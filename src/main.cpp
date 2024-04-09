@@ -9249,6 +9249,10 @@ class Window_Manager {
                 int16_t x = 0, y = 0;
                 uint16_t width = 0, height = 0;
                 c->win.geo(&x, &y, &width, &height);
+                c->x = ((screen->width_in_pixels / 2) - (width / 2));
+                c->y = ((screen->height_in_pixels / 2) - (height / 2));
+                c->width = width;
+                c->height = height;
                 loutI << Var_(x) << ' ' << Var_(y) << ' ' << Var_(width) << ' ' << Var_(height) << '\n';
                 loutI << Var_(c->x) << ' ' << Var_(c->y) << ' ' << Var_(c->width) << ' ' << Var_(c->height) << '\n';
 
