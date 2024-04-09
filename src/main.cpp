@@ -3052,6 +3052,7 @@ getMappedEv(uint8_t __ev)
 
 class evH {
     const xcb_generic_event_t *ev;
+    __key_codes__ key_codes;
 
 public:
     evH() {}
@@ -3061,6 +3062,8 @@ public:
     void
     main_loop()
     {
+        key_codes.init();
+
         while (true)
         {
             AutoTimer t("main_loop");
@@ -3073,6 +3076,7 @@ public:
             }
             uint8_t res = (ev->response_type & ~0x80);
             AutoTimer t2("inner loop");
+
             switch (res)
             {
                 case XCB_EXPOSE:
@@ -3119,7 +3123,10 @@ public:
 
                     RE_CAST_EV(xcb_key_press_event_t);
                     client *c = nullptr;
-                    if ((c = C_RETRIVE(e->event)) != nullptr) C_EMIT(c, EWMH_MAXWIN_SIGNAL);
+                    if (e->detail == key_codes.f11)
+                    {
+                        if ((c = C_RETRIVE(e->event)) != nullptr) C_EMIT(c, EWMH_MAXWIN_SIGNAL);
+                    }
                     keyPressH(ev);
                     break;
                 }
