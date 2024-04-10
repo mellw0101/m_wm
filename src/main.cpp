@@ -13808,9 +13808,8 @@ class change_desktop {
                         {
                             wm->cur_d->current_clients[0]->focus();
                             wm->focused_client = wm->cur_d->current_clients[0];
+                            wm->cur_d->focused_client = wm->cur_d->current_clients[0];
                         }
-                        wm->cur_d->current_clients[0]->focus();
-                        wm->focused_client = wm->cur_d->current_clients[0];
                     }
                     else
                     {
@@ -13959,14 +13958,14 @@ class change_desktop {
     private:
     /* Variabels   */
         // xcb_connection_t(*connection);
-        vector<client *>(show);
-        vector<client *>(hide);
-        thread(show_thread);
-        thread(hide_thread);
+        vector<client *> show;
+        vector<client *> hide;
+        thread show_thread;
+        thread hide_thread;
         atomic<bool>(stop_show_flag){false};
         atomic<bool>(stop_hide_flag){false};
         atomic<bool>(reverse_animation_flag){false};
-        vector<thread>(animation_threads);
+        vector<thread> animation_threads;
 
     /* Methods     */
         vector<client *>
