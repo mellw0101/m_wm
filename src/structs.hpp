@@ -890,8 +890,10 @@ class __c_func_arr__ {
         static constexpr uint8_t ERROR_STATE = make_T_MAX<uint8_t>();
 
     /* Methods */
-        constexpr uint8_t sig_to_index__(uint8_t __sig) {
-            switch (__sig) {
+        constexpr uint8_t sig_to_index__(uint8_t __sig)
+        {
+            switch (__sig)
+            {
                 case BUTTON_MAXWIN_PRESS:               return 0;
                 case KILL_SIGNAL:                       return 1;
                 case FOCUS_CLIENT:                      return 2;
@@ -911,9 +913,7 @@ class __c_func_arr__ {
                 case RESIZE_CLIENT_BORDER_BOTTOM_LEFT:  return 16;
 
                 default: return make_T_MAX<uint8_t>();
-
             }
-
         }
 
     public:
@@ -921,19 +921,19 @@ class __c_func_arr__ {
         FixedArray<function<void(client *c)>, 17> func;
 
     /* Methods   */
-        constexpr void send_c_sig(client *__c, int __sig) {
+        constexpr void send_c_sig(client *__c, int __sig)
+        {
             uint8_t index = sig_to_index__(__sig);
             if (index == ERROR_STATE) return;
             func[index](__c);
-
         }
 
         template<typename Callback>
-        constexpr void add_func_to_sig(Callback &&__callback, uint8_t __sig) {
+        constexpr void add_func_to_sig(Callback &&__callback, uint8_t __sig)
+        {
             uint8_t index = sig_to_index__(__sig);
             if (index == ERROR_STATE) return;
             func[index] = std::forward<function<void(client *)>>(__callback);
-
         }
 
 };

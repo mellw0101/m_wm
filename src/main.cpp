@@ -3206,8 +3206,9 @@ public:
                     loutI << Var_(e->window) << ' ' << Var_(e->event) << '\n'; 
                     if (e->window == e->event)
                     {
-                        loutI << "emmiting sig" << '\n';
-                        signal_manager->_window_signals.emit(e->window, XCB_DESTROY_NOTIFY);
+                        /* loutI << "emmiting sig" << '\n';
+                        signal_manager->_window_signals.emit(e->window, XCB_DESTROY_NOTIFY); */
+                        C_EMIT(C_RETRIVE(e->window), KILL_SIGNAL);
                         xcb_flush(conn);
                     }
                     break;
@@ -8355,7 +8356,7 @@ class client {
 
             CONN(L_MOUSE_BUTTON_EVENT,
             {
-                C_EMIT( this, BUTTON_MAXWIN_PRESS );
+                C_EMIT(this, BUTTON_MAXWIN_PRESS);
                 xcb_flush(conn);
             },
             max_button);
@@ -15321,7 +15322,9 @@ class tile {
         }
 
 };
-class Events {
+
+class Events
+{
     public:
     /* Variabels */
         pointer p;
@@ -15392,19 +15395,25 @@ class Events {
                 
             }); */
 
-            /* C_SIGNAL(if (__c) {
+            /* C_SIGNAL(if (__c)
+            {
                 if (!__c->win.is_mapped())
                 {
                     __c->kill();
-
                 }
                 else
                 {
                     __c->win.kill();
                     __c->kill();
                 }
+            },
+            KILL_SIGNAL); */
 
-            }, KILL_SIGNAL); */
+            C_SIGNAL(
+            {
+                if (__c != nullptr) __c->kill();
+            },
+            KILL_SIGNAL);
 
             /* C_SIGNAL(if (__c) {
                 __c->raise();
