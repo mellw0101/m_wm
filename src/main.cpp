@@ -3185,8 +3185,11 @@ public:
                     RE_CAST_EV(xcb_client_message_event_t);
                     if (e->format == 32)
                     {
-                        xcb_atom_t atom = xcb->get_atom(0, "WM_DELETE_WINDOW");
-                        if (e->data.data32[0] == atom)
+                        // xcb_atom_t atom = xcb->get_atom(0, "WM_DELETE_WINDOW");
+                        iAtomR p_reply(1, "WM_PROTOCOLS");
+                        iAtomR d_reply(0, "WM_DELETE_WINDOW");
+                        
+                        if (e->data.data32[0] == d_reply.Atom() && e->type == p_reply.Atom())
                         {
                             loutI << "emmiting sig" << '\n';
                             signal_manager->_window_signals.emit(e->window, KILL_SIGNAL);
