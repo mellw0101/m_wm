@@ -1099,6 +1099,9 @@ class __signal_manager__ {
         #define CONN(__e, __cb, __w) \
             signal_manager->_window_signals.conect(__w, __e, W_callback {__cb})
 
+        #define ConnSig(__w, __e, __cb) \
+            signal_manager->_window_signals.conect(__w, __e, [this](uint32_t w) {__cb})
+
         #define SIG(__window, __callback, __event) \
             signal_manager->_window_signals.conect(__window, __event, __callback)
 
@@ -2800,14 +2803,15 @@ class Launcher {
             int result = posix_spawn(&pid, command_path.c_str(), NULL, &attr, argv, environ);
             posix_spawnattr_destroy(&attr);
 
-            if (result == 0) {
+            if (result == 0)
+            {
                 pid_manager->add_pid(pid);
                 return 0;
-
-            } else {
+            }
+            else
+            {
                 loutErrno("posix_spawn failed");
                 return result;
-
             }
 
         }
@@ -4688,6 +4692,12 @@ window {
                     xcb_flush(conn);
                 }
             }
+
+            void
+            send_intern_struct_update()
+            {
+                send_event(XCB_EVENT_MASK_STRUCTURE_NOTIFY, (uint32_t[]){static_cast<const uint32_t>(_x), static_cast<const uint32_t>(_y), _width, _height});
+            }
             
             void
             update(uint32_t __x, uint32_t __y, uint32_t __width, uint32_t __height)
@@ -5405,8 +5415,12 @@ window {
                 free(reply);
                 return propertyValue;
             }
-            string get_net_wm_name_by_req()
+
+            string
+            get_net_wm_name_by_req()
             {
+                AutoTimer t(__func__);
+
                 xcb_ewmh_get_utf8_strings_reply_t wm_name;
                 string windowName = "";
 
@@ -5418,10 +5432,13 @@ window {
                 _name = windowName;
                 return windowName;
             }
-            string get_net_wm_name() const
+
+            string
+            get_net_wm_name() const
             {
                 return _name;
             }
+
             void print_wm_class(xcb_connection_t* conn, xcb_window_t window)
             {
                 xcb_get_property_cookie_t cookie = xcb_get_property(conn, 0, window, XCB_ATOM_WM_CLASS, XCB_GET_PROPERTY_TYPE_ANY, 0, 1024);
@@ -5693,6 +5710,8 @@ window {
             void
             set_pointer(CURSOR cursor_type)
             {
+                AutoTimer t("window:set_pointer");
+
                 xcb_cursor_context_t *ctx;
                 if (xcb_cursor_context_new(conn, screen, &ctx) < 0)
                 {
@@ -5777,13 +5796,10 @@ window {
                 void
                 x(uint32_t x)
                 {
-                    // config_window(XCB_CONFIG_WINDOW_X, x);
-                    /* update(x, _y, _width, _height); */
-                    /* ConfW(_window, XCB_CONFIG_WINDOW_X, x);
-                    _x = x; */
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X, (uint32_t[]){x});
                     xcb_flush(conn);
                     _x = x;
+                    send_intern_struct_update();
                 }
                 
                 void
@@ -7493,9 +7509,8 @@ class client {
             draw_title( uint32_t __mode )
             {
                 titlebar.clear();
-                if ( __mode & TITLE_REQ_DRAW )  { titlebar.draw_acc_16( win.get_net_wm_name_by_req() ); }
-                if ( __mode & TITLE_INTR_DRAW ) { titlebar.draw_acc_16( win.get_net_wm_name() ); }
-
+                if (__mode & TITLE_REQ_DRAW ) { titlebar.draw_acc_16(win.get_net_wm_name_by_req()); }
+                if (__mode & TITLE_INTR_DRAW) { titlebar.draw_acc_16(win.get_net_wm_name()); }
             }
             
             #define CLI_RIGHT  screen->width_in_pixels  - this->width
@@ -7987,21 +8002,21 @@ class client {
             draw_title(TITLE_REQ_DRAW);
             icon.raise();
 
-            CONN(XCB_EXPOSE,
-            {
+            ConnSig(titlebar, XCB_EXPOSE,
+            
                 titlebar.clear();
                 titlebar.draw_acc_16(win.get_net_wm_name());
                 xcb_flush(conn);
-            },
-            titlebar);
+            );
 
-            CONN(XCB_PROPERTY_NOTIFY,
-            {
+            ConnSig(win, XCB_PROPERTY_NOTIFY,
+            
                 titlebar.clear();
                 titlebar.draw_acc_16(win.get_net_wm_name_by_req());
                 xcb_flush(conn);
-            },
-            win);
+            );
+
+            titlebar.send_event(XCB_EVENT_MASK_EXPOSURE);
         }
         
         void
@@ -8154,19 +8169,17 @@ class client {
 
             min_button.set_backround_png(s.c_str());
 
-            CONN(XCB_ENTER_NOTIFY,
-            {
+            ConnSig(min_button, XCB_ENTER_NOTIFY,
+
                 min_button.change_border_color(WHITE);
                 xcb_flush(conn);  
-            },
-            min_button);
+            );
 
-            CONN(XCB_LEAVE_NOTIFY,
-            {
+            ConnSig(min_button, XCB_LEAVE_NOTIFY,
+
                 min_button.change_border_color(BLACK);
                 xcb_flush(conn);  
-            },
-            min_button);
+            );
         }
         
         void
@@ -8481,8 +8494,11 @@ class Entry {
         function<void()> action;
 
     /* Methods */
-        void make_window(uint32_t __parent, int16_t __x, int16_t __y, uint16_t __width, uint16_t __height)
+        void
+        make_window(uint32_t __parent, int16_t __x, int16_t __y, uint16_t __width, uint16_t __height)
         {
+            AutoTimer t("Entry:make_window");
+
             window.create_window(
                 __parent,
                 __x,
@@ -8493,12 +8509,14 @@ class Entry {
                 BUTTON_EVENT_MASK,
                 MAP
             );
-            CONN(EXPOSE, if (__window == this->window) this->window.draw_acc(name);, this->window);
+            ConnSig(window , XCB_EXPOSE, window.draw_acc(name););
             CONN(L_MOUSE_BUTTON_EVENT, if ( __window == this->window && this->action != nullptr ) this->action(); WS_emit(window.parent(), HIDE_CONTEXT_MENU);, this->window);
             CONN(R_MOUSE_BUTTON_EVENT, if (__window == this->window) Emit(window.parent(), HIDE_CONTEXT_MENU );, this->window);
-            CONN(XCB_ENTER_NOTIFY, window.change_backround_color(WHITE);, window);
-            CONN(XCB_LEAVE_NOTIFY, window.change_backround_color(BLACK);, window);
-            window.grab_button({ { L_MOUSE_BUTTON, XCB_BUTTON_MASK_ANY } });
+            
+            ConnSig(window, XCB_ENTER_NOTIFY, window.change_backround_color(WHITE););
+            ConnSig(window, XCB_LEAVE_NOTIFY, window.change_backround_color(BLACK););
+
+            window.grab_button({{L_MOUSE_BUTTON, XCB_BUTTON_MASK_ANY}});
         }
 
 };
@@ -8509,7 +8527,7 @@ class context_menu {
         uint32_t _width = 120, _height = 20;
 
         int border_size = 1;
-        vector<Entry>(entries);
+        vector<Entry> entries;
 
     /* Methods   */
         void
@@ -8525,11 +8543,7 @@ class context_menu {
                 XCB_EVENT_MASK_FOCUS_CHANGE | XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_POINTER_MOTION,
                 RAISE
             );
-            CONN(L_MOUSE_BUTTON_EVENT,
-            {
-                WS_emit(this->context_window, HIDE_CONTEXT_MENU);
-            },
-            this->context_window);
+            ConnSig(context_window, L_MOUSE_BUTTON_EVENT, hide__(););
         }
 
         void
@@ -8547,9 +8561,9 @@ class context_menu {
         void
         make_entries__()
         {
-            for ( int i(0), y(0); i < entries.size(); ++i, y += _height )
+            for (int i(0); i < entries.size(); ++i)
             {
-                entries[i].make_window( context_window, 0, y, _width, _height );
+                entries[i].make_window( context_window, 0, (_height * i), _width, _height );
                 signal_manager->_window_signals.emit( entries[i].window, EXPOSE );
             }
         }
@@ -8585,7 +8599,7 @@ class context_menu {
             context_window.x_y_width_height((_x - BORDER_SIZE), (_y - BORDER_SIZE), _width, new_height);
             context_window.map();
             context_window.raise();
-            CONN( HIDE_CONTEXT_MENU, this->hide__();, this->context_window );
+            CONN(HIDE_CONTEXT_MENU, this->hide__();, this->context_window);
             make_entries__();
         }
         
@@ -8601,6 +8615,15 @@ class context_menu {
     context_menu() { create_dialog_win__(); }
 
 };
+
+/**
+*****************************************
+*****************************************
+**** @class @c 'Window_Manager'
+*****************************************
+*****************************************
+*/
+
 class Window_Manager {
     /* Defines     */
         #define INIT_NEW_WM(__inst, __class) \
@@ -8699,12 +8722,12 @@ class Window_Manager {
                 create_new_desktop( 5 );
 
                 context_menu = new class context_menu();
-                context_menu->add_entry( "konsole",              [ this ]() { launcher.program( (char *) "konsole" ); });
-                context_menu->add_entry( "google-chrome-stable", [ this ]() { launcher.launch_child_process( "google-chrome-stable" ); });
-                context_menu->add_entry( "code",                 [ this ]() { launcher.launch_child_process( "code" ); });
-                context_menu->add_entry( "dolphin",              [ this ]() { launcher.launch_child_process( "dolphin" ); });
-                context_menu->add_entry( "alacritty",            [ this ]() { launcher.launch_child_process( "alacritty" ); });
-                context_menu->add_entry( "quit",                 [ this ]() { this->quit(0); });
+                context_menu->add_entry("konsole",              [this]() { launcher.program( (char *) "konsole" ); });
+                context_menu->add_entry("google-chrome-stable", [this]() { launcher.launch_child_process( "google-chrome-stable" ); });
+                context_menu->add_entry("code",                 [this]() { launcher.launch_child_process( "code" ); });
+                context_menu->add_entry("dolphin",              [this]() { launcher.launch_child_process( "dolphin" ); });
+                context_menu->add_entry("alacritty",            [this]() { launcher.launch_child_process( "alacritty" ); });
+                context_menu->add_entry("quit",                 [this]() { quit(0); });
 
                 setup_events(); 
             }
@@ -8863,6 +8886,8 @@ class Window_Manager {
                 client *
                 client_from_window(const xcb_window_t *window)
                 {
+                    AutoTimer t(__func__);
+
                     for (const auto &c:client_list)
                     {
                         if (*window == c->win)
@@ -8876,7 +8901,10 @@ class Window_Manager {
                 client *
                 client_from_any_window(const xcb_window_t *window)
                 {
-                    for (const auto &c:client_list) {
+                    AutoTimer t(__func__);
+
+                    for (const auto &c:client_list)
+                    {
                         if (*window == c->win
                         ||  *window == c->frame
                         ||  *window == c->titlebar
@@ -8890,13 +8918,12 @@ class Window_Manager {
                         ||  *window == c->border[top_left]
                         ||  *window == c->border[top_right]
                         ||  *window == c->border[bottom_left]
-                        ||  *window == c->border[bottom_right]) {
+                        ||  *window == c->border[bottom_right])
+                        {
                             return c;
-
                         }
-
-                    } return nullptr;
-
+                    }
+                    return nullptr;
                 }
                 
                 client *
@@ -9102,7 +9129,8 @@ class Window_Manager {
                 xcb_flush(conn);
             }
 
-            client *make_internal_client(window &window)
+            client *
+            make_internal_client(window &window)
             {
                 client *c = new client;
 
@@ -9121,7 +9149,8 @@ class Window_Manager {
 
             }
             
-            void send_sigterm_to_client(client *c)
+            void
+            send_sigterm_to_client(client *c)
             {
                 c->kill();
                 remove_client(c);
@@ -9235,12 +9264,15 @@ class Window_Manager {
     private:
     /* Functions   */
         /* Init   */
-            void _conn(const char *displayname, int *screenp)
+            void
+            _conn(const char *displayname, int *screenp)
             {
                 conn = xcb_connect( displayname, screenp );
                 check_conn();
             }
-            void _ewmh()
+            
+            void
+            _ewmh()
             {
                 if ( !( ewmh = static_cast<xcb_ewmh_connection_t *>( calloc( 1, sizeof( xcb_ewmh_connection_t )))))
                 {
@@ -9255,19 +9287,27 @@ class Window_Manager {
                     quit( 1 );
                 }
             }
-            void _setup()
+            
+            void
+            _setup()
             {
                 setup = xcb_get_setup(conn);
             }
-            void _iter()
+            
+            void
+            _iter()
             {
                 iter = xcb_setup_roots_iterator(setup);
             }
-            void _screen()
+            
+            void
+            _screen()
             {
                 screen = iter.data;
             }
-            bool setSubstructureRedirectMask()
+            
+            bool
+            setSubstructureRedirectMask()
             {
                 xcb_void_cookie_t cookie = xcb_change_window_attributes_checked(
                     conn,
@@ -9285,26 +9325,28 @@ class Window_Manager {
                 free( error );
                 return false;
             }
-            void configure_root()
+            
+            void
+            configure_root()
             {
                 root.set_backround_color( DARK_GREY );
                 root.set_event_mask( ROOT_EVENT_MASK );
-                root.grab_keys( {
+                root.grab_keys(
+                {
                     { Q,       SHIFT  | ALT   },
                     { T,       CTRL   | ALT   },
                     { L_ARROW, CTRL   | SUPER },
                     { R_ARROW, CTRL   | SUPER },
                     { F12,     NULL           },
                     { SUPER_L, SHIFT          }
-                
-                }); root.clear();
+                });
+                root.clear();
 
                 #ifndef ARMV8_BUILD
                     root.set_backround_png((USER_PATH_PREFIX( "/mwm_png/galaxy21.png" )).c_str());
                     // root.set_backround_png(USER_PATH_PREFIX("/mwm_png/galaxy16-17-3840x1200.png"));
                 #endif
-                root.set_pointer( CURSOR::arrow );
-
+                root.set_pointer(CURSOR::arrow);
             }
 
         /* Check  */
@@ -9429,7 +9471,7 @@ class Window_Manager {
 
         /* Client */
             client *
-            make_client(const uint32_t &window)
+            make_client(uint32_t window)
             {
                 client *c = new client;
                 if (c == nullptr)
@@ -9465,7 +9507,7 @@ class Window_Manager {
                     c->win.set_EWMH_fullscreen_state();
                 }
 
-                if ( c->win.check_atom( ewmh->_NET_WM_STATE_MODAL ))
+                if ( c->win.check_atom(ewmh->_NET_WM_STATE_MODAL))
                 {
                     c->atoms.is_modal = true;
                     c->modal_data.transient_for = c->win.get_transient_for_window();
@@ -9476,7 +9518,9 @@ class Window_Manager {
                 return c;
 
             }
-            void check_client(client *c)
+
+            void
+            check_client(client *c)
             {
                 /* c->win.x(BORDER_SIZE);
                 FLUSH_X();
@@ -9488,51 +9532,58 @@ class Window_Manager {
                 if (c->x == 0
                 &&  c->y != 0
                 &&  c->width == screen->width_in_pixels
-                &&  c->height == screen->height_in_pixels) {
+                &&  c->height == screen->height_in_pixels)
+                {
                     c->_y(0);
                     FLUSH_X();
                     return;
-
                 }
+                
                 // if client is full_screen 'width' and 'height' but position is offset from (0, 0) then make pos (0, 0)
                 if (c->x != 0
                 &&  c->y != 0
                 &&  c->width == screen->width_in_pixels
-                &&  c->height == screen->height_in_pixels) {
+                &&  c->height == screen->height_in_pixels)
+                {
                     c->x_y(0,0);
                     FLUSH_X();
                     return;
-
                 }
-                if (c->x < 0) {
+
+                if (c->x < 0)
+                {
                     c->_x(0);
                     FLUSH_X();
-
                 }
-                if (c->y < 0) {
+
+                if (c->y < 0)
+                {
                     c->_y(0);
                     FLUSH_X();
-
                 }
-                if (c->width > screen->width_in_pixels) {
+
+                if (c->width > screen->width_in_pixels)
+                {
                     c->_width(screen->width_in_pixels);
                     FLUSH_X();
-
                 }
-                if (c->height > screen->height_in_pixels) {
+
+                if (c->height > screen->height_in_pixels)
+                {
                     c->_height(screen->height_in_pixels);
                     FLUSH_X();
+                }
 
-                }                
-                if ((c->x + c->width) > screen->width_in_pixels) {
+                if ((c->x + c->width) > screen->width_in_pixels)
+                {
                     c->_width(screen->width_in_pixels - c->x);
                     FLUSH_X();
+                }
 
-                }                
-                if ((c->y + c->height) > screen->height_in_pixels) {
+                if ((c->y + c->height) > screen->height_in_pixels)
+                {
                     c->_height(screen->height_in_pixels - c->y);
                     FLUSH_X();
-
                 }
             }
 
@@ -9568,52 +9619,45 @@ class Window_Manager {
             void
             setup_events()
             {
-                CONN(XCB_MAP_REQUEST,
-                {
-                    client *c = client_from_any_window(&__window);
+                ConnSig(screen->root, XCB_MAP_REQUEST,
+                
+                    client *c = client_from_any_window(&w);
                     if ( c != nullptr ) return;
-                    manage_new_client(__window);
-                },
-                screen->root);
+                    manage_new_client(w);
+                );
 
-                CONN(XCB_DESTROY_NOTIFY,
-                {
+                ConnSig(screen->root, XCB_DESTROY_NOTIFY,
+
                     loutI << "Destroy notify" << loutEND;
-                    client *c = client_from_window(&__window);
+                    client *c = client_from_window(&w);
                     if ( c == nullptr ) return;
                     c->kill();
                     remove_client(c);
-                },
-                screen->root);
+                );
 
-                CONN(L_MOUSE_BUTTON_EVENT,
-                {
+                ConnSig(screen->root, L_MOUSE_BUTTON_EVENT,
+
                     unfocus();
                     if (context_menu->context_window.is_mapped())
                     {
                         Emit(context_menu->context_window, HIDE_CONTEXT_MENU);
                     }
-                },
-                screen->root);
+                );
                 
-                CONN(R_MOUSE_BUTTON_EVENT,
-                {
-                    context_menu->show();
-                },
-                screen->root);
+                ConnSig(screen->root, R_MOUSE_BUTTON_EVENT, context_menu->show(););
 
-                CONN(SET_FOCUSED_CLIENT,
-                {
-                    client *c = client_from_any_window(&__window);
-                    if ( c == nullptr )
+                ConnSig(screen->root, SET_FOCUSED_CLIENT,
+
+                    client *c = client_from_window(&w);
+                    if (c == nullptr)
                     {
                         loutE << "c = nullptr" << '\n';
-                        focused_client = nullptr;
+                        /* focused_client = nullptr; */
                         return;
                     }
+                    c->raise();
                     focused_client = c;
-                },
-                screen->root);
+                );
                 
                 if (BORDER_SIZE == 0)
                 {
@@ -10102,32 +10146,6 @@ class __status_bar__ {
                 _w[_AUDIO].change_backround_color(DARK_GREY);
             },
             _w[_AUDIO]);
-            
-            /* WS_conn(this->_w[_AUDIO], L_MOUSE_BUTTON_EVENT, W_callback {
-                if (__window != this->_w[_AUDIO]) return;
-
-                if (this->_w[_AUDIO_DROPDOWN].is_mapped()) {
-                    this->hide__(this->_w[_AUDIO_DROPDOWN]);
-                
-                } else {
-                    if (this->_w[_WIFI_DROPWOWN].is_mapped()) {
-                        this->hide__(this->_w[_WIFI_DROPWOWN]);
-
-                    } this->show__(this->_w[_AUDIO_DROPDOWN]);
-
-                }
-
-            }); */
-            /* WS_conn(this->_w[_AUDIO], ENTER_NOTIFY, W_callback {
-                if (__window != this->_w[_AUDIO]) return;
-                this->_w[_AUDIO].change_backround_color(WHITE);
-
-            });
-            WS_conn(this->_w[_AUDIO], LEAVE_NOTIFY, W_callback {
-                if (__window != this->_w[_AUDIO]) return;
-                this->_w[_AUDIO].change_backround_color(DARK_GREY);
-
-            }); */
         }
 
         void
@@ -13446,6 +13464,8 @@ public:
         {
             w.raise();
             w.y( 0 );
+            w.focus_input();
+            w.raise();
             xcb_flush(conn);
         }
         else
@@ -13455,7 +13475,8 @@ public:
         }
     }
 
-    void init()
+    void
+    init()
     {
         w.create_window(
             screen->root,
@@ -13467,8 +13488,9 @@ public:
             NONE,
             MAP
         );
-        FlushX_Win( w );
-        for ( int i = 0; i < (( screen->height_in_pixels / 2 ) / 20 ); ++i )
+        xcb_flush(conn);
+
+        /* for (int i = 0; i < ((screen->height_in_pixels / 2) / 20); ++i)
         {
             window window;
             window.create_window(
@@ -13481,9 +13503,9 @@ public:
                 NONE,
                 MAP
             );
-            FlushX_Win( window );
+            xcb_flush(conn);
             w_vec.push_back( window );
-        }
+        } */
 
         /* event_handler->setEventCallback(
         XCB_KEY_PRESS,
@@ -13496,7 +13518,7 @@ public:
             }
         }); */
 
-        wm->context_menu->add_entry( "DropDownTerm", [ this ]()-> void { this->toggle__(); } );
+        wm->context_menu->add_entry("DropDownTerm", [this]()-> void { this->toggle__(); });
     }
 };
 static DropDownTerm *ddTerm( nullptr );
@@ -15789,17 +15811,22 @@ keyPressH(const xcb_generic_event_t *ev)
         }
     }
 
-    if ( e->detail == wm->key_codes.tab && (( e->state & ALT ) != 0 ))
+    if (e->detail == wm->key_codes.tab && ((e->state & ALT) != 0))
     {
         wm->cycle_focus();
     }
-    else if ( e->detail == wm->key_codes.t && (( e->state & ALT ) != 0 ) && (( e->state & CTRL ) != 0 ))
+    else if (e->detail == wm->key_codes.t && ((e->state & ALT) != 0) && ((e->state & CTRL) != 0))
     {
-        wm->launcher.launch_child_process( "konsole" );
+        /* wm->launcher.launch_child_process( "konsole" ); */
+        int status = wm->launcher.launch_child_process("alacritty");
+        if (status != 0)
+        {
+            wm->launcher.launch_child_process("konsole");
+        }
     }
-    else if ( e->detail == wm->key_codes.q && (( e->state & ALT ) != 0 ) && (( e->state & SHIFT ) != 0 ))
+    else if (e->detail == wm->key_codes.q && ((e->state & ALT) != 0) && ((e->state & SHIFT) != 0))
     {
-        wm->quit( 0 );
+        wm->quit(0);
     }
 
     if (e->detail == wm->key_codes.f12)
@@ -15846,35 +15873,9 @@ buttonPressH(const xcb_generic_event_t *ev)
     RE_CAST_EV(xcb_button_press_event_t);
     client *c = signal_manager->_window_client_map.retrive(e->event);
     if ( !c ) return;
-    // {
-    //     c = wm->get_client_from_pointer();
-    //     if (c == nullptr) return;
-    //     loutI << "got client from pointer" << loutEND;
-    //     c->focus();
-    //     return;
-    // }
 
     if (e->detail == L_MOUSE_BUTTON)
-    {
-        // if (e->event == c->win) {
-        //     switch (e->state)
-        //     {
-        //         case ALT:
-        //         {
-        //             c->raise();
-        //             mv_client mv(c, e->event_x, e->event_y + 20);
-        //             c->focus();
-        //             wm->focused_client = c;
-        //             return;
-        //         }
-        //     }
-
-        //     c->raise();
-        //     c->focus();
-        //     wm->focused_client = c;
-        //     return;
-        // }
-        
+    {   
         if (e->event == c->titlebar)
         {
             c->raise();
@@ -15932,21 +15933,6 @@ buttonPressH(const xcb_generic_event_t *ev)
             return;
         }
     }
-
-    // if (e->detail == R_MOUSE_BUTTON)
-    // {
-    //     switch (e->state)
-    //     {
-    //         case ALT:
-    //         {
-    //             c->raise();
-    //             c->focus();
-    //             resize_client resize(c, 0);
-    //             wm->focused_client = c;
-    //             return;
-    //         }
-    //     }
-    // }
 }
 
 class test {
