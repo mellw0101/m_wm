@@ -3092,9 +3092,9 @@ public:
                     AutoTimer t("XCB_BUTTON_PRESS");
 
                     RE_CAST_EV(xcb_button_press_event_t);
-                    if ( e->detail == L_MOUSE_BUTTON )
+                    if (e->detail == L_MOUSE_BUTTON)
                     {
-                        if ((e->state & ALT)!= 0)
+                        if ((e->state & ALT) != 0)
                         {
                             signal_manager->_window_signals.emit(e->event, L_MOUSE_BUTTON_EVENT__ALT);
                         }
@@ -3107,11 +3107,11 @@ public:
                     {
                         if ((e->state & ALT) != 0)
                         {
-                            signal_manager->_window_signals.emit(e->event, R_MOUSE_BUTTON_EVENT__ALT );
+                            signal_manager->_window_signals.emit(e->event, R_MOUSE_BUTTON_EVENT__ALT);
                         }
                         else
                         {
-                            signal_manager->_window_signals.emit(e->event, R_MOUSE_BUTTON_EVENT );
+                            signal_manager->_window_signals.emit(e->event, R_MOUSE_BUTTON_EVENT);
                         }
                     }
                     buttonPressH(ev);
@@ -8064,10 +8064,10 @@ class client {
             CONN(KILL_SIGNAL,
             {
                 /* signal_manager->_window_client_map.remove_by_value(this); */
-                kill();
+                this->kill();
                 xcb_flush(conn);
             },
-            win);
+            this->win);
 
             CONN(KILL_SIGNAL,
             {
