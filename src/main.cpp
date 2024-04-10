@@ -7897,8 +7897,10 @@ class client {
                 &&   win.get_min_height() > height
                 ||   height == 0 && width == 0 )
                 {
-                    loutI << "running get_window_parameters" << '\n';
-                    get_window_parameters();
+                    /* loutI << "running get_window_parameters" << '\n';
+                    get_window_parameters(); */
+                    loutI << "running win.geo()" << '\n';
+                    win.geo(&x, &y, &width, &height);
                 }
             }
 
@@ -9315,7 +9317,7 @@ class Window_Manager {
                     return;
                 }
 
-                int16_t x = 0, y = 0;
+                /* int16_t x = 0, y = 0;
                 uint16_t width = 0, height = 0;
                 c->win.geo(&x, &y, &width, &height);
                 c->x = ((screen->width_in_pixels / 2) - (width / 2));
@@ -9323,11 +9325,11 @@ class Window_Manager {
                 c->width = width;
                 c->height = height;
                 loutI << Var_(x) << ' ' << Var_(y) << ' ' << Var_(width) << ' ' << Var_(height) << '\n';
-                loutI << Var_(c->x) << ' ' << Var_(c->y) << ' ' << Var_(c->width) << ' ' << Var_(c->height) << '\n';
+                loutI << Var_(c->x) << ' ' << Var_(c->y) << ' ' << Var_(c->width) << ' ' << Var_(c->height) << '\n'; */
 
                 c->win.get_override_redirect();
                 c->win.x_y_width_height(c->x, c->y, c->width, c->height);
-                FLUSH_X();
+                xcb_flush(conn);
                 pid_manager->check_pid(c->win.get_pid());
 
                 c->win.map();
@@ -9403,21 +9405,22 @@ class Window_Manager {
 
                 ), client_list.end());
 
-                /* cur_d->current_clients.erase(remove(
-                    cur_d->current_clients.begin(),
-                    cur_d->current_clients.end(),
-                    c
-
-                ), cur_d->current_clients.end()); */
-
                 for (int i = 0; i < desktop_list.size(); ++i)
                 {
-                    desktop_list[i]->current_clients.erase(remove(
-                        desktop_list[i]->current_clients.begin(),
-                        desktop_list[i]->current_clients.end(),
-                        c
+                    desktop_list[i]->current_clients.erase(
+                        remove(
+                            desktop_list[i]->current_clients.begin(),
+                            desktop_list[i]->current_clients.end(),
+                            c
+                        ),
+                        desktop_list[i]->current_clients.end()
+                    );
 
-                    ), desktop_list[i]->current_clients.end());
+                    if (c == desktop_list[i]->focused_client)
+                    {
+                        desktop_list[i]->focused_client = nullptr;
+                    }
+
                     loutI << "desktop" << (i + 1) << " client vec size" << desktop_list[i]->current_clients.size() << '\n';
                 }
 
@@ -9677,7 +9680,8 @@ class Window_Manager {
             }
 
         /* Client */
-            client *make_client(const uint32_t &window)
+            client *
+            make_client(const uint32_t &window)
             {
                 client *c = new client;
                 if (c == nullptr)
@@ -9813,7 +9817,8 @@ class Window_Manager {
 
 
         /* Events */
-            void setup_events()
+            void
+            setup_events()
             {
                 CONN(XCB_MAP_REQUEST,
                 {
@@ -13917,7 +13922,8 @@ class change_desktop {
         };
 
     /* Methods     */
-        void change_to(const DIRECTION &direction)
+        void
+        change_to(const DIRECTION &direction)
         {
             switch (direction)
             {
@@ -14008,7 +14014,8 @@ class change_desktop {
             mtx.unlock();
         }
 
-        void change_with_app(const DIRECTION &direction)
+        void
+        change_with_app(const DIRECTION &direction)
         {
             if (wm->focused_client == nullptr) return;
 
@@ -14069,7 +14076,8 @@ class change_desktop {
             mtx.unlock();
         }
 
-        static void teleport_to(const uint8_t & n)
+        static void
+        teleport_to(const uint8_t & n)
         {
             if (wm->cur_d == wm->desktop_list[n - 1] || n == 0 || n == wm->desktop_list.size()) return;
 
@@ -14146,7 +14154,8 @@ class change_desktop {
             return clients;
         }
 
-        void animate(vector<client *> clients, const DIRECTION &direction)
+        void
+        animate(vector<client *> clients, const DIRECTION &direction)
         {
             switch (direction)
             {
@@ -14178,7 +14187,8 @@ class change_desktop {
             }
         }
 
-        void anim_cli(client *c, const int &endx)
+        void
+        anim_cli(client *c, const int &endx)
         {
             Mwm_Animator anim(c);
             anim.animate_client_x(
@@ -14189,13 +14199,15 @@ class change_desktop {
             c->update();
         }
 
-        void thread_sleep(const double &milliseconds)
+        void
+        thread_sleep(const double &milliseconds)
         {
             auto duration = chrono::duration<double, milli>(milliseconds);
             this_thread::sleep_for(duration);
         }
 
-        void stopAnimations()
+        void
+        stopAnimations()
         {
             stop_show_flag.store(true);
             stop_hide_flag.store(true);
@@ -14213,7 +14225,8 @@ class change_desktop {
             }
         }
 
-        void joinAndClearThreads()
+        void
+        joinAndClearThreads()
         {
             for (thread &t : animation_threads)
             {
