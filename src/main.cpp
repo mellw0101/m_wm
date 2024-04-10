@@ -8064,6 +8064,7 @@ class client {
             CONN(KILL_SIGNAL,
             {
                 /* signal_manager->_window_client_map.remove_by_value(this); */
+                loutI << "got KILL_SIGNAL" << '\n';
                 this->kill();
                 xcb_flush(conn);
             },
