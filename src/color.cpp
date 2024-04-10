@@ -3,7 +3,7 @@
 #include "prof.hpp"
 
 rgb_color_code
-rgb_code__(int __color)
+__color__::rgb_code__(int __color)
 {
     AutoTimer timer("__color__:rgb_code");
 
