@@ -7897,10 +7897,8 @@ class client {
                 &&   win.get_min_height() > height
                 ||   height == 0 && width == 0 )
                 {
-                    /* loutI << "running get_window_parameters" << '\n';
-                    get_window_parameters(); */
-                    loutI << "running win.geo()" << '\n';
-                    win.geo(&x, &y, &width, &height);
+                    loutI << "running get_window_parameters" << '\n';
+                    get_window_parameters();
                 }
             }
 
@@ -9317,15 +9315,35 @@ class Window_Manager {
                     return;
                 }
 
-                /* int16_t x = 0, y = 0;
-                uint16_t width = 0, height = 0;
+                loutI << "pre nums " << Var_(c->x) << ' ' << Var_(c->y) << ' ' << Var_(c->width) << ' ' << Var_(c->height) << '\n';
+
+                int16_t x = 0, y = 0; uint16_t width = 0, height = 0;
                 c->win.geo(&x, &y, &width, &height);
-                c->x = ((screen->width_in_pixels / 2) - (width / 2));
-                c->y = ((screen->height_in_pixels / 2) - (height / 2));
-                c->width = width;
-                c->height = height;
-                loutI << Var_(x) << ' ' << Var_(y) << ' ' << Var_(width) << ' ' << Var_(height) << '\n';
-                loutI << Var_(c->x) << ' ' << Var_(c->y) << ' ' << Var_(c->width) << ' ' << Var_(c->height) << '\n'; */
+                loutI << "from req " << Var_(x) << ' ' << Var_(y) << ' ' << Var_(width) << ' ' << Var_(height) << '\n';
+                
+                if (c->x >= screen->width_in_pixels
+                ||  c->x <= 0)
+                {
+                    c->x = ((screen->width_in_pixels / 2) - (width / 2));
+                }
+
+                if (c->y >= screen->height_in_pixels
+                ||  c->y <= 0)
+                {
+                    c->y = ((screen->height_in_pixels / 2) - (height / 2));
+                }
+
+                if (c->width < width)
+                {
+                    c->width = width;
+                }
+
+                if (c->height < height)
+                {
+                    c->height = height;
+                }
+                
+                loutI << "post nums " << Var_(c->x) << ' ' << Var_(c->y) << ' ' << Var_(c->width) << ' ' << Var_(c->height) << '\n';
 
                 c->win.get_override_redirect();
                 c->win.x_y_width_height(c->x, c->y, c->width, c->height);
