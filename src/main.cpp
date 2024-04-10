@@ -4426,7 +4426,7 @@ window {
                     XCB_CW_BORDER_PIXEL,
                     (uint32_t[1])
                     {
-                        get_color(__color)
+                        Color->get(__color)
                     }
                 );
                 xcb_flush(conn);
@@ -5961,16 +5961,17 @@ window {
             set_backround_color_16_bit(const uint16_t & red_value, const uint16_t & green_value, const uint16_t & blue_value)
             {
                 change_back_pixel(get_color(red_value, green_value, blue_value));
-
             }
             
             void
             set_backround_png(const char * imagePath)
             {
+                AutoTimer t("window:set_backround_png");
+
                 Imlib_Image image = imlib_load_image(imagePath);
                 if (!image)
                 {
-                    loutE << "Failed to load image: " << imagePath << endl;
+                    loutE << "Failed to load image: " << imagePath << '\n';
                     return;
                 }
                 imlib_context_set_image(image);
@@ -5983,11 +5984,13 @@ window {
                 int      newHeight = _height;
                 int       newWidth =  (int)(newHeight * aspectRatio);
 
-                if (newWidth > _width) {
+                if (newWidth > _width)
+                {
                     newWidth = _width;
                     newHeight = (int)(newWidth / aspectRatio);
+                }
 
-                } Imlib_Image scaledImage = imlib_create_cropped_scaled_image(
+                Imlib_Image scaledImage = imlib_create_cropped_scaled_image(
                     0, 
                     0, 
                     originalWidth, 
@@ -5995,11 +5998,13 @@ window {
                     newWidth, 
                     newHeight
 
-                ); imlib_free_image();/* Free original image */
+                );
+                imlib_free_image();/* Free original image */
 
                 imlib_context_set_image(scaledImage);
                 DATA32 *data = imlib_image_get_data();/* Get the scaled image data */
 
+                /* Create an XCB image from the scaled data */
                 xcb_image_t *xcb_image = xcb_image_create_native( 
                     conn, 
                     newWidth, 
@@ -6008,8 +6013,8 @@ window {
                     screen->root_depth, 
                     NULL, 
                     ~0, (uint8_t*)data
+                );
 
-                );/* Create an XCB image from the scaled data */
                 create_pixmap();
                 create_graphics_exposure_gc();
                 xcb_rectangle_t rect = {0, 0, _width, _height};
@@ -6019,20 +6024,19 @@ window {
                     _gc, 
                     1, 
                     &rect
-
                 );
                 
                 /* Init x and y */
                 int x(0), y(0);
-                if (newWidth != _width) {
+                if (newWidth != _width)
+                {
                     x = (_width - newWidth) / 2;
-
                 }
                 
                 /* Calculate position to center the image */
-                if (newHeight != _height) {
+                if (newHeight != _height)
+                {
                     y = (_height - newHeight) / 2;
-
                 }
 
                 /* Put the scaled image onto the pixmap at the calculated position */
@@ -6053,7 +6057,6 @@ window {
                     _window,
                     XCB_CW_BACK_PIXMAP,
                     &pixmap
-
                 );
                 xcb_flush(conn);
 
