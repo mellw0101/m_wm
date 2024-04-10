@@ -3207,7 +3207,7 @@ public:
                     if (e->window == e->event)
                     {
                         loutI << "emmiting sig" << '\n';
-                        signal_manager->_window_signals.emit(e->window, KILL_SIGNAL);
+                        signal_manager->_window_signals.emit(e->window, XCB_DESTROY_NOTIFY);
                         xcb_flush(conn);
                     }
                     break;
@@ -8061,22 +8061,22 @@ class client {
             },
             win);
 
-            CONN(KILL_SIGNAL,
+            /* CONN(KILL_SIGNAL,
             {
-                /* signal_manager->_window_client_map.remove_by_value(this); */
+                // signal_manager->_window_client_map.remove_by_value(this);
                 loutI << "got KILL_SIGNAL" << '\n';
                 this->kill();
                 xcb_flush(conn);
             },
-            this->win);
+            this->win); */
 
-            CONN(KILL_SIGNAL,
+            /* CONN(KILL_SIGNAL,
             {
-                /* signal_manager->_window_client_map.remove_by_value(this); */
-                /* kill();
-                xcb_flush(conn); */
+                // signal_manager->_window_client_map.remove_by_value(this);
+                kill();
+                xcb_flush(conn);
             },
-            frame);
+            frame); */
             /* do {
                 event_handler->setEventCallback(
                 XCB_CLIENT_MESSAGE,
