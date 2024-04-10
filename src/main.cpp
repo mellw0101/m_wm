@@ -9796,6 +9796,10 @@ class Window_Manager {
                 CONN(XCB_DESTROY_NOTIFY,
                 {
                     loutI << "Destroy notify" << loutEND;
+                    client *c = client_from_window(&__window);
+                    if ( c == nullptr ) return;
+                    c->kill();
+                    remove_client(c);
                 },
                 screen->root);
 
