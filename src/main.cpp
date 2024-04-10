@@ -3204,13 +3204,11 @@ public:
                     RE_CAST_EV(xcb_destroy_notify_event_t);
                     signal_manager->_window_signals.emit(e->window, XCB_DESTROY_NOTIFY);
                     loutI << Var_(e->window) << ' ' << Var_(e->event) << '\n'; 
-                    if (e->window == e->event)
-                    {
-                        /* loutI << "emmiting sig" << '\n';
-                        signal_manager->_window_signals.emit(e->window, XCB_DESTROY_NOTIFY); */
-                        C_EMIT(C_RETRIVE(e->window), KILL_SIGNAL);
-                        xcb_flush(conn);
-                    }
+
+                    loutI << "emmiting sig" << '\n';
+                    signal_manager->_window_signals.emit(e->event, XCB_DESTROY_NOTIFY);
+                    xcb_flush(conn);
+                
                     break;
                 }
                 case XCB_PROPERTY_NOTIFY:
@@ -8035,7 +8033,7 @@ class client {
             },
             win);
 
-            frame.set_event_mask( FRAME_EVENT_MASK );
+            frame.set_event_mask(FRAME_EVENT_MASK);
             frame.map();
 
             /* do {
@@ -15409,11 +15407,11 @@ class Events
             },
             KILL_SIGNAL); */
 
-            C_SIGNAL(
+            /* C_SIGNAL(
             {
                 if (__c != nullptr) __c->kill();
             },
-            KILL_SIGNAL);
+            KILL_SIGNAL); */
 
             /* C_SIGNAL(if (__c) {
                 __c->raise();
