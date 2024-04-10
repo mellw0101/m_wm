@@ -3161,6 +3161,7 @@ public:
 
                     RE_CAST_EV(xcb_focus_in_event_t);
                     signal_manager->_window_signals.emit(e->event, XCB_FOCUS_IN);
+                    signal_manager->_window_signals.emit(e->event, SET_FOCUSED_CLIENT);
                     break;
                 }
                 case XCB_FOCUS_OUT:
@@ -9112,15 +9113,22 @@ class Window_Manager {
                 }
 
             /* Fetch */
-                client *client_from_window(const xcb_window_t *window) {
-                    for (const auto &c:client_list) {
-                        if (*window == c->win) {
+                client *
+                client_from_window(const xcb_window_t *window)
+                {
+                    for (const auto &c:client_list)
+                    {
+                        if (*window == c->win)
+                        {
                             return c;
                         }
                     }
                     return nullptr;
                 }
-                client *client_from_any_window(const xcb_window_t *window) {
+                
+                client *
+                client_from_any_window(const xcb_window_t *window)
+                {
                     for (const auto &c:client_list) {
                         if (*window == c->win
                         ||  *window == c->frame
@@ -9143,10 +9151,14 @@ class Window_Manager {
                     } return nullptr;
 
                 }
-                client *client_from_pointer(const int &prox) {
+                
+                client *
+                client_from_pointer(const int &prox)
+                {
                     const uint32_t &x = pointer.x();
                     const uint32_t &y = pointer.y();
-                    for (const auto &c : cur_d->current_clients) {
+                    for (const auto &c : cur_d->current_clients)
+                    {
                         // LEFT EDGE OF CLIENT
                         if (x > c->x - prox && x <= c->x) return c;
                         
@@ -9159,53 +9171,60 @@ class Window_Manager {
                         // BOTTOM EDGE OF CLIENT
                         if (y >= c->y + c->height && y < c->y + c->height + prox) return c;
 
-                    } return nullptr;
-
+                    }
+                    return nullptr;
                 }
-                map<client *, edge> get_client_next_to_client(client *c, edge c_edge) {
+
+                map<client *, edge>
+                get_client_next_to_client(client *c, edge c_edge)
+                {
                     map<client *, edge> map;
-                    for (client *c2:cur_d->current_clients) {
+                    for (client *c2:cur_d->current_clients)
+                    {
                         if (c == c2) continue;
 
-                        if (c_edge == edge::LEFT) {
-                            if(c->x == c2->x + c2->width) {
+                        if (c_edge == edge::LEFT)
+                        {
+                            if(c->x == c2->x + c2->width)
+                            {
                                 map[c2] = edge::RIGHT;
                                 return map;
-
                             }
-
                         }
-                        if (c_edge == edge::RIGHT) {
-                            if (c->x + c->width == c2->x) {
+
+                        if (c_edge == edge::RIGHT)
+                        {
+                            if (c->x + c->width == c2->x)
+                            {
                                 map[c2] = edge::LEFT;
                                 return map;
-
                             }
-
                         }
-                        if (c_edge == edge::TOP) {
-                            if (c->y == c2->y + c2->height) {
+
+                        if (c_edge == edge::TOP)
+                        {
+                            if (c->y == c2->y + c2->height)
+                            {
                                 map[c2] = edge::BOTTOM_edge;
                                 return map;
-
                             }
-
                         }
-                        if (c_edge == edge::BOTTOM_edge) {
-                            if (c->y + c->height == c2->y) {
+
+                        if (c_edge == edge::BOTTOM_edge)
+                        {
+                            if (c->y + c->height == c2->y)
+                            {
                                 map[c2] = edge::TOP;
                                 return map;
-
                             }
-
                         }
-
-                    } map[nullptr] = edge::NONE;
-                    
+                    }
+                    map[nullptr] = edge::NONE;
                     return map;
-
                 }
-                edge get_client_edge_from_pointer(client *c, const int &prox) {
+
+                edge get_client_edge_from_pointer(client *c, const int &prox)
+                {
                     const uint32_t &x = pointer.x();
                     const uint32_t &y = pointer.y();
 
@@ -9214,11 +9233,12 @@ class Window_Manager {
                     const uint32_t &left_border   = c->x;
                     const uint32_t &right_border  = (c->x + c->width);
  
+                    /* TOP EDGE OF CLIENT */
                     if (((y > top_border - prox) && (y <= top_border))
-                    && ((x > left_border + prox) && (x < right_border - prox))) {
+                    && ((x > left_border + prox) && (x < right_border - prox)))
+                    {
                         return edge::TOP;
-
-                    } /* TOP EDGE OF CLIENT */
+                    }
 
                     if (((y >= bottom_border) && (y < bottom_border + prox))
                     && ((x > left_border + prox) && (x < right_border - prox))) {
@@ -9366,14 +9386,25 @@ class Window_Manager {
 
                 ), client_list.end());
 
-                cur_d->current_clients.erase(remove(
+                /* cur_d->current_clients.erase(remove(
                     cur_d->current_clients.begin(),
                     cur_d->current_clients.end(),
                     c
 
-                ), cur_d->current_clients.end());
+                ), cur_d->current_clients.end()); */
 
-                signal_manager->_window_client_map.remove_by_value( c );
+                for (int i = 0; i < desktop_list.size(); ++i)
+                {
+                    desktop_list[i]->current_clients.erase(remove(
+                        desktop_list[i]->current_clients.begin(),
+                        desktop_list[i]->current_clients.end(),
+                        c
+
+                    ), desktop_list[i]->current_clients.end());
+                    loutI << "desktop" << (i + 1) << " client vec size" << desktop_list[i]->current_clients.size() << '\n';
+                }
+
+                signal_manager->_window_client_map.remove_by_value(c);
                 delete c;
             }
 
@@ -9767,36 +9798,11 @@ class Window_Manager {
         /* Events */
             void setup_events()
             {
-                /* event_handler->setEventCallback(
-                XCB_MAP_REQUEST,
-                [ this ]( Ev ev ) -> void
-                {
-                    RE_CAST_EV( xcb_map_request_event_t );
-                    client *c = signal_manager->_window_client_map.retrive( e->window );
-                    if ( c ) return;
-                    this->manage_new_client( e->window );
-                });
-                event_handler->setEventCallback(
-                XCB_MAP_NOTIFY,
-                [ this ]( Ev ev )
-                {
-                    RE_CAST_EV( xcb_map_notify_event_t );
-                    client *c = C_RETRIVE( e->event );
-                    if ( c ) c->update();
-                }); */
-
                 CONN(XCB_MAP_REQUEST,
                 {
-                    client *c = this->client_from_any_window(&__window);
+                    client *c = client_from_any_window(&__window);
                     if ( c != nullptr ) return;
-                    this->manage_new_client(__window);
-                },
-                screen->root);
-
-                CONN(XCB_MAP_NOTIFY,
-                {
-                    client *c = C_RETRIVE(__window);
-                    if ( c ) c->update();
+                    manage_new_client(__window);
                 },
                 screen->root);
 
@@ -9807,87 +9813,37 @@ class Window_Manager {
                     if ( c == nullptr ) return;
                     c->kill();
                     remove_client(c);
-                    signal_manager->_window_client_map.remove_by_value(c);
                 },
                 screen->root);
 
-                /* event_handler->setEventCallback(
-                XCB_BUTTON_PRESS,
-                [ this ]( Ev ev ) -> void
-                {
-                    RE_CAST_EV( xcb_button_press_event_t );
-                    if (e->event != screen->root) return;
-                    
-                    if (e->detail == L_MOUSE_BUTTON)
-                    {
-                        unfocus();
-                        if ( this->context_menu->context_window.is_mapped() )
-                        {
-                            Emit( this->context_menu->context_window, HIDE_CONTEXT_MENU );
-                        }
-                    }
-                    else if ( e->detail == R_MOUSE_BUTTON )
-                    {
-                        context_menu->show();
-                    }
-                }); */
                 CONN(L_MOUSE_BUTTON_EVENT,
                 {
-                    this->unfocus();
+                    unfocus();
                     if (this->context_menu->context_window.is_mapped())
                     {
                         Emit(this->context_menu->context_window, HIDE_CONTEXT_MENU);
                     }
-                }
-                , screen->root);
+                },
+                screen->root);
                 
                 CONN(R_MOUSE_BUTTON_EVENT,
                 {
-                    this->context_menu->show();
+                    context_menu->show();
                 },
                 screen->root);
-                /* event_handler->setEventCallback(
-                XCB_DESTROY_NOTIFY,
-                [ this ]( Ev ev )
+
+                CONN(SET_FOCUSED_CLIENT,
                 {
-                    RE_CAST_EV( xcb_destroy_notify_event_t );
-                    client *c = C_RETRIVE( e->window );
-                    if ( !c ) return;
-                    remove_client( c );
-                }); */
-                /* event_handler->setEventCallback(
-                XCB_KEY_PRESS,
-                [ this ]( Ev ev ) -> void
-                {
-                    RE_CAST_EV( xcb_key_press_event_t );
-                    if ( e->detail == key_codes.tab && (( e->state & ALT ) != 0 ))
+                    client *c = client_from_any_window(&__window);
+                    if ( c == nullptr )
                     {
-                        this->cycle_focus();
+                        loutE << "c = nullptr" << '\n';
+                        this->focused_client = nullptr;
+                        return;
                     }
-                    else if ( e->detail == key_codes.t && (( e->state & ALT ) != 0 ) && (( e->state & CTRL ) != 0 ))
-                    {
-                        this->launcher.launch_child_process( "konsole" );
-                    }
-                    else if ( e->detail == key_codes.q && (( e->state & ALT ) != 0 ) && (( e->state & SHIFT ) != 0 ))
-                    {
-                        this->quit( 0 );
-                    }
-                }); */
-                /* event_handler->setEventCallback(
-                XCB_FOCUS_IN,
-                [ this ]( Ev ev ) -> void
-                {
-                    RE_CAST_EV(xcb_focus_in_event_t);
-                    client *c = signal_manager->_window_client_map.retrive(e->event);
-                    if ( c )
-                    {
-                        focused_client = c;
-                        if (!c->win.is_active_EWMH_window())
-                        {
-                            loutE << "c->win is not 'EWMH active window'" << loutEND;
-                        }
-                    }
-                }); */
+                    this->focused_client = c;
+                },
+                screen->root);
                 
                 if (BORDER_SIZE == 0)
                 {
@@ -13951,6 +13907,7 @@ class change_desktop {
                 case NEXT:
                 {
                     if (wm->cur_d->desktop == wm->desktop_list.size()) return;
+
                     if (wm->focused_client != nullptr)
                     {
                         wm->cur_d->focused_client = wm->focused_client;
@@ -13958,8 +13915,10 @@ class change_desktop {
 
                     hide = get_clients_on_desktop(wm->cur_d->desktop);
                     show = get_clients_on_desktop(wm->cur_d->desktop + 1);
+
                     animate(show, NEXT);
                     animate(hide, NEXT);
+
                     wm->cur_d = wm->desktop_list[wm->cur_d->desktop];
                     if (wm->cur_d->focused_client != nullptr)
                     {

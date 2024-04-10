@@ -843,6 +843,7 @@ enum
 #define HIDE_CONTEXT_MENU                 80
 #define CLIENT_SIGNAL                     98
 #define ROOT_SIGNAL                       99
+#define SET_FOCUSED_CLIENT                100
 
 enum EV : uint8_t {
     REMOVE_ALL                        = 0,
