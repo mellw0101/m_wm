@@ -7355,7 +7355,8 @@ class client {
 
     /* Methods     */
         /* Main      */
-            void make_decorations()
+            void
+            make_decorations()
             {
                 AutoTimer t(__func__);
 
@@ -7370,18 +7371,24 @@ class client {
                     make_borders();
                 }
             }
-            void raise()
+            
+            void
+            raise()
             {
                 frame.raise();
             }
-            void focus()
+            
+            void
+            focus()
             {
                 win.focus_input();
                 win.set_active_EWMH_window();
                 frame.raise();
                 xcb_flush(conn);
             }
-            void update()
+            
+            void
+            update()
             {
                 AutoTimer t("client:" + string(__func__));
 
@@ -7392,15 +7399,21 @@ class client {
                 win.send_event(XCB_EVENT_MASK_STRUCTURE_NOTIFY, (uint32_t[]){(static_cast<uint32_t>(x) + BORDER_SIZE), (static_cast<uint32_t>(y) + ( TITLE_BAR_HEIGHT + BORDER_SIZE )), win.width(), win.height()});
                 xcb_flush(conn);
             }
-            void map()
+            
+            void
+            map()
             {
                 frame.map();
             }
-            void unmap()
+            
+            void
+            unmap()
             {
                 frame.unmap();
             }
-            void kill()
+            
+            void
+            kill()
             {
                 frame.unmap();
                 win.unmap();
@@ -7465,60 +7478,30 @@ class client {
                     event_handler->removeEventCallback( ev_id_vec[i].first, ev_id_vec[i].second );
                 }
             }
-            /* void add_to_map()
-            {
-                cw_map.insert(win,          this);
-                cw_map.insert(frame,        this);
-                cw_map.insert(titlebar,     this);
-                cw_map.insert(close_button, this);
-                cw_map.insert(max_button,   this);
-                cw_map.insert(min_button,   this);
-                cw_map.insert(icon,         this);
-                cw_map.insert(border[0],    this);
-                cw_map.insert(border[1],    this);
-                cw_map.insert(border[2],    this);
-                cw_map.insert(border[3],    this);
-                cw_map.insert(border[4],    this);
-                cw_map.insert(border[5],    this);
-                cw_map.insert(border[6],    this);
-                cw_map.insert(border[7],    this);
-            } */
-            /* void remove_from_map()
-            {
-                cw_map.remove(win);
-                cw_map.remove(frame);
-                cw_map.remove(titlebar);
-                cw_map.remove(close_button);
-                cw_map.remove(max_button);
-                cw_map.remove(min_button);
-                cw_map.remove(icon);
-                cw_map.remove(border[0]);
-                cw_map.remove(border[1]);
-                cw_map.remove(border[2]);
-                cw_map.remove(border[3]);
-                cw_map.remove(border[4]);
-                cw_map.remove(border[5]);
-                cw_map.remove(border[6]);
-                cw_map.remove(border[7]);
-            } */
-            void align()
+
+            void
+            align()
             {
                 win.x(BORDER_SIZE);
                 win.y(TITLE_BAR_HEIGHT + BORDER_SIZE);
                 FLUSH_X();
             }
+
             #define TITLE_REQ_DRAW  (uint32_t)1 << 0
             #define TITLE_INTR_DRAW (uint32_t)1 << 1
-            void draw_title( uint32_t __mode )
+            void
+            draw_title( uint32_t __mode )
             {
                 titlebar.clear();
                 if ( __mode & TITLE_REQ_DRAW )  { titlebar.draw_acc_16( win.get_net_wm_name_by_req() ); }
                 if ( __mode & TITLE_INTR_DRAW ) { titlebar.draw_acc_16( win.get_net_wm_name() ); }
 
             }
+            
             #define CLI_RIGHT  screen->width_in_pixels  - this->width
             #define CLI_BOTTOM screen->height_in_pixels - this->height
-            void snap(int x, int y, const vector<client *> &__vec )
+            void
+            snap(int x, int y, const vector<client *> &__vec )
             {
                 for (client *const &c : __vec) {
                     if (c == this) continue;
@@ -8170,39 +8153,6 @@ class client {
             bitmap.exportToPng(s.c_str());
 
             min_button.set_backround_png(s.c_str());
-            /* min_button.set_backround_png(USER_PATH_PREFIX("/min.png")); */
-
-            /* do {
-                int id = event_handler->setEventCallback(
-                XCB_ENTER_NOTIFY,
-                [this](Ev ev)-> void
-                {
-                    RE_CAST_EV(xcb_enter_notify_event_t);
-                    if (e->event == min_button)
-                    {
-                        min_button.change_border_color( WHITE );
-                        xcb_flush(conn);
-                    }
-                });
-                ev_id_vec.push_back( { XCB_ENTER_NOTIFY, id } );
-
-            } while (0);
-
-            do {
-                int id = event_handler->setEventCallback(
-                XCB_LEAVE_NOTIFY,
-                [this](Ev ev)-> void
-                {
-                    RE_CAST_EV(xcb_leave_notify_event_t);
-                    if (e->event == min_button)
-                    {
-                        min_button.change_border_color(BLACK);
-                        xcb_flush(conn);
-                    }
-                });
-                ev_id_vec.push_back({XCB_LEAVE_NOTIFY, id});
-
-            } while (0); */
 
             CONN(XCB_ENTER_NOTIFY,
             {
@@ -8386,7 +8336,7 @@ class client {
             CWC(icon);
 
             win.make_png_from_icon();
-            icon.set_backround_png( PNG_HASH( win.get_icccm_class()).c_str() );
+            icon.set_backround_png(PNG_HASH(win.get_icccm_class()).c_str());
         }
     
     /* Variables   */
@@ -8545,9 +8495,9 @@ class Entry {
             );
             CONN(EXPOSE, if (__window == this->window) this->window.draw_acc(name);, this->window);
             CONN(L_MOUSE_BUTTON_EVENT, if ( __window == this->window && this->action != nullptr ) this->action(); WS_emit(window.parent(), HIDE_CONTEXT_MENU);, this->window);
-            CONN(R_MOUSE_BUTTON_EVENT, if ( __window == this->window ) Emit( window.parent(), HIDE_CONTEXT_MENU );, this->window);
-            CONN(ENTER_NOTIFY, if (__window == this->window) this->window.change_backround_color(WHITE);, this->window);
-            CONN(LEAVE_NOTIFY, if (__window == this->window) this->window.change_backround_color(BLACK);, this->window);
+            CONN(R_MOUSE_BUTTON_EVENT, if (__window == this->window) Emit(window.parent(), HIDE_CONTEXT_MENU );, this->window);
+            CONN(XCB_ENTER_NOTIFY, window.change_backround_color(WHITE);, window);
+            CONN(XCB_LEAVE_NOTIFY, window.change_backround_color(BLACK);, window);
             window.grab_button({ { L_MOUSE_BUTTON, XCB_BUTTON_MASK_ANY } });
         }
 
