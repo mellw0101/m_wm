@@ -3177,7 +3177,7 @@ public:
                     signal_manager->_window_signals.emit(screen->root, XCB_MAP_NOTIFY, e->event);
                     break;
                 }
-                case XCB_CLIENT_MESSAGE:
+                /* case XCB_CLIENT_MESSAGE:
                 {
                     AutoTimer t("XCB_CLIENT_MESSAGE");
                     loutI << "XCB_CLIENT_MESSAGE was detected" << '\n';
@@ -3196,7 +3196,7 @@ public:
                         }
                     }
                     break;
-                }
+                } */
                 case XCB_DESTROY_NOTIFY:
                 {
                     AutoTimer t("XCB_DESTROY_NOTIFY");
