@@ -3202,13 +3202,14 @@ public:
                     AutoTimer t("XCB_DESTROY_NOTIFY");
 
                     RE_CAST_EV(xcb_destroy_notify_event_t);
-                    signal_manager->_window_signals.emit(e->window, XCB_DESTROY_NOTIFY);
+                    /* signal_manager->_window_signals.emit(e->window, XCB_DESTROY_NOTIFY); */
                     loutI << Var_(e->window) << ' ' << Var_(e->event) << '\n'; 
-
-                    loutI << "emmiting sig" << '\n';
-                    signal_manager->_window_signals.emit(screen->root, XCB_DESTROY_NOTIFY, e->event);
-                    xcb_flush(conn);
-                
+                    if (e->window == e->event)
+                    {
+                        loutI << "emmiting sig" << '\n';
+                        signal_manager->_window_signals.emit(screen->root, XCB_DESTROY_NOTIFY, e->event);
+                        xcb_flush(conn);
+                    }
                     break;
                 }
                 case XCB_PROPERTY_NOTIFY:
