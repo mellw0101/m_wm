@@ -9819,9 +9819,9 @@ class Window_Manager {
                 CONN(L_MOUSE_BUTTON_EVENT,
                 {
                     unfocus();
-                    if (this->context_menu->context_window.is_mapped())
+                    if (context_menu->context_window.is_mapped())
                     {
-                        Emit(this->context_menu->context_window, HIDE_CONTEXT_MENU);
+                        Emit(context_menu->context_window, HIDE_CONTEXT_MENU);
                     }
                 },
                 screen->root);
@@ -9838,10 +9838,12 @@ class Window_Manager {
                     if ( c == nullptr )
                     {
                         loutE << "c = nullptr" << '\n';
-                        this->focused_client = nullptr;
+                        focused_client = nullptr;
+                        cur_d->focused_client = nullptr;
                         return;
                     }
-                    this->focused_client = c;
+                    focused_client = c;
+                    cur_d->focused_client = c;
                 },
                 screen->root);
                 
@@ -13933,7 +13935,7 @@ class change_desktop {
                     else
                     {
                         wm->focused_client = nullptr;
-                        wm->root.focus_input();
+                        wm->unfocus();
                     }
 
                     break;
@@ -13942,6 +13944,7 @@ class change_desktop {
                 case PREV:
                 {
                     if (wm->cur_d->desktop == 1) return;
+                    
                     if (wm->focused_client != nullptr)
                     {
                         wm->cur_d->focused_client = wm->focused_client;
@@ -13949,8 +13952,10 @@ class change_desktop {
 
                     hide = get_clients_on_desktop(wm->cur_d->desktop);
                     show = get_clients_on_desktop(wm->cur_d->desktop - 1);
+
                     animate(show, PREV);
                     animate(hide, PREV);
+                    
                     wm->cur_d = wm->desktop_list[wm->cur_d->desktop - 2];
                     if (wm->cur_d->focused_client != nullptr)
                     {
@@ -13965,7 +13970,7 @@ class change_desktop {
                     else
                     {
                         wm->focused_client = nullptr;
-                        wm->root.focus_input();
+                        wm->unfocus();
                     }
 
                     break;
@@ -14077,7 +14082,8 @@ class change_desktop {
         vector<thread>(animation_threads);
 
     /* Methods     */
-        vector<client *> get_clients_on_desktop(const uint8_t &desktop)
+        vector<client *>
+        get_clients_on_desktop(const uint8_t &desktop)
         {
             vector<client *>(clients);
             for (client *const &c : wm->client_list)
@@ -14098,12 +14104,15 @@ class change_desktop {
             return clients;
         }
 
-        vector<client *> get_clients_on_desktop_with_app(const uint8_t &desktop)
+        vector<client *>
+        get_clients_on_desktop_with_app(const uint8_t &desktop)
         {
             vector<client *>(clients);
             for (client *const &c : wm->client_list)
             {
-                if (c->desktop == desktop && c != wm->focused_client) 
+                if (c == nullptr) continue;
+
+                if (c->desktop == desktop && c != wm->focused_client)
                 {
                     clients.push_back(c);
                 }
@@ -15900,9 +15909,9 @@ keyPressH(const xcb_generic_event_t *ev)
 
             case SUPER:
             {
-                client *c = signal_manager->_window_client_map.retrive( e->event );
+                client *c = wm->client_from_any_window(&e->event);
                 if ( !c ) return;
-                tile( c, TILE::RIGHT );
+                tile(c, TILE::RIGHT);
                 return;
             }
         }
@@ -15958,7 +15967,7 @@ keyPressH(const xcb_generic_event_t *ev)
             {
                 client *c = signal_manager->_window_client_map.retrive(e->event);
                 if ( !c ) return;
-                tile( c, TILE::UP );
+                tile(c, TILE::UP);
                 return;
             }
         }
