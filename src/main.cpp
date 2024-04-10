@@ -941,43 +941,52 @@ namespace {
     };
 
 
-    class __window_client_map__ {
-        public:
-            umap<uint32_t, client *> _data;
+    class __window_client_map__
+    {
+    public:
+        umap<uint32_t, client *> _data;
 
-            void connect(uint32_t __window, client *__c)
+        void
+        connect(uint32_t __window, client *__c)
+        {
+            _data[__window] = __c;
+        }
+
+        client *
+        retrive(uint32_t __window)
+        {
+            auto it = _data.find(__window);
+            if (it != _data.end())
             {
-                _data[__window] = __c;
+                return it->second;
             }
-            client *retrive(uint32_t __window)
+            return nullptr;
+
+        }/** @brief @returns @p 'client' from uint32_t */
+        
+        void
+        remove(uint32_t __window)
+        {
+            _data.erase(__window);
+        }
+
+        void
+        remove_by_value(client* __c)
+        {
+            for (auto it = _data.begin(); it != _data.end();)
             {
-                auto it = _data.find(__window);
-                if (it != _data.end())
+                if (it->second == __c)
                 {
-                    return it->second;
+                    it = _data.erase(it); // Erase and move to next valid iterator
                 }
-                return nullptr;
-
-            }/** @brief @returns @p 'client' from uint32_t */
-            void remove(uint32_t __window)
-            {
-                _data.erase(__window);
-            }
-
-            void remove_by_value(client* __c)
-            {
-                for ( auto it = _data.begin(); it != _data.end(); )
+                else
                 {
-                    if ( it->second == __c )
-                    {
-                        it = _data.erase( it ); // Erase and move to next valid iterator
-                    }
-                    else
-                    {
-                        ++it; // Move to next item if current doesn't match
-                    }
+                    ++it; // Move to next item if current doesn't match
                 }
             }
+
+            loutI << "Deleted window from map, current size:" << _data.size() << '\n';
+        }
     };
 
 }
@@ -3201,12 +3210,9 @@ public:
                 {
                     AutoTimer t("XCB_DESTROY_NOTIFY");
 
-                    RE_CAST_EV(xcb_destroy_notify_event_t);
-                    /* signal_manager->_window_signals.emit(e->window, XCB_DESTROY_NOTIFY); */
-                    loutI << Var_(e->window) << ' ' << Var_(e->event) << '\n'; 
+                    RE_CAST_EV(xcb_destroy_notify_event_t); 
                     if (e->window == e->event)
                     {
-                        loutI << "emmiting sig" << '\n';
                         signal_manager->_window_signals.emit(screen->root, XCB_DESTROY_NOTIFY, e->event);
                         xcb_flush(conn);
                     }
@@ -8053,14 +8059,14 @@ class client {
             
             } while ( 0 ); */
 
-            CONN(XCB_DESTROY_NOTIFY,
+            /* CONN(XCB_DESTROY_NOTIFY,
             {
-                /* signal_manager->_window_client_map.remove_by_value( this ); */
+                signal_manager->_window_client_map.remove_by_value( this );
                 loutI << "got KILL_SIGNAL" << '\n';
                 kill();
                 xcb_flush(conn);
             },
-            win);
+            win); */
 
             /* CONN(KILL_SIGNAL,
             {
@@ -9801,6 +9807,7 @@ class Window_Manager {
                     if ( c == nullptr ) return;
                     c->kill();
                     remove_client(c);
+                    signal_manager->_window_client_map.remove_by_value(c);
                 },
                 screen->root);
 
