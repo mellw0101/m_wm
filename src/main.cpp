@@ -9803,8 +9803,9 @@ class Window_Manager {
                 CONN(XCB_DESTROY_NOTIFY,
                 {
                     loutI << "Destroy notify" << loutEND;
-                    client *c = client_from_window(&__window);
+                    client *c = C_RETRIVE(__window);
                     if ( c == nullptr ) return;
+                    if ( c->win != __window ) return;
                     c->kill();
                     remove_client(c);
                     signal_manager->_window_client_map.remove_by_value(c);
@@ -13678,70 +13679,71 @@ class __dock__ {
 
 }; static __dock__ *dock( nullptr );
 
-class DropDownTerm {
-    private:
-        void toggle__()
-        {
-            if ( w.y() == ( - ( screen->height_in_pixels / 2 )))
-            {
-                w.raise();
-                w.y( 0 );
-                FlushX_Win( w );
-            }
-            else
-            {
-                w.y( - ( screen->height_in_pixels / 2 ));
-                FlushX_Win( w );
-            }
-        }
-        
-    public:
-        window w;
-        vector<window> w_vec;
+class DropDownTerm
+{        
+public:
+    window w;
+    vector<window> w_vec;
 
-        void init()
+    void
+    toggle__()
+    {
+        if (w.y() == - (screen->height_in_pixels / 2))
         {
-            w.create_window(
-                screen->root,
+            w.raise();
+            w.y( 0 );
+            xcb_flush(conn);
+        }
+        else
+        {
+            w.y(- (screen->height_in_pixels / 2));
+            xcb_flush(conn);
+        }
+    }
+
+    void init()
+    {
+        w.create_window(
+            screen->root,
+            0,
+            - ( screen->height_in_pixels / 2 ),
+            screen->width_in_pixels,
+            ( screen->height_in_pixels / 2 ),
+            BLACK,
+            NONE,
+            MAP
+        );
+        FlushX_Win( w );
+        for ( int i = 0; i < (( screen->height_in_pixels / 2 ) / 20 ); ++i )
+        {
+            window window;
+            window.create_window(
+                w,
                 0,
-                - ( screen->height_in_pixels / 2 ),
+                ((( screen->height_in_pixels / 2 ) - 20 ) - ( i * 20 )),
                 screen->width_in_pixels,
-                ( screen->height_in_pixels / 2 ),
+                20,
                 BLACK,
                 NONE,
                 MAP
             );
-            FlushX_Win( w );
-            for ( int i = 0; i < (( screen->height_in_pixels / 2 ) / 20 ); ++i )
-            {
-                window window;
-                window.create_window(
-                    w,
-                    0,
-                    ((( screen->height_in_pixels / 2 ) - 20 ) - ( i * 20 )),
-                    screen->width_in_pixels,
-                    20,
-                    BLACK,
-                    NONE,
-                    MAP
-                );
-                FlushX_Win( window );
-                w_vec.push_back( window );
-            }
-
-            event_handler->setEventCallback(
-            XCB_KEY_PRESS,
-            [ this ]( Ev ev ) -> void
-            {
-                RE_CAST_EV( xcb_key_press_event_t );
-                if ( e->detail == wm->key_codes.f12 )
-                {
-                    toggle__();
-                }
-            });
-
-            wm->context_menu->add_entry( "DropDownTerm", [ this ]()-> void { this->toggle__(); } );
+            FlushX_Win( window );
+            w_vec.push_back( window );
         }
+
+        /* event_handler->setEventCallback(
+        XCB_KEY_PRESS,
+        [ this ]( Ev ev ) -> void
+        {
+            RE_CAST_EV( xcb_key_press_event_t );
+            if ( e->detail == wm->key_codes.f12 )
+            {
+                toggle__();
+            }
+        }); */
+
+        wm->context_menu->add_entry( "DropDownTerm", [ this ]()-> void { this->toggle__(); } );
+    }
 };
 static DropDownTerm *ddTerm( nullptr );
 
@@ -15990,7 +15992,7 @@ keyPressH(const xcb_generic_event_t *ev)
         }
     }
 
-    if ( e->detail == wm->key_codes.u_arrow )
+    if (e->detail == wm->key_codes.u_arrow)
     {
         switch ( e->state )
         {
@@ -16015,6 +16017,11 @@ keyPressH(const xcb_generic_event_t *ev)
     else if ( e->detail == wm->key_codes.q && (( e->state & ALT ) != 0 ) && (( e->state & SHIFT ) != 0 ))
     {
         wm->quit( 0 );
+    }
+
+    if (e->detail == wm->key_codes.f12)
+    {
+        ddTerm->toggle__();
     }
 
     /* if (e->detail == wm->key_codes.tab)
