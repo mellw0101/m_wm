@@ -5123,7 +5123,8 @@ window {
                     return icon_data;
                 }
 
-                void make_png_from_icon()
+                void
+                make_png_from_icon()
                 {
                     AutoTimer t(__func__);
 
@@ -5969,7 +5970,7 @@ window {
                 AutoTimer t("window:set_backround_png");
 
                 Imlib_Image image = imlib_load_image(imagePath);
-                if (!image)
+                if ( !image )
                 {
                     loutE << "Failed to load image: " << imagePath << '\n';
                     return;
@@ -6066,10 +6067,10 @@ window {
                 xcb_flush(conn);
                 xcb_image_destroy(xcb_image);
                 imlib_free_image(); // Free scaled image
-                clear_window();
+                clear();
             }
             
-            void
+            /* void
             set_backround_png(const string &__imagePath)
             {
                 set_backround_png(__imagePath.c_str());
@@ -6163,7 +6164,7 @@ window {
                 // imlib_free_image(); // Free scaled image
 
                 // clear_window();
-            }
+            } */
             
             void
             make_then_set_png(const char * file_name, const std::vector<std::vector<bool>> &bitmap)
@@ -6176,14 +6177,14 @@ window {
             make_then_set_png(const string &__file_name, const std::vector<std::vector<bool>> &bitmap)
             {
                 create_png_from_vector_bitmap(__file_name.c_str(), bitmap);
-                set_backround_png(__file_name);
+                set_backround_png(__file_name.c_str());
             }
             
             void
             make_then_set_png(const string &__file_name, bool bitmap[20][20])
             {
                 create_png_from_vector_bitmap(__file_name.c_str(), bitmap);
-                set_backround_png(__file_name);
+                set_backround_png(__file_name.c_str());
             }
             
             int
@@ -6611,21 +6612,6 @@ window {
                 /** NOTE: Setting @p Xid_gen_success bit of @class member variable @p '_bit_state' */
                 _bit_state |= (1 << Xid_gen_success);
             }
-            
-            void
-            clear_window()
-            {
-                xcb_clear_area(
-                    conn, 
-                    0,
-                    _window,
-                    0, 
-                    0,
-                    _width,
-                    _height
-                );
-                xcb_flush(conn);
-            }
 
             void
             clear_window(uint32_t __window)
@@ -6638,62 +6624,6 @@ window {
                     0,
                     20,
                     20
-                );
-                xcb_flush(conn);
-            }
-
-            /**
-             * @brief Configures the window with the specified mask and value.
-             * 
-             * This function configures the window using the XCB library. It takes in a mask and a value
-             * as parameters and applies the configuration to the window.
-             * 
-             * @param mask The mask specifying which attributes to configure.
-             * @param value The value to set for the specified attributes.
-             * 
-             */
-            void
-            config_window(uint16_t __mask, uint16_t __value)
-            {
-                xcb_configure_window(
-                    conn,
-                    _window,
-                    __mask,
-                    (const uint32_t[1])
-                    {
-                        static_cast<const uint32_t &>(__value)
-                    }
-                );
-                xcb_flush(conn);
-            }
-            
-            void
-            config_window(uint16_t __mask, const void *__value)
-            {
-                xcb_configure_window(
-                    conn,
-                    _window,
-                    __mask,
-                    __value
-                );
-                xcb_flush(conn);
-            }
-            
-            void
-            config_window(uint32_t mask, const vector<uint32_t> & values)
-            {
-                if (values.empty())
-                {
-                    loutEWin << "values vector is empty" << loutEND;
-                    return;
-                }
-
-                xcb_configure_window(
-                    conn,
-                    _window,
-                    mask,
-                    values.data()
-
                 );
                 xcb_flush(conn);
             }
@@ -8186,7 +8116,7 @@ class client {
             string s = USER_PATH_PREFIX("/max.png");
             bitmap.exportToPng(s.c_str());
 
-            max_button.set_backround_png(USER_PATH_PREFIX("/max.png"));
+            max_button.set_backround_png(string(USER_PATH_PREFIX("/max.png")).c_str());
 
             CONN(L_MOUSE_BUTTON_EVENT,
             {
@@ -8239,7 +8169,8 @@ class client {
             string s = USER_PATH_PREFIX("/min.png");
             bitmap.exportToPng(s.c_str());
 
-            min_button.set_backround_png(USER_PATH_PREFIX("/min.png"));
+            min_button.set_backround_png(s.c_str());
+            /* min_button.set_backround_png(USER_PATH_PREFIX("/min.png")); */
 
             /* do {
                 int id = event_handler->setEventCallback(
@@ -8440,6 +8371,7 @@ class client {
         set_icon_png()
         {
             AutoTimer timer(__func__);
+
             icon.create_window(
                 frame,
                 BORDER_SIZE,
@@ -8454,7 +8386,7 @@ class client {
             CWC(icon);
 
             win.make_png_from_icon();
-            icon.set_backround_png( PNG_HASH( win.get_icccm_class()) );
+            icon.set_backround_png( PNG_HASH( win.get_icccm_class()).c_str() );
         }
     
     /* Variables   */
@@ -8843,14 +8775,14 @@ class Window_Manager {
             get_atom(char *name, xcb_atom_t *atom)
             {
                 xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(conn, xcb_intern_atom(conn, 0, slen(name), name), NULL);
-                if (reply != NULL) {
-                    *atom = reply->atom;
-
-                } else {
+                if ( reply == nullptr )
+                {
                     *atom = XCB_NONE;
-
-                } free(reply);
-
+                    return;
+                }
+                
+                *atom = reply->atom;
+                free(reply);
             }
             
             void
@@ -9418,7 +9350,7 @@ class Window_Manager {
                 }); root.clear();
 
                 #ifndef ARMV8_BUILD
-                    root.set_backround_png( USER_PATH_PREFIX( "/mwm_png/galaxy21.png" ));
+                    root.set_backround_png((USER_PATH_PREFIX( "/mwm_png/galaxy21.png" )).c_str());
                     // root.set_backround_png(USER_PATH_PREFIX("/mwm_png/galaxy16-17-3840x1200.png"));
                 #endif
                 root.set_pointer( CURSOR::arrow );
@@ -10169,7 +10101,7 @@ class __status_bar__ {
 
             string s = USER_PATH_PREFIX("/wifi.png");
             bitmap.exportToPng(s.c_str());
-            _w[_WIFI].set_backround_png(USER_PATH_PREFIX("/wifi.png"));
+            _w[_WIFI].set_backround_png((USER_PATH_PREFIX("/wifi.png")).c_str());
             _w[_WIFI].set_pointer(CURSOR::hand2);
             
             _w[_AUDIO].create_window(

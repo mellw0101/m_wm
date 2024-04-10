@@ -176,7 +176,7 @@ __color__::get_color__(int __color)
             (ccode.g << 8) | ccode.g,
             (ccode.b << 8) | ccode.b
         ),
-        NULL
+        nullptr
     );
     pi = r->pixel;
     free(r);    
