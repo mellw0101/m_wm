@@ -8934,6 +8934,7 @@ class Window_Manager {
                     tmp.unmap();
                     tmp.kill();
                     focused_client = nullptr;
+                    cur_d->focused_client = nullptr;
                 }
 
             /* Fetch */
@@ -14043,6 +14044,8 @@ class change_desktop {
         void
         anim_cli(client *c, const int &endx)
         {
+            if ( c == nullptr ) return;
+ 
             Mwm_Animator anim(c);
             anim.animate_client_x(
                 c->x,
@@ -15309,10 +15312,10 @@ class Events
             C_SIGNAL(if (__c) resize_client::border(__c, edge::BOTTOM_LEFT );, RESIZE_CLIENT_BORDER_BOTTOM_LEFT );
             C_SIGNAL(if (__c) resize_client::border(__c, edge::BOTTOM_RIGHT);, RESIZE_CLIENT_BORDER_BOTTOM_RIGHT); */
 
-            CONN_root(CONF_REQ_WIDTH,  W_callback -> void { wm->data.width  = __window; });
+            /* CONN_root(CONF_REQ_WIDTH,  W_callback -> void { wm->data.width  = __window; });
             CONN_root(CONF_REQ_HEIGHT, W_callback -> void { wm->data.height = __window; });
             CONN_root(CONF_REQ_X,      W_callback -> void { wm->data.x      = __window; });
-            CONN_root(CONF_REQ_Y,      W_callback -> void { wm->data.y      = __window; });
+            CONN_root(CONF_REQ_Y,      W_callback -> void { wm->data.y      = __window; }); */
 
             // signal_manager->_window_signals.conect(screen->root, EWMH_MAXWIN_SIGNAL, [this](uint32_t __w) -> void {
             //     client *c = signal_manager->_window_client_map.retrive(__w);
