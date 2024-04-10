@@ -88,6 +88,7 @@ Logger logger;
 #include "defenitions.hpp"
 #include "tools.hpp"
 #include "prof.hpp"
+#include "color.hpp"
 
 /*
 #include "thread.hpp"
@@ -105,7 +106,7 @@ xcb_connection_t * conn = nullptr;
 static xcb_ewmh_connection_t * ewmh;
 static const xcb_setup_t * setup;
 static xcb_screen_iterator_t iter;
-static xcb_screen_t *screen;
+xcb_screen_t *screen = nullptr;
 
 #define DEFAULT_FONT "7x14"
 #define DEFAULT_FONT_WIDTH 7
@@ -4400,7 +4401,7 @@ window {
             #define CHANGE_BORDER_COLOR(__window) \
                 if (__window != 0)                                      \
                 {                                                       \
-                    change_back_pixel(get_color(__color), __window);    \
+                    change_back_pixel(Color->get(__color), __window);    \
                     FlushX_Win( __window );                             \
                     clear_window(__window);                             \
                     FLUSH_X();                                          \
@@ -7164,7 +7165,7 @@ window {
                 }
                 xcb->create_w(_window, window, __x, __y, __width, __height);
 
-                change_back_pixel(get_color(__color), window);
+                change_back_pixel(Color->get(__color), window);
                 xcb_map_window(conn, window);
                 xcb_flush(conn);
 
@@ -8759,9 +8760,45 @@ class Window_Manager {
                     loutE << "x not connected" << loutEND;
                 }
 
+                Color = new __color__
+                {
+                    (vector<int>)
+                    {
+                        BLACK,
+                        WHITE,
+                        RED,
+                        GREEN,
+                        BLUE,
+                        BLUE_2,
+                        BLUE_3,
+                        BLUE_4,
+                        BLUE_5,
+                        BLUE_6,
+                        BLUE_7,
+                        BLUE_8,
+                        BLUE_9,
+                        BLUE_10,
+                        YELLOW,
+                        MAGENTA,
+                        CYAN,
+                        GREY,
+                        DARK_GREY,
+                        DARK_GREY_2,
+                        DARK_GREY_3,
+                        DARK_GREY_4,
+                        LIGHT_GREY,
+                        ORANGE,
+                        BROWN,
+                        PINK,
+                        PURPLE,
+                        NO_COLOR
+                    }
+                };
+
                 root = screen->root;
                 root.width( screen->width_in_pixels );
                 root.height( screen->height_in_pixels );
+                
 
                 setSubstructureRedirectMask();
                 configure_root();
