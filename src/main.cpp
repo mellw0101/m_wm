@@ -3161,7 +3161,7 @@ public:
 
                     RE_CAST_EV(xcb_focus_in_event_t);
                     signal_manager->_window_signals.emit(e->event, XCB_FOCUS_IN);
-                    signal_manager->_window_signals.emit(e->event, SET_FOCUSED_CLIENT);
+                    signal_manager->_window_signals.emit(screen->root, SET_FOCUSED_CLIENT, e->event);
                     break;
                 }
                 case XCB_FOCUS_OUT:
