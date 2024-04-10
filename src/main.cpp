@@ -9839,11 +9839,9 @@ class Window_Manager {
                     {
                         loutE << "c = nullptr" << '\n';
                         focused_client = nullptr;
-                        cur_d->focused_client = nullptr;
                         return;
                     }
                     focused_client = c;
-                    cur_d->focused_client = c;
                 },
                 screen->root);
                 
