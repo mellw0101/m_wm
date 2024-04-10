@@ -16135,7 +16135,7 @@ class test {
             change_desktop cd(conn);
             const int og_duration = cd.duration;
 
-            while ( i < ( end + 1 ))
+            while (i < (end + 1))
             {
                 cd.change_to(change_desktop::NEXT);
                 cd.change_to(change_desktop::PREV);
