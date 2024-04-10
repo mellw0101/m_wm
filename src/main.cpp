@@ -3051,7 +3051,7 @@ getMappedEv(uint8_t __ev)
 }
 
 class evH {
-    const xcb_generic_event_t *ev;
+    xcb_generic_event_t *ev;
     __key_codes__ key_codes;
 
 public:
@@ -3202,9 +3202,30 @@ public:
                     AutoTimer t("XCB_DESTROY_NOTIFY");
 
                     RE_CAST_EV(xcb_destroy_notify_event_t);
-                    signal_manager->_window_signals.emit(e->event, XCB_DESTROY_NOTIFY);
+                    signal_manager->_window_signals.emit(e->window, XCB_DESTROY_NOTIFY);
+                    loutI << Var_(e->window) << ' ' << Var_(e->event) << '\n'; 
+                    if (e->window == e->event)
+                    {
+                        loutI << "emmiting sig" << '\n';
+                        signal_manager->_window_signals.emit(e->window, KILL_SIGNAL);
+                        xcb_flush(conn);
+                    }
+                    break;
+                }
+                case XCB_PROPERTY_NOTIFY:
+                {
+                    AutoTimer t("XCB_PROPERTY_NOTIFY");
+
+                    RE_CAST_EV(xcb_property_notify_event_t);
+                    if (e->atom == ewmh->_NET_WM_NAME)
+                    {
+                        signal_manager->_window_signals.emit(e->window, XCB_PROPERTY_NOTIFY);
+                        xcb_flush(conn);
+                    }
+                    break;
                 }
             }
+            free(ev);
         }
     }
 };
@@ -4651,7 +4672,7 @@ window {
 
                     xcb_send_event(
                         conn,
-                        false,
+                        true,
                         _window,
                         XCB_EVENT_MASK_NO_EVENT,
                         (char *)&ev
@@ -8043,16 +8064,16 @@ class client {
             CONN(KILL_SIGNAL,
             {
                 /* signal_manager->_window_client_map.remove_by_value(this); */
-                kill();
-                xcb_flush(conn);
+                /* kill();
+                xcb_flush(conn); */
             },
             win);
 
             CONN(KILL_SIGNAL,
             {
                 /* signal_manager->_window_client_map.remove_by_value(this); */
-                kill();
-                xcb_flush(conn);
+                /* kill();
+                xcb_flush(conn); */
             },
             frame);
             /* do {
@@ -8097,14 +8118,15 @@ class client {
             draw_title(TITLE_REQ_DRAW);
             icon.raise();
 
-            CONN(XCB_EXPOSE, {
+            CONN(XCB_EXPOSE,
+            {
                 titlebar.clear();
                 titlebar.draw_acc_16(win.get_net_wm_name());
                 xcb_flush(conn);
+            },
+            titlebar);
 
-            }, titlebar);
-
-            do {
+            /* do {
                 int id = event_handler->setEventCallback(
                 XCB_PROPERTY_NOTIFY,
                 [this](Ev ev)-> void
@@ -8119,7 +8141,15 @@ class client {
                 });
                 ev_id_vec.push_back({XCB_PROPERTY_NOTIFY, id});
             
-            } while ( 0 );
+            } while ( 0 ); */
+
+            CONN(XCB_PROPERTY_NOTIFY,
+            {
+                titlebar.clear();
+                titlebar.draw_acc_16(win.get_net_wm_name_by_req());
+                xcb_flush(conn);
+            },
+            win);
         }
         
         void
