@@ -3180,11 +3180,13 @@ public:
                 case XCB_CLIENT_MESSAGE:
                 {
                     AutoTimer t("XCB_CLIENT_MESSAGE");
+                    loutI << "XCB_CLIENT_MESSAGE was detected" << '\n';
 
                     RE_CAST_EV(xcb_client_message_event_t);
                     xcb_atom_t atom = xcb->get_atom(0, "WM_DELETE_WINDOW");
                     if (e->format == 32 && e->data.data32[0] == atom)
                     {
+                        loutI << "emmiting sig" << '\n';
                         signal_manager->_window_signals.emit(e->window, KILL_SIGNAL);
                     }
                     break;
@@ -8043,7 +8045,7 @@ class client {
             CONN(KILL_SIGNAL,
             {
                 /* signal_manager->_window_client_map.remove_by_value(this); */
-                unmap();
+                kill();
                 xcb_flush(conn);
             },
             frame);
@@ -8156,7 +8158,7 @@ class client {
             {
                 if (!win.is_mapped())
                 {
-                    frame.kill();
+                    kill();
                     xcb_flush(conn);
                 }
                 win.kill_test();
