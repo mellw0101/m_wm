@@ -8617,7 +8617,6 @@ class context_menu {
 *****************************************
 *****************************************
 */
-
 class Window_Manager {
     /* Defines     */
         #define INIT_NEW_WM(__inst, __class) \
@@ -14290,7 +14289,8 @@ class resize_client {
                 STATIC_CONSTEXPR_TYPE(double, frameDuration, (1000 / frameRate));
 
             /* Methods     */
-                void teleport_mouse(edge edge)
+                void
+                teleport_mouse(edge edge)
                 {
                     switch (edge)
                     {
@@ -14349,24 +14349,28 @@ class resize_client {
                     }
                 }
 
-                void resize_client(const uint32_t x, const uint32_t y, edge edge) {
-                    switch (edge) {
-                        case edge::LEFT: {
+                void
+                resize_client(const uint32_t x, const uint32_t y, edge edge)
+                {
+                    switch (edge)
+                    {
+                        case edge::LEFT:
+                        {
                             c->x_width(x, (c->width + c->x - x));
                             break;
-
                         }
-                        case edge::RIGHT: {
+                        case edge::RIGHT:
+                        {
                             c->_width((x - c->x));
                             break;
-
                         }
-                        case edge::TOP: {
+                        case edge::TOP:
+                        {
                             c->y_height(y, (c->height + c->y - y));   
                             break;
-
                         }
-                        case edge::BOTTOM_edge: {
+                        case edge::BOTTOM_edge:
+                        {
                             c->_height((y - c->y));
                             break;
 
@@ -14400,7 +14404,9 @@ class resize_client {
 
                 }
                 
-                void resize_client(client *c, const uint32_t x, const uint32_t y, edge edge) {
+                void
+                resize_client(client *c, const uint32_t x, const uint32_t y, edge edge)
+                {
                     switch (edge) {
                         case edge::LEFT: {
                             c->x_width(x, (c->width + c->x - x));
@@ -14451,7 +14457,9 @@ class resize_client {
 
                 }
 
-                void snap(const uint32_t x, const uint32_t y, edge edge, const uint8_t & prox) {
+                void
+                snap(const uint32_t x, const uint32_t y, edge edge, const uint8_t & prox)
+                {
                     uint16_t left_border(0), right_border(0), top_border(0), bottom_border(0);
 
                     for (client *const &c : wm->cur_d->current_clients) {
@@ -14513,95 +14521,105 @@ class resize_client {
 
                 }
 
-                void run(edge edge) {
+                void
+                run(edge edge)
+                {
                     xcb_generic_event_t *ev;
                     bool shouldContinue = true;
 
-                    while (shouldContinue) {
+                    while (shouldContinue)
+                    {
+                        AutoTimer t("resize_client::border::run full_loop");
+                     
                         if ((ev = xcb_wait_for_event(conn)) == nullptr) continue;
 
-                        switch (ev->response_type & ~0x80) {
-                            case XCB_MOTION_NOTIFY: {
-                                if (isTimeToRender()) {
+                        AutoTimer t2("resize_client::border::run inner_loop");
+
+                        switch (ev->response_type & ~0x80)
+                        {
+                            case XCB_MOTION_NOTIFY:
+                            {
+                                if (isTimeToRender())
+                                {
                                     RE_CAST_EV(xcb_motion_notify_event_t);
                                     snap(e->root_x, e->root_y, edge, 12);
                                     c->update();
                                     xcb_flush(conn);
-
-                                } break;
-
-                            }
-                            case XCB_BUTTON_RELEASE: {
-                                shouldContinue = false;                        
-                                c->update();
+                                }
                                 break;
 
                             }
-                            case XCB_PROPERTY_NOTIFY: {
-                                RE_CAST_EV(xcb_property_notify_event_t);
-                                client *c = wm->client_from_any_window(&e->window);
-                                if (c) {
-                                    if (e->atom   == ewmh->_NET_WM_NAME
-                                    &&  e->window == c->win) {
-                                        c->draw_title(TITLE_REQ_DRAW);
-                                    
-                                    }
-                                
-                                } break;
-                            
+                            case XCB_BUTTON_RELEASE:
+                            {
+                                shouldContinue = false;                        
+                                c->update();
+                                break;
                             }
-                        
-                        } free(ev);
-                    
+                            case XCB_PROPERTY_NOTIFY:
+                            {
+                                RE_CAST_EV(xcb_property_notify_event_t);
+                                if (e->atom == ewmh->_NET_WM_NAME)
+                                {
+                                    Emit(e->window, XCB_PROPERTY_NOTIFY);
+                                }
+                                break;
+                            }   
+                        }
+                        free(ev);
                     }
-                
                 }
 
-                void run_double(edge edge, bool __double = false) {
+                void
+                run_double(edge edge, bool __double = false)
+                {
                     xcb_generic_event_t *ev;
                     bool shouldContinue(true);
                     
-                    while (shouldContinue) {
+                    while (shouldContinue)
+                    {
                         ev = xcb_wait_for_event(conn);
                         if (ev == nullptr) continue;
 
-                        switch (ev->response_type & ~0x80) {
-                            case XCB_MOTION_NOTIFY: {
+                        switch (ev->response_type & ~0x80)
+                        {
+                            case XCB_MOTION_NOTIFY:
+                            {
                                 const auto *e = reinterpret_cast<const xcb_motion_notify_event_t *>(ev);
-                                if (isTimeToRender()) {
+                                if (isTimeToRender())
+                                {
                                     resize_client(c, e->root_x, e->root_y, edge);
                                     resize_client(c2, e->root_x, e->root_y, c2_edge);
                                     xcb_flush(conn);
-
-                                } break;
+                                }
+                                break;
                             
                             }
-                            case XCB_BUTTON_RELEASE: {
+                            case XCB_BUTTON_RELEASE:
+                            {
                                 shouldContinue = false;                        
                                 c->update();
                                 c2->update();
                                 break;
-
                             }
 
-                        } free(ev);
-                    
+                        }
+                        free(ev);
                     }
-                
                 }
 
-                bool isTimeToRender() {
+                bool
+                isTimeToRender()
+                {
                     const auto &currentTime = chrono::high_resolution_clock::now();
                     const chrono::duration<double, milli> & elapsedTime = currentTime - lastUpdateTime;
 
-                    if (elapsedTime.count() >= frameDuration) {
+                    if (elapsedTime.count() >= frameDuration)
+                    {
                         lastUpdateTime = currentTime; 
                         return true;
-                    
-                    } return false;
-
+                    }
+                    return false;
                 }
-
         };
 
     private:
@@ -14682,7 +14700,6 @@ class resize_client {
                         break;
                     }
                 }
-
                 free(ev);
             }
         }
