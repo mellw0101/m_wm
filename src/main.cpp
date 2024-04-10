@@ -9285,19 +9285,22 @@ class Window_Manager {
                     return edge::NONE;
 
                 }
-                client *get_client_from_pointer() {
+                
+                client *
+                get_client_from_pointer()
+                {
                     const int16_t x = pointer.x();
                     const int16_t y = pointer.y();
 
-                    for (client *const &c : cur_d->current_clients) {
+                    for (client *const &c : cur_d->current_clients)
+                    {
                         if (x > c->x && x < c->x + c->width
-                        &&  y > c->y && y < c->y + c->height) {
+                        &&  y > c->y && y < c->y + c->height)
+                        {
                             return c;
-
                         }
-
-                    } return nullptr;
-
+                    }
+                    return nullptr;
                 }
 
             void
@@ -9378,6 +9381,20 @@ class Window_Manager {
             remove_client(client *c)
             {
                 AutoTimer timer(__func__);
+                if (c == nullptr)
+                {
+                    loutE << "null client" << '\n';
+                    return;
+                }
+
+                if (c == focused_client)
+                {
+                    focused_client = nullptr;
+                }
+                if (c == cur_d->focused_client)
+                {
+                    cur_d->focused_client = nullptr;
+                }
 
                 client_list.erase(remove(
                     client_list.begin(),
@@ -13927,6 +13944,11 @@ class change_desktop {
                     }
                     else if (wm->cur_d->current_clients.size() > 0)
                     {
+                        if (wm->cur_d->current_clients[0] != nullptr)
+                        {
+                            wm->cur_d->current_clients[0]->focus();
+                            wm->focused_client = wm->cur_d->current_clients[0];
+                        }
                         wm->cur_d->current_clients[0]->focus();
                         wm->focused_client = wm->cur_d->current_clients[0];
                     }
@@ -13955,6 +13977,7 @@ class change_desktop {
                     animate(hide, PREV);
                     
                     wm->cur_d = wm->desktop_list[wm->cur_d->desktop - 2];
+
                     if (wm->cur_d->focused_client != nullptr)
                     {
                         wm->cur_d->focused_client->focus();
@@ -13962,8 +13985,12 @@ class change_desktop {
                     }
                     else if (wm->cur_d->current_clients.size() > 0)
                     {
-                        wm->cur_d->current_clients[0]->focus();
-                        wm->focused_client = wm->cur_d->current_clients[0];
+                        if (wm->cur_d->current_clients[0] != nullptr)
+                        {
+                            wm->cur_d->current_clients[0]->focus();
+                            wm->focused_client = wm->cur_d->current_clients[0];
+                            wm->cur_d->focused_client = wm->cur_d->current_clients[0];
+                        }
                     }
                     else
                     {
@@ -15672,21 +15699,21 @@ class Events
             } */
         }
 
-        // void map_notify_handler(const xcb_generic_event_t *&ev)
-        // {
-        //     RE_CAST_EV(xcb_map_notify_event_t);
-        //     client *c = signal_manager->_window_client_map.retrive(e->window);
-        //     if (!c) return;
-        //     c->update(); 
-        // }
+        /* void map_notify_handler(const xcb_generic_event_t *&ev)
+        {
+            RE_CAST_EV(xcb_map_notify_event_t);
+            client *c = signal_manager->_window_client_map.retrive(e->window);
+            if (!c) return;
+            c->update(); 
+        }
 
-        // void map_req_handler(const xcb_generic_event_t *&ev)
-        // {
-        //     RE_CAST_EV(xcb_map_request_event_t);
-        //     client *c = signal_manager->_window_client_map.retrive(e->window);
-        //     if (c != nullptr) return;
-        //     wm->manage_new_client(e->window);
-        // }
+        void map_req_handler(const xcb_generic_event_t *&ev)
+        {
+            RE_CAST_EV(xcb_map_request_event_t);
+            client *c = signal_manager->_window_client_map.retrive(e->window);
+            if (c != nullptr) return;
+            wm->manage_new_client(e->window);
+        } */
 
         void button_press_handler(const xcb_generic_event_t *&ev)
         {
@@ -15796,91 +15823,91 @@ class Events
             // }
         }
         
-        // void configure_request_handler(const xcb_generic_event_t *&ev)
-        // {
-        //     RE_CAST_EV(xcb_configure_request_event_t);
-        //     wm->data.width  = e->width;
-        //     wm->data.height = e->height;
-        //     wm->data.x      = e->x;
-        //     wm->data.y      = e->y;
+        /* void configure_request_handler(const xcb_generic_event_t *&ev)
+        {
+            RE_CAST_EV(xcb_configure_request_event_t);
+            wm->data.width  = e->width;
+            wm->data.height = e->height;
+            wm->data.x      = e->x;
+            wm->data.y      = e->y;
 
-        //     // loutI << WINDOW_ID_BY_INPUT(e->window) << " e->x" << e->x << " e->y" << e->y << " e->width" << e->width << "e->height" << e->height << '\n';
-        // }
+            // loutI << WINDOW_ID_BY_INPUT(e->window) << " e->x" << e->x << " e->y" << e->y << " e->width" << e->width << "e->height" << e->height << '\n';
+        } */
 
-        // void focus_in_handler(const xcb_generic_event_t *&ev)
-        // {
-        //     RE_CAST_EV(xcb_focus_in_event_t);
-        //     GET_CLIENT_FROM_WINDOW(e->event);
+        /* void focus_in_handler(const xcb_generic_event_t *&ev)
+        {
+            RE_CAST_EV(xcb_focus_in_event_t);
+            GET_CLIENT_FROM_WINDOW(e->event);
 
-        //     c->win.ungrab_button({
-        //         { L_MOUSE_BUTTON, NULL }
-        //     });
+            c->win.ungrab_button({
+                { L_MOUSE_BUTTON, NULL }
+            });
 
-        //     c->raise();
-        //     c->win.set_active_EWMH_window();
-        //     wm->focused_client = c;
-        // }
+            c->raise();
+            c->win.set_active_EWMH_window();
+            wm->focused_client = c;
+        } */
 
-        // void focus_out_handler(const xcb_generic_event_t *&ev)
-        // {
-        //     RE_CAST_EV(xcb_focus_out_event_t);
-        //     GET_CLIENT_FROM_WINDOW(e->event);
-        //     c->win.grab_button({
-        //         { L_MOUSE_BUTTON, NULL }
-        //     });
-        // }
+        /* void focus_out_handler(const xcb_generic_event_t *&ev)
+        {
+            RE_CAST_EV(xcb_focus_out_event_t);
+            GET_CLIENT_FROM_WINDOW(e->event);
+            c->win.grab_button({
+                { L_MOUSE_BUTTON, NULL }
+            });
+        }
 
-        // void destroy_notify_handler(const xcb_generic_event_t *&ev)
-        // {
-        //     RE_CAST_EV(xcb_destroy_notify_event_t);
-        //     GET_CLIENT_FROM_WINDOW(e->event);
-        //     if (c->atoms.is_modal) {
-        //         client *c_trans = wm->client_from_any_window(&c->modal_data.transient_for);
-        //         if (c_trans != nullptr) {
-        //             c_trans->focus();
-        //             wm->focused_client = c_trans;
+        void destroy_notify_handler(const xcb_generic_event_t *&ev)
+        {
+            RE_CAST_EV(xcb_destroy_notify_event_t);
+            GET_CLIENT_FROM_WINDOW(e->event);
+            if (c->atoms.is_modal) {
+                client *c_trans = wm->client_from_any_window(&c->modal_data.transient_for);
+                if (c_trans != nullptr) {
+                    c_trans->focus();
+                    wm->focused_client = c_trans;
 
-        //         }
+                }
 
-        //     }
+            }
             
-        //     pid_manager->remove_pid(c->win.pid());
-        //     wm->send_sigterm_to_client(c);
-        // }
+            pid_manager->remove_pid(c->win.pid());
+            wm->send_sigterm_to_client(c);
+        }
         
-        // void unmap_notify_handler(const xcb_generic_event_t *&ev)
-        // {
-        //     RE_CAST_EV(xcb_unmap_notify_event_t);
-        //     client *c = wm->client_from_window(&e->window);
-        //     if (c == nullptr) return;
+        void unmap_notify_handler(const xcb_generic_event_t *&ev)
+        {
+            RE_CAST_EV(xcb_unmap_notify_event_t);
+            client *c = wm->client_from_window(&e->window);
+            if (c == nullptr) return;
 
-        //     // loutI << WINDOW_ID_BY_INPUT(e->window) << '\n';
-        // }
+            // loutI << WINDOW_ID_BY_INPUT(e->window) << '\n';
+        }
         
-        // void reparent_notify_handler(const xcb_generic_event_t *&ev)
-        // {
-        //     RE_CAST_EV(xcb_reparent_notify_event_t);
-        //     GET_CLIENT_FROM_WINDOW(e->window);
+        void reparent_notify_handler(const xcb_generic_event_t *&ev)
+        {
+            RE_CAST_EV(xcb_reparent_notify_event_t);
+            GET_CLIENT_FROM_WINDOW(e->window);
 
-        //     c->win.x(BORDER_SIZE);
-        //     c->win.y(TITLE_BAR_HEIGHT + BORDER_SIZE);
-        //     xcb_flush(conn);
-        // }
+            c->win.x(BORDER_SIZE);
+            c->win.y(TITLE_BAR_HEIGHT + BORDER_SIZE);
+            xcb_flush(conn);
+        }
 
-        // void enter_notify_handler(const xcb_generic_event_t *&ev)
-        // {
-        //     RE_CAST_EV(xcb_enter_notify_event_t);
-        // }
+        void enter_notify_handler(const xcb_generic_event_t *&ev)
+        {
+            RE_CAST_EV(xcb_enter_notify_event_t);
+        }
 
-        // void leave_notify_handler(const xcb_generic_event_t *&ev)
-        // {
-        //     RE_CAST_EV(xcb_leave_notify_event_t);   
-        // }
+        void leave_notify_handler(const xcb_generic_event_t *&ev)
+        {
+            RE_CAST_EV(xcb_leave_notify_event_t);   
+        }
 
-        // void motion_notify_handler(const xcb_generic_event_t *&ev)
-        // {
-        //     RE_CAST_EV(xcb_motion_notify_event_t);
-        // }
+        void motion_notify_handler(const xcb_generic_event_t *&ev)
+        {
+            RE_CAST_EV(xcb_motion_notify_event_t);
+        } */
 };
 
 void
