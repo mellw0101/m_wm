@@ -5939,7 +5939,7 @@ window {
             set_backround_color(int __color)
             {
                 _color = __color;
-                change_back_pixel(get_color(__color));
+                change_back_pixel(Color->get(__color));
             }
 
             void
@@ -6731,8 +6731,8 @@ window {
                         GC_FONT_MASK,
                         (const uint32_t[3])
                         {
-                            get_color(text_color),
-                            get_color(backround_color),
+                            Color->get(text_color),
+                            Color->get(backround_color),
                             font
                         }
                     );

@@ -162,7 +162,7 @@ __color__::rgb_code__(int __color)
 uint32_t
 __color__::get_color__(int __color)
 {
-    AutoTimer timer(__func__);
+    AutoTimer timer("__color__:get_color__");
 
     uint32_t pi          = 0;
     xcb_colormap_t cmap  = screen->default_colormap;
