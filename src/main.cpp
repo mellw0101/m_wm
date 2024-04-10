@@ -9321,8 +9321,8 @@ class Window_Manager {
                 c->win.geo(&x, &y, &width, &height);
                 loutI << "from req " << Var_(x) << ' ' << Var_(y) << ' ' << Var_(width) << ' ' << Var_(height) << '\n';
                 
-                if ( c->width  < width ) c->width = width;
-                if ( c->height < height ) c->height = height;
+                if ( c->width < width || c->width >= screen->width_in_pixels ) c->width = width;
+                if ( c->height < height || c->height >= screen->height_in_pixels ) c->height = height;
 
                 c->x = ((screen->width_in_pixels / 2) - (c->width / 2));
                 c->y = ((screen->height_in_pixels / 2) - (c->height / 2));
