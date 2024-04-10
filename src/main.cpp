@@ -8056,6 +8056,7 @@ class client {
             CONN(XCB_DESTROY_NOTIFY,
             {
                 /* signal_manager->_window_client_map.remove_by_value( this ); */
+                loutI << "got KILL_SIGNAL" << '\n';
                 kill();
                 xcb_flush(conn);
             },
