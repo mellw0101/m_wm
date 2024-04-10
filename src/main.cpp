@@ -527,9 +527,9 @@ namespace {
             umap<uint32_t, umap<int, function<void(uint32_t)>>> _data;
 
             template<typename Callback>
-            void conect(uint32_t __w, uint8_t __sig, Callback &&__cb) {
+            void conect(uint32_t __w, uint8_t __sig, Callback &&__cb)
+            {
                 _data[__w][__sig] = std::forward<Callback>(__cb);
-
             }
 
             void emit(uint32_t __w, uint8_t __sig)
@@ -3206,7 +3206,7 @@ public:
                     loutI << Var_(e->window) << ' ' << Var_(e->event) << '\n'; 
 
                     loutI << "emmiting sig" << '\n';
-                    signal_manager->_window_signals.emit(e->event, XCB_DESTROY_NOTIFY);
+                    signal_manager->_window_signals.emit(screen->root, XCB_DESTROY_NOTIFY, e->event);
                     xcb_flush(conn);
                 
                     break;
@@ -9790,6 +9790,12 @@ class Window_Manager {
                 {
                     client *c = C_RETRIVE(__window);
                     if ( c ) c->update();
+                },
+                screen->root);
+
+                CONN(XCB_DESTROY_NOTIFY,
+                {
+                    loutI << "Destroy notify" << loutEND;
                 },
                 screen->root);
 
