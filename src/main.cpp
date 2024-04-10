@@ -8023,6 +8023,7 @@ class client {
             CONN(XCB_FOCUS_IN,
             {
                 win.ungrab_button({{L_MOUSE_BUTTON, NULL}});
+                raise();
                 xcb_flush(conn);
             },
             win);
@@ -8043,64 +8044,6 @@ class client {
 
             frame.set_event_mask(FRAME_EVENT_MASK);
             frame.map();
-
-            /* do {
-                event_handler->setEventCallback(
-                XCB_DESTROY_NOTIFY,
-                [ this ]( Ev ev )-> void
-                {
-                    RE_CAST_EV( xcb_destroy_notify_event_t );
-                    if ( e->event == this->win )
-                    {
-                        signal_manager->_window_client_map.remove_by_value( this );
-                        this->kill();
-                        xcb_flush(conn);
-                    }
-                });
-            
-            } while ( 0 ); */
-
-            /* CONN(XCB_DESTROY_NOTIFY,
-            {
-                signal_manager->_window_client_map.remove_by_value( this );
-                loutI << "got KILL_SIGNAL" << '\n';
-                kill();
-                xcb_flush(conn);
-            },
-            win); */
-
-            /* CONN(KILL_SIGNAL,
-            {
-                // signal_manager->_window_client_map.remove_by_value(this);
-                loutI << "got KILL_SIGNAL" << '\n';
-                this->kill();
-                xcb_flush(conn);
-            },
-            this->win); */
-
-            /* CONN(KILL_SIGNAL,
-            {
-                // signal_manager->_window_client_map.remove_by_value(this);
-                kill();
-                xcb_flush(conn);
-            },
-            frame); */
-            /* do {
-                event_handler->setEventCallback(
-                XCB_CLIENT_MESSAGE,
-                [ this ]( Ev ev )-> void
-                {
-                    RE_CAST_EV( xcb_client_message_event_t );
-                    xcb_atom_t atom = xcb->get_atom(0, "WM_DELETE_WINDOW");
-                    if ( e->window == this->win && e->format == 32 && e->data.data32[0] == atom )
-                    {
-                        signal_manager->_window_client_map.remove_by_value(this);
-                        this->kill();
-                        xcb_flush(conn);
-                    }
-                });
-            
-            } while ( 0 ); */
 
             CWC( frame );
             CWC( win );
@@ -8135,23 +8078,6 @@ class client {
             },
             titlebar);
 
-            /* do {
-                int id = event_handler->setEventCallback(
-                XCB_PROPERTY_NOTIFY,
-                [this](Ev ev)-> void
-                {
-                    RE_CAST_EV( xcb_property_notify_event_t );
-                    if (e->window == win && e->atom == ewmh->_NET_WM_NAME)
-                    {
-                        titlebar.clear();
-                        titlebar.draw_acc_16(win.get_net_wm_name_by_req());
-                        xcb_flush(conn);
-                    }
-                });
-                ev_id_vec.push_back({XCB_PROPERTY_NOTIFY, id});
-            
-            } while ( 0 ); */
-
             CONN(XCB_PROPERTY_NOTIFY,
             {
                 titlebar.clear();
@@ -8182,22 +8108,6 @@ class client {
             CWC(close_button);
             close_button.make_then_set_png(USER_PATH_PREFIX("/close.png"), CLOSE_BUTTON_BITMAP);
             close_button.grab_button({{L_MOUSE_BUTTON, NULL}});
-            
-            /* do {
-                int id = event_handler->setEventCallback(
-                XCB_BUTTON_PRESS,
-                [this](Ev ev)-> void
-                {
-                    RE_CAST_EV(xcb_button_press_event_t);
-                    if (e->event != close_button) return;
-                    if (e->detail != L_MOUSE_BUTTON) return;
-                    if (!win.is_mapped()) frame.kill();
-                    win.kill_test();
-                    xcb_flush(conn);
-                });
-                ev_id_vec.push_back( { XCB_BUTTON_PRESS, id } );
-
-            } while ( 0 ); */
 
             CONN(L_MOUSE_BUTTON_EVENT,
             {
@@ -8210,22 +8120,6 @@ class client {
                 xcb_flush(conn);
             },
             close_button);
-
-            /* do {
-                int id = event_handler->setEventCallback(
-                XCB_ENTER_NOTIFY,
-                [this](Ev ev)-> void
-                {
-                    RE_CAST_EV( xcb_enter_notify_event_t );
-                    if (e->event == close_button)
-                    {
-                        close_button.change_border_color(WHITE);
-                        xcb_flush(conn);
-                    }
-                });
-                ev_id_vec.push_back({XCB_ENTER_NOTIFY, id});
-                
-            } while ( 0 ); */
 
             CONN(XCB_ENTER_NOTIFY,
             {
@@ -8240,22 +8134,6 @@ class client {
                 xcb_flush(conn);   
             },
             close_button);
-
-            /* do {
-                int id = event_handler->setEventCallback(
-                XCB_LEAVE_NOTIFY,
-                [this](Ev ev)-> void
-                {
-                    RE_CAST_EV(xcb_leave_notify_event_t);
-                    if (e->event == close_button)
-                    {
-                        close_button.change_border_color(BLACK);
-                        xcb_flush(conn);
-                    }
-                });
-                ev_id_vec.push_back({XCB_LEAVE_NOTIFY, id});
-
-            } while ( 0 ); */
         }
         
         void
@@ -8305,60 +8183,6 @@ class client {
             bitmap.exportToPng(s.c_str());
 
             max_button.set_backround_png(USER_PATH_PREFIX("/max.png"));
-
-            /* CONN(L_MOUSE_BUTTON_EVENT, if (__window == this->max_button) {
-                C_EMIT(this, BUTTON_MAXWIN_PRESS);
-
-            }, this->max_button); */
-
-            /* do {
-                int id = event_handler->setEventCallback(
-                XCB_BUTTON_PRESS,
-                [this](Ev ev) -> void
-                {
-                    RE_CAST_EV(xcb_button_press_event_t);
-                    if (e->event != max_button) return;
-                    if (e->detail == L_MOUSE_BUTTON)
-                    {
-                        C_EMIT( this, BUTTON_MAXWIN_PRESS );
-                        xcb_flush(conn);
-                    }
-                });
-                ev_id_vec.push_back( { XCB_BUTTON_PRESS, id } );
-
-            } while ( 0 ); */
-
-            /* do {
-                int id = event_handler->setEventCallback(
-                XCB_ENTER_NOTIFY,
-                [this](Ev ev)-> void
-                {
-                    RE_CAST_EV(xcb_enter_notify_event_t);
-                    if (e->event == max_button)
-                    {
-                        max_button.change_border_color(WHITE);
-                        xcb_flush(conn);
-                    }
-                });
-                ev_id_vec.push_back( { XCB_ENTER_NOTIFY, id } );
-
-            } while ( 0 ); */
-
-            /* do {
-                int id = event_handler->setEventCallback(
-                XCB_LEAVE_NOTIFY,
-                [this](Ev ev)-> void
-                 {
-                    RE_CAST_EV(xcb_leave_notify_event_t);
-                    if (e->event == max_button)
-                    {
-                        max_button.change_border_color(BLACK);
-                        xcb_flush(conn);
-                    }
-                });
-                ev_id_vec.push_back({XCB_LEAVE_NOTIFY, id});
-
-            } while ( 0 ); */
 
             CONN(L_MOUSE_BUTTON_EVENT,
             {
@@ -9327,20 +9151,6 @@ class Window_Manager {
                 c->x = ((screen->width_in_pixels / 2) - (c->width / 2));
                 c->y = ((screen->height_in_pixels / 2) - (c->height / 2));
 
-                /* if (c->x >= screen->width_in_pixels
-                ||  c->x <= 0)
-                {
-                    c->x = ((screen->width_in_pixels / 2) - (width / 2));
-                }
-
-                if (c->y >= screen->height_in_pixels
-                ||  c->y <= 0)
-                {
-                    c->y = ((screen->height_in_pixels / 2) - (height / 2));
-                } */
-                
-                loutI << "post nums " << Var_(c->x) << ' ' << Var_(c->y) << ' ' << Var_(c->width) << ' ' << Var_(c->height) << '\n';
-
                 c->win.get_override_redirect();
                 c->win.x_y_width_height(c->x, c->y, c->width, c->height);
                 xcb_flush(conn);
@@ -9366,6 +9176,7 @@ class Window_Manager {
                     /* c->add_to_map(); */
                 }
                 c->win.grab_default_keys();
+                xcb_flush(conn);
             }
 
             client *make_internal_client(window &window)
@@ -10259,14 +10070,12 @@ class __status_bar__ {
                 MAP
 
             );
-            CONN_Win(_w[_TIME_DATE], EXPOSE,
-                if (__window != this->_w[_TIME_DATE]) return;
-                this->_w[_TIME_DATE].draw_acc(this->get_time_and_date__());
+            CONN(XCB_EXPOSE,
+            {
+                _w[_TIME_DATE].draw_acc(get_time_and_date__());
+            }
+            ,_w[_TIME_DATE]);
 
-            );
-            /* expose_tasks.push_back({this->_w[_TIME_DATE], [&]() {
-                this->_w[_TIME_DATE].draw_acc(this->get_time_and_date__());
-            }}); */
             _w[_WIFI].create_window(
                 _w[_BAR],
                 WIFI_WINDOW_X,
@@ -10278,22 +10087,24 @@ class __status_bar__ {
                 MAP
 
             );
-            WS_conn(_w[_WIFI], L_MOUSE_BUTTON_EVENT, W_callback {
-                if (__window != this->_w[_WIFI]) return;
-
-                if (this->_w[_WIFI_DROPWOWN].is_mapped()) {
+            CONN(L_MOUSE_BUTTON_EVENT,
+            {
+                if (this->_w[_WIFI_DROPWOWN].is_mapped())
+                {
                     this->hide__(this->_w[_WIFI_DROPWOWN]);
                 }
-                else {
-                    if (this->_w[_AUDIO_DROPDOWN].is_mapped()) {
-                        this->hide__(this->_w[_AUDIO_DROPDOWN]);
+                else
+                {
+                    if (_w[_AUDIO_DROPDOWN].is_mapped())
+                    {
+                        hide__(_w[_AUDIO_DROPDOWN]);
                     }
-                    show__(this->_w[_WIFI_DROPWOWN]);
-                    this->_w[_WIFI_INFO].send_event(XCB_EVENT_MASK_EXPOSURE);
-                    this->_w[_WIFI_CLOSE].send_event(XCB_EVENT_MASK_EXPOSURE);
+                    show__(_w[_WIFI_DROPWOWN]);
+                    _w[_WIFI_INFO].send_event(XCB_EVENT_MASK_EXPOSURE);
+                    _w[_WIFI_CLOSE].send_event(XCB_EVENT_MASK_EXPOSURE);
                 }
-
-            });
+            },
+            _w[_WIFI]);
 
             Bitmap bitmap(20, 20);
             
@@ -10319,6 +10130,7 @@ class __status_bar__ {
             bitmap.exportToPng(s.c_str());
             _w[_WIFI].set_backround_png(USER_PATH_PREFIX("/wifi.png"));
             _w[_WIFI].set_pointer(CURSOR::hand2);
+            
             _w[_AUDIO].create_window(
                 _w[_BAR],
                 (WIFI_WINDOW_X - 50),
@@ -10330,16 +10142,45 @@ class __status_bar__ {
                 MAP,
                 (int[]){ALL, 2, BLACK},
                 CURSOR::hand2
-
             );
-            WS_conn( this->_w[_AUDIO], EXPOSE, W_callback {
-                if ( __window != this->_w[_AUDIO] ) return;
-                this->_w[_AUDIO].draw( "Audio" ); 
+            
+            CONN(XCB_EXPOSE,
+            {
+                _w[_AUDIO].draw("Audio");
+            },
+            _w[_AUDIO]);
+            _w[_AUDIO].send_event(XCB_EVENT_MASK_EXPOSURE);
 
-            });/* 
-            expose_tasks.push_back({this->_w[_AUDIO], [&]() { this->_w[_AUDIO].draw("Audio"); }}); */
-            /* this->_w[_AUDIO].send_event(XCB_EVENT_MASK_EXPOSURE); */
-            WS_conn(this->_w[_AUDIO], L_MOUSE_BUTTON_EVENT, W_callback {
+            CONN(L_MOUSE_BUTTON_EVENT,
+            {
+                if (_w[_AUDIO_DROPDOWN].is_mapped())
+                {
+                    hide__(_w[_AUDIO_DROPDOWN]);
+                }
+                else
+                {
+                    if (_w[_WIFI_DROPWOWN].is_mapped())
+                    {
+                        hide__(_w[_WIFI_DROPWOWN]);
+                    }
+                    show__(_w[_AUDIO_DROPDOWN]);
+                }
+            },
+            _w[_AUDIO]);
+
+            CONN(XCB_ENTER_NOTIFY,
+            {
+                _w[_AUDIO].change_backround_color(WHITE);
+            },
+            _w[_AUDIO]);
+
+            CONN(XCB_LEAVE_NOTIFY,
+            {
+                _w[_AUDIO].change_backround_color(DARK_GREY);
+            },
+            _w[_AUDIO]);
+            
+            /* WS_conn(this->_w[_AUDIO], L_MOUSE_BUTTON_EVENT, W_callback {
                 if (__window != this->_w[_AUDIO]) return;
 
                 if (this->_w[_AUDIO_DROPDOWN].is_mapped()) {
@@ -10353,8 +10194,8 @@ class __status_bar__ {
 
                 }
 
-            });
-            WS_conn(this->_w[_AUDIO], ENTER_NOTIFY, W_callback {
+            }); */
+            /* WS_conn(this->_w[_AUDIO], ENTER_NOTIFY, W_callback {
                 if (__window != this->_w[_AUDIO]) return;
                 this->_w[_AUDIO].change_backround_color(WHITE);
 
@@ -10363,8 +10204,7 @@ class __status_bar__ {
                 if (__window != this->_w[_AUDIO]) return;
                 this->_w[_AUDIO].change_backround_color(DARK_GREY);
 
-            });
-
+            }); */
         }
 
         void
