@@ -4443,7 +4443,7 @@ window {
             {
                 AutoTimer t("window::raise");
 
-                xcb_configure_window(
+                xcb_void_cookie_t cookie = xcb_configure_window_checked(
                     conn,
                     _window,
                     XCB_CONFIG_WINDOW_STACK_MODE, 
@@ -4452,6 +4452,11 @@ window {
                         XCB_STACK_MODE_ABOVE
                     }
                 );
+                xcb_generic_error_t *err = xcb_request_check(conn, cookie);
+                if (err)
+                {
+                    loutEWin << "xcb_configure_window_checked Failed" << '\n';
+                }
                 xcb_flush(conn);
             }  
             
@@ -4975,11 +4980,12 @@ window {
             {
                 AutoTimer timer(__func__);
 
-                xcb_ewmh_set_active_window(
+                xcb_void_cookie_t cookie = xcb_ewmh_set_active_window_checked(
                     ewmh,
                     0,
                     _window
                 );
+                CheckVoidC(cookie, "xcb_ewmh_set_active_window_checked Failed");
                 xcb_flush(conn);
             }
 
@@ -7432,8 +7438,8 @@ class client {
             {
                 /* win.focus_input();
                 win.set_active_EWMH_window();
-                frame.raise();
                 xcb_flush(conn); */
+                frame.raise();
                 int status = win.focus();
                 xcb_flush(conn);
                 if(status != 0)
@@ -8992,7 +8998,7 @@ class Window_Manager {
                     tmp.unmap();
                     tmp.kill();
                     focused_client = nullptr;
-                    /* cur_d->focused_client = nullptr; */
+                    cur_d->focused_client = nullptr;
                 }
 
             /* Fetch */
