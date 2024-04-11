@@ -4438,10 +4438,10 @@ window {
             }
         
         /* Main          */
-            void
+            /* void
             raise()
             {
-                AutoTimer t(__func__);
+                AutoTimer t("window::raise");
 
                 xcb_configure_window(
                     conn,
@@ -4453,7 +4453,7 @@ window {
                     }
                 );
                 xcb_flush(conn);
-            }            
+            }  */      
             
             void
             map()
@@ -4595,18 +4595,34 @@ window {
                 xcb_flush(conn);
             }
             
-            void
+            /* void
             focus_input()
             {
                 AutoTimer timer(__func__);
                 
                 xcb_set_input_focus(
                     conn,
-                    /* XCB_INPUT_FOCUS_PARENT, */XCB_INPUT_FOCUS_POINTER_ROOT,
+                    // XCB_INPUT_FOCUS_PARENT,XCB_INPUT_FOCUS_POINTER_ROOT,
                     _window,
                     XCB_CURRENT_TIME
                 );
                 xcb_flush(conn);
+            } */
+
+            int
+            focus()
+            {
+                AutoTimer timer("window::focus");
+                focus_input();
+                set_active_EWMH_window();
+                xcb_flush(conn);
+                if (!is_active_EWMH_window())
+                {
+                    loutEWin << "window wan not correctly set as 'active EWMH window'" << '\n';
+                    return 1;
+                }
+                raise();
+                return 0;
             }
             
             void
@@ -6585,6 +6601,48 @@ window {
 
     /* Methods     */
         /* Main       */
+            /* Focus */
+                /**
+                 * @brief avalible 'revert_to' options 
+                 *
+                 * @p XCB_INPUT_FOCUS_NONE 
+                 * @p XCB_INPUT_FOCUS_PARENT 
+                 * @p XCB_INPUT_FOCUS_POINTER_ROOT
+                 *
+                 * @p XCB_INPUT_FOCUS_FOLLOW_KEYBOARD NOTE: This is experemental
+                 * 
+                 */
+                void
+                focus_input()
+                {
+                    AutoTimer timer("window::focus_input");
+                    
+                    xcb_set_input_focus(
+                        conn,
+                        XCB_INPUT_FOCUS_PARENT,
+                        _window,
+                        XCB_CURRENT_TIME
+                    );
+                    xcb_flush(conn);
+                }
+
+                void
+                raise()
+                {
+                    AutoTimer t("window::raise");
+
+                    xcb_configure_window(
+                        conn,
+                        _window,
+                        XCB_CONFIG_WINDOW_STACK_MODE, 
+                        (const uint32_t[1])
+                        {
+                            XCB_STACK_MODE_ABOVE
+                        }
+                    );
+                    xcb_flush(conn);
+                } 
+
             void
             make_window()
             {
@@ -7380,19 +7438,25 @@ class client {
                 }
             }
             
-            void
+            /* void
             raise()
             {
                 frame.raise();
-            }
+            } */
             
             void
             focus()
             {
-                win.focus_input();
+                /* win.focus_input();
                 win.set_active_EWMH_window();
                 frame.raise();
+                xcb_flush(conn); */
+                int status = win.focus();
                 xcb_flush(conn);
+                if(status != 0)
+                {
+                    loutE << "could not focus win" << '\n';
+                }
             }
             
             void
@@ -8016,7 +8080,6 @@ class client {
             CONN(XCB_FOCUS_IN,
             {
                 win.ungrab_button({{L_MOUSE_BUTTON, NULL}});
-                raise();
                 xcb_flush(conn);
             },
             win);
@@ -8061,7 +8124,7 @@ class client {
 
             titlebar.grab_button({{L_MOUSE_BUTTON, NULL}});
             draw_title(TITLE_REQ_DRAW);
-            icon.raise();
+            /* icon.raise(); */
 
             ConnSig(titlebar, XCB_EXPOSE,
             
@@ -8659,7 +8722,8 @@ class context_menu {
 
             context_window.x_y_width_height((_x - BORDER_SIZE), (_y - BORDER_SIZE), _width, new_height);
             context_window.map();
-            context_window.raise();
+            /* context_window.raise(); */
+            context_window.focus();
             CONN(HIDE_CONTEXT_MENU, this->hide__();, this->context_window);
             make_entries__();
         }
@@ -8941,7 +9005,7 @@ class Window_Manager {
                         20
                     );
                     tmp.map();
-                    tmp.focus_input();
+                    tmp.focus();
                     tmp.unmap();
                     tmp.kill();
                     focused_client = nullptr;
@@ -9726,10 +9790,10 @@ class Window_Manager {
                         /* focused_client = nullptr; */
                         return;
                     }
-                    c->raise();
+                    /* c->raise(); */
                     focused_client = c;
                     cur_d->focused_client = c;
-                    c->set_active_EWMH_window();
+                    /* c->set_active_EWMH_window(); */
                 );
                 
                 if (BORDER_SIZE == 0)
@@ -11601,8 +11665,8 @@ class search_window {
             event_handler->setEventCallback(XCB_BUTTON_PRESS, [&](Ev ev) -> void {
                 const xcb_button_press_event_t * e = reinterpret_cast<const xcb_button_press_event_t *>(ev);
                 if(e->event == main_window) {
-                    main_window.raise();
-                    main_window.focus_input();
+                    /* main_window.raise();
+                    main_window.focus_input(); */
                 }
             });
         }
@@ -11659,13 +11723,13 @@ class search_window {
                 window entry;
                 entry.create_default(main_window, 0, (20 * (i + 1)) , 140, 20);
                 entry.set_backround_color(BLACK);
-                entry.raise();
+                /* entry.raise(); */
                 entry.map();
                 entry_list.push_back(entry);
             }
 
-            main_window.raise();
-            main_window.focus_input();
+            /* main_window.raise();
+            main_window.focus_input(); */
         }
 
         void add_enter_action(std::function<void()> enter_action)
@@ -11956,9 +12020,9 @@ class __file_app__ {
                 void show()
                 {
                     _window.map();
-                    _window.raise();
+                    /* _window.raise(); */
                     _border.map();
-                    _border.raise();
+                    /* _border.raise(); */
                     create_menu_entry__("hello");
                     create_menu_entry__("hello");
                     create_menu_entry__("hello");
@@ -12023,7 +12087,7 @@ class __file_app__ {
         {
             create_main_window();
             _left_menu.create(main_window);
-            main_window.raise();
+            /* main_window.raise(); */
             main_window.map();
             make_internal_client();
             _left_menu.show();
@@ -13326,8 +13390,8 @@ class __dock_search__ {
                 RE_CAST_EV(xcb_button_press_event_t);
                 if (e->event == main_window)
                 {
-                    main_window.raise();
-                    main_window.focus_input();
+                    /* main_window.raise();
+                    main_window.focus_input(); */
                 }
             });
         }
@@ -13386,8 +13450,9 @@ class __dock_search__ {
         void show()
         {
             main_window.map();
-            main_window.raise();
-            main_window.focus_input();
+            main_window.focus(); /** <- EDIT: */
+            /* main_window.raise();
+            main_window.focus_input(); */
         }
 
         void draw_text()
@@ -13427,13 +13492,14 @@ class __dock__ {
                     _height,
                     duration
                 );
-                dock_menu.raise();
+                dock_menu.focus(); /** <- EDIT: */
+                /* dock_menu.raise(); */
             }
 
             if (__state == MIN)
             {
-                dock_menu.raise();
-                dock_menu.focus_input();
+                /* dock_menu.raise();
+                dock_menu.focus_input(); */
                 __animate__::window(
                     dock_menu,
                     SCREEN_CENTER_X(2),
@@ -13469,16 +13535,19 @@ class __dock__ {
                 if (wm->focused_client != nullptr)
                 {
                     f_c = wm->focused_client;
-                    wm->root.focus_input();
+                    /* wm->root.focus_input(); */
+                    wm->root.focus(); /** <- EDIT: */
                     wm->focused_client = nullptr;
                 }
 
                 dock_menu.map();
-                dock_menu.raise();
-                dock_menu.focus_input();
+                /* dock_menu.raise();
+                dock_menu.focus_input(); */
+                dock_menu.focus(); /** <- EDIT: */
                 anim_dock_menu(MAX);
-                dock_menu.raise();
-                dock_menu.focus_input();
+                /* dock_menu.raise();
+                dock_menu.focus_input(); */
+                dock_menu.focus(); /** <- EDIT: */
                 dock_search.show();
             }
         }
@@ -13547,10 +13616,11 @@ public:
     {
         if (w.y() == - (screen->height_in_pixels / 2))
         {
-            w.raise();
+            /* w.raise(); */
             w.y( 0 );
-            w.focus_input();
-            w.raise();
+            /* w.focus_input();
+            w.raise(); */
+            w.focus(); /** <- EDIT: */
             xcb_flush(conn);
         }
         else
@@ -14374,7 +14444,7 @@ class resize_client {
                     }
                     pointer.grab();
                     teleport_mouse(_edge);
-                    run_test(_edge);
+                    run(_edge);
                     pointer.ungrab();
                 }
 
@@ -15830,28 +15900,28 @@ class Events
 
             if (e->detail == L_MOUSE_BUTTON)
             {
-                // if (e->event == c->win) {
-                //     switch (e->state)
-                //     {
-                //         case ALT:
-                //         {
-                //             c->raise();
-                //             mv_client mv(c, e->event_x, e->event_y + 20);
-                //             c->focus();
-                //             wm->focused_client = c;
-                //             return;
-                //         }
-                //     }
+                /* if (e->event == c->win) {
+                    switch (e->state)
+                    {
+                        case ALT:
+                        {
+                            c->raise();
+                            mv_client mv(c, e->event_x, e->event_y + 20);
+                            c->focus();
+                            wm->focused_client = c;
+                            return;
+                        }
+                    }
 
-                //     c->raise();
-                //     c->focus();
-                //     wm->focused_client = c;
-                //     return;
-                // }
+                    c->raise();
+                    c->focus();
+                    wm->focused_client = c;
+                    return;
+                } */
                 
                 if (e->event == c->titlebar)
                 {
-                    c->raise();
+                    /* c->raise(); */
                     c->focus();
                     mv_client mv(c, e->event_x, e->event_y);
                     wm->focused_client = c;
@@ -16158,14 +16228,15 @@ void
 buttonPressH(const xcb_generic_event_t *ev)
 {
     RE_CAST_EV(xcb_button_press_event_t);
-    client *c = signal_manager->_window_client_map.retrive(e->event);
-    if ( !c ) return;
+    /* client *c = signal_manager->_window_client_map.retrive(e->event); */
+    client *c = wm->client_from_window(&e->event); /** <- EDIT: */
+    if (c == nullptr) return;
 
     if (e->detail == L_MOUSE_BUTTON)
     {   
         if (e->event == c->titlebar)
         {
-            c->raise();
+            /* c->raise(); */
             c->focus();
             mv_client mv(c, e->event_x, e->event_y);
             wm->focused_client = c;
@@ -16283,7 +16354,8 @@ class test {
                 300,
                 300
             );
-            win_1.raise();
+            /* win_1.raise(); */
+            win_1.focus(); /** EDIT: */
             win_1.set_backround_color(RED);
             win_1.map();
             Mwm_Animator win_1_animator(win_1);
