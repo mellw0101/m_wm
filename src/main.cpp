@@ -9413,7 +9413,8 @@ class Window_Manager {
                 root.clear();
 
                 #ifndef ARMV8_BUILD
-                    root.set_backround_png((USER_PATH_PREFIX( "/mwm_png/galaxy21.png" )).c_str());
+                    root.set_backround_png((USER_PATH_PREFIX( "/mwm_png/galaxy15.png" )).c_str());
+                    /* root.set_backround_png((USER_PATH_PREFIX( "/mwm_png/galaxy21.png" )).c_str()); */
                     // root.set_backround_png(USER_PATH_PREFIX("/mwm_png/galaxy16-17-3840x1200.png"));
                 #endif
                 root.set_pointer(CURSOR::arrow);
@@ -13749,44 +13750,53 @@ class mv_client {
             else                                                                                  c->frame.x_y(x, y);
         }
 
-        void run() {
-            while (shouldContinue) {
+        void run()
+        {
+            while (shouldContinue)
+            {
                 ev = xcb_wait_for_event(conn);
                 if (ev == nullptr) continue;
 
-                switch (ev->response_type & ~0x80) {
-                    case XCB_MOTION_NOTIFY: {
-                        if (isTimeToRender()) {
+                switch (ev->response_type & ~0x80)
+                {
+                    case XCB_MOTION_NOTIFY:
+                    {
+                        if (isTimeToRender())
+                        {
                             RE_CAST_EV(xcb_motion_notify_event_t);
                             int new_x = e->root_x - start_x - BORDER_SIZE;
                             int new_y = e->root_y - start_y - BORDER_SIZE;
                             snap(new_x, new_y);
-                            FLUSH_X();
-
-                        } break;
-                        
+                            xcb_flush(conn);
+                        }
+                        break;
                     }
-                    case XCB_BUTTON_RELEASE: {
+                    case XCB_BUTTON_RELEASE:
+                    {
                         shouldContinue = false;
                         c->update();
                         break;
-
                     }
-
-                } free(ev);
-
+                    case XCB_EXPOSE:
+                    {
+                        RE_CAST_EV(xcb_expose_event_t);
+                        Emit(e->window, XCB_EXPOSE);
+                    }
+                }
+                free(ev);
             }
         }
 
-        bool isTimeToRender() {
+        bool isTimeToRender()
+        {
             auto currentTime = chrono::high_resolution_clock::now();
             const chrono::duration<double, milli> elapsedTime = currentTime - lastUpdateTime;
-            if (elapsedTime.count() >= frameDuration) {
+            if (elapsedTime.count() >= frameDuration)
+            {
                 lastUpdateTime = currentTime;
                 return true;
-
-            } return false;
-
+            }
+            return false;
         }
 };
 
