@@ -4438,7 +4438,7 @@ window {
             }
         
         /* Main          */
-            /* void
+            void
             raise()
             {
                 AutoTimer t("window::raise");
@@ -4453,7 +4453,7 @@ window {
                     }
                 );
                 xcb_flush(conn);
-            }  */      
+            }  
             
             void
             map()
@@ -6625,23 +6625,6 @@ window {
                     );
                     xcb_flush(conn);
                 }
-
-                void
-                raise()
-                {
-                    AutoTimer t("window::raise");
-
-                    xcb_configure_window(
-                        conn,
-                        _window,
-                        XCB_CONFIG_WINDOW_STACK_MODE, 
-                        (const uint32_t[1])
-                        {
-                            XCB_STACK_MODE_ABOVE
-                        }
-                    );
-                    xcb_flush(conn);
-                } 
 
             void
             make_window()
