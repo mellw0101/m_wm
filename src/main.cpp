@@ -4443,7 +4443,7 @@ window {
             {
                 AutoTimer t(__func__);
 
-                VoidC cookie = xcb_configure_window(
+                xcb_configure_window(
                     conn,
                     _window,
                     XCB_CONFIG_WINDOW_STACK_MODE, 
@@ -4452,8 +4452,7 @@ window {
                         XCB_STACK_MODE_ABOVE
                     }
                 );
-                CheckVoidC(cookie, "Failed to raise window");
-                FlushX_Win(_window);
+                xcb_flush(conn);
             }            
             
             void
@@ -4470,10 +4469,9 @@ window {
             {
                 AutoTimer t(__func__);
 
-                VoidC cookie = xcb_unmap_window(conn, _window);
-                CheckVoidC(cookie, "Failed to unmap window");
-                FlushX_Win(_window);
-            }            
+                xcb_unmap_window(conn, _window);
+                xcb_flush(conn);
+            }
             
             void
             reparent(uint32_t __new_parent, int16_t __x, int16_t __y)
@@ -6270,7 +6268,7 @@ window {
              *
              */
             void
-            draw_acc(const string &__str, int __text_color = WHITE, int __backround_color = 0, const char *__font_name = DEFAULT_FONT)
+            draw_acc(const char *__str, int __text_color = WHITE, int __backround_color = 0, const char *__font_name = DEFAULT_FONT)
             {
                 AutoTimer t(__func__);
 
@@ -6285,12 +6283,12 @@ window {
                 
                 xcb_image_text_8(
                     conn,
-                    __str.length(),
+                    slen(__str),
                     _window,
                     font_gc,
-                    CENTER_TEXT(_width, __str.length()),
+                    CENTER_TEXT(_width, slen(__str)),
                     CENTER_TEXT_Y(_height),
-                    __str.c_str()
+                    __str
                 );
                 xcb_flush(conn);
             }
@@ -6346,7 +6344,7 @@ window {
             }
             
             void
-            draw_acc_16(const string &__str, int __text_color = WHITE, int __background_color = 0, const char *__font_name = DEFAULT_FONT)
+            draw_acc_16(const char *__str, int __text_color = WHITE, int __background_color = 0, const char *__font_name = DEFAULT_FONT)
             {
                 AutoTimer t(__func__);
 
@@ -6359,14 +6357,14 @@ window {
                 }
 
                 int len;
-                xcb_char2b_t *char2b_str = to_char2b(__str.c_str(), &len);
+                xcb_char2b_t *char2b_str = to_char2b(__str, &len);
                 
                 xcb_image_text_16(
                     conn,
                     len,
                     _window,
                     font_gc,
-                    CENTER_TEXT(_width, __str.length()),
+                    CENTER_TEXT(_width, slen(__str)),
                     CENTER_TEXT_Y(_height),
                     char2b_str
                 );
@@ -6591,6 +6589,8 @@ window {
             void
             make_window()
             {
+                AutoTimer t("window::make_window");
+
                 if (( _window = xcb_generate_id( conn )) == U32_MAX )
                 {
                     loutEWin << "Could not generate id for window" << '\n';
@@ -7502,8 +7502,8 @@ class client {
             draw_title( uint32_t __mode )
             {
                 titlebar.clear();
-                if (__mode & TITLE_REQ_DRAW ) { titlebar.draw_acc_16(win.get_net_wm_name_by_req()); }
-                if (__mode & TITLE_INTR_DRAW) { titlebar.draw_acc_16(win.get_net_wm_name()); }
+                if (__mode & TITLE_REQ_DRAW ) { titlebar.draw_acc_16(win.get_net_wm_name_by_req().c_str()); }
+                if (__mode & TITLE_INTR_DRAW) { titlebar.draw_acc_16(win.get_net_wm_name().c_str()); }
             }
             
             #define CLI_RIGHT  screen->width_in_pixels  - this->width
@@ -7650,10 +7650,20 @@ class client {
                 frame.x_y(x, y);
                 // frame.configure(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, (uint32_t[2]){x, y});
             }
-            void _x(int16_t x) {
-                frame.x(x);
-        
+            
+            void
+            _x(int16_t x)
+            {
+                /* frame.x(x); */
+                AutoTimer t("client::_x");
+
+                const uint32_t newX = x;
+                xcb_configure_window_checked(conn, frame, XCB_CONFIG_WINDOW_X, (const uint32_t[1]){newX});
+                xcb_flush(conn);
+                frame.update(newX, frame.y(), frame.width(), frame.height());
+                update();
             }
+
             void _y(int16_t y) {
                 frame.y(y);
         
@@ -7674,6 +7684,7 @@ class client {
                 xcb_flush(conn);
         
             }
+
             void
             _height(const uint32_t &height)
             {
@@ -8058,14 +8069,14 @@ class client {
             ConnSig(titlebar, XCB_EXPOSE,
             
                 titlebar.clear();
-                titlebar.draw_acc_16(win.get_net_wm_name());
+                titlebar.draw_acc_16(win.get_net_wm_name().c_str());
                 xcb_flush(conn);
             );
 
             ConnSig(win, XCB_PROPERTY_NOTIFY,
             
                 titlebar.clear();
-                titlebar.draw_acc_16(win.get_net_wm_name_by_req());
+                titlebar.draw_acc_16(win.get_net_wm_name_by_req().c_str());
                 xcb_flush(conn);
             );
 
@@ -8562,7 +8573,7 @@ class Entry {
                 BUTTON_EVENT_MASK,
                 MAP
             );
-            ConnSig(window , XCB_EXPOSE, window.draw_acc(name););
+            ConnSig(window , XCB_EXPOSE, window.draw_acc(name.c_str()););
             CONN(L_MOUSE_BUTTON_EVENT, if ( __window == this->window && this->action != nullptr ) this->action(); WS_emit(window.parent(), HIDE_CONTEXT_MENU);, this->window);
             CONN(R_MOUSE_BUTTON_EVENT, if (__window == this->window) Emit(window.parent(), HIDE_CONTEXT_MENU );, this->window);
             
@@ -10099,7 +10110,7 @@ class __status_bar__ {
             );
             CONN(XCB_EXPOSE,
             {
-                _w[_TIME_DATE].draw_acc(get_time_and_date__());
+                _w[_TIME_DATE].draw_acc(get_time_and_date__().c_str());
             }
             ,_w[_TIME_DATE]);
 
@@ -13366,7 +13377,7 @@ class __dock_search__ {
 
         void draw_text()
         {
-            main_window.draw_acc(search_string.str());
+            main_window.draw_acc(search_string.str().c_str());
         }
 };
 
@@ -14660,7 +14671,7 @@ class resize_client {
                             case XCB_MOTION_NOTIFY:
                             {
                                 /* if (e->time == XCB_CURRENT_TIME) {} */
-                                if (motion_bit++ > 1)
+                                if (motion_bit++ > 3)
                                 {
                                     AutoTimer t("resize_client::border::pollForEvents XCB_MOTION_NOTIFY");
                                     
@@ -14688,7 +14699,6 @@ class resize_client {
                         free(ev);
                     }
                     return evVec;
-                    /* usleep(((double)1000 / 120) * 1000); */
                 }
 
                 void
@@ -14801,7 +14811,7 @@ class resize_client {
                         {
                             Emit(expose_evVec[i], XCB_EXPOSE);
                         }
-                        usleep(1000);
+                        usleep(2800);
                     }
                 }
 
