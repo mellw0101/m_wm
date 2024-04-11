@@ -1,12 +1,12 @@
 #include "xcb.hpp"
 // #include "data.hpp"
-#include "data.hpp"
 #include "defenitions.hpp"
 #include "tools.hpp"
 #include "Log.hpp"
 #include <cstdint>
 #include <xcb/xcb.h>
 #include <xcb/xproto.h>
+#include "prof.hpp"
 
 xcb_intern_atom_cookie_t xcb::intern_atom_cookie(const char *__name) {
     return xcb_intern_atom(
@@ -43,7 +43,7 @@ xcb_atom_t xcb::intern_atom(const char *__name) {
     }
     return true;
 } */
-bool xcb::window_exists(uint32_t __w) {
+/* bool xcb::window_exists(uint32_t __w) {
     xcb_generic_error_t *err = NULL;
     auto *reply = xcb_query_tree_reply(conn, xcb_query_tree(conn, __w), &err);
     if (reply) free(reply); // Correctly free the reply if it's non-null
@@ -54,7 +54,7 @@ bool xcb::window_exists(uint32_t __w) {
     return false; // Return false if there was an error, assuming it indicates non-existence
 
 }
-
+ */
 uint32_t
 xcb::gen_Xid()
 {
@@ -230,4 +230,60 @@ xcb::get_atom(uint8_t __only_if_exists, const char *__atom_name)
 {
     iAtomR r(0, __atom_name);
     return (r.is_not_valid()) ? XCB_NONE : r.Atom();
+}
+
+uint32_t
+xcb::get_input_focus()
+{
+    AutoTimer t("xcb::get_input_focus");
+
+    xcb_get_input_focus_cookie_t cookie = xcb_get_input_focus(conn);
+    xcb_get_input_focus_reply_t *reply = xcb_get_input_focus_reply(conn, cookie, NULL); // NULL for no error handling
+
+    if (reply == nullptr)
+    {
+        loutE << "Could not get input focus" << "\n";
+        return UINT32_MAX;
+    }
+    uint32_t w = reply->focus;
+    loutI << "The current focused win" << w << '\n';
+    free(reply);
+    return w;
+}
+
+uint32_t
+xcb::get_input_focus_unchecked()
+{
+    AutoTimer t("xcb::get_input_focus_unchecked");
+
+    xcb_get_input_focus_cookie_t cookie = xcb_get_input_focus_unchecked(conn);
+    xcb_get_input_focus_reply_t *reply = xcb_get_input_focus_reply(conn, cookie, NULL); // NULL for no error handling
+
+    if (reply == nullptr)
+    {
+        loutE << "Could not get input focus" << "\n";
+        return UINT32_MAX;
+    }
+    uint32_t w = reply->focus;
+    loutI << "The current focused win" << w << '\n';
+    free(reply);
+    return w;
+}
+
+uint32_t
+xcb::window_exists(uint32_t w)
+{
+    // Attempt to retrieve the WM_NAME property of the window
+    xcb_get_property_cookie_t cookie = xcb_get_property_unchecked(conn, 0, w, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 0, 0);
+
+    xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, NULL);
+
+    if (reply == nullptr)
+    {
+        // The window does not exist
+        return UINT32_MAX;
+    }
+
+    free(reply);
+    return w;
 }

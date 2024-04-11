@@ -4619,14 +4619,14 @@ window {
             {
                 AutoTimer timer("window::focus");
                 focus_input();
-                set_active_EWMH_window();
+                this->set_active_EWMH_window();
                 xcb_flush(conn);
                 if (!is_active_EWMH_window())
                 {
                     loutEWin << "window wan not correctly set as 'active EWMH window'" << '\n';
                     return 1;
                 }
-                raise();
+                this->raise();
                 return 0;
             }
             
@@ -6538,7 +6538,7 @@ window {
                 {
                     xcb_grab_button(
                         conn, 
-                        0,
+                        1,
                         _window, 
                         XCB_EVENT_MASK_BUTTON_PRESS,
                         XCB_GRAB_MODE_ASYNC, 
@@ -7439,9 +7439,10 @@ class client {
                 /* win.focus_input();
                 win.set_active_EWMH_window();
                 xcb_flush(conn); */
-                frame.raise();
+                this->frame.raise();
                 int status = win.focus();
                 xcb_flush(conn);
+                this->frame.raise();
                 if(status != 0)
                 {
                     loutE << "could not focus win" << '\n';
@@ -7698,29 +7699,49 @@ class client {
             
         
         /* Config    */
-            void x_y(const uint32_t &x, const uint32_t &y) {
-                frame.x_y(x, y);
-                // frame.configure(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, (uint32_t[2]){x, y});
+            void
+            x_y(uint32_t __x, uint32_t __y)
+            {
+                /* frame.x_y(x, y); */
+                AutoTimer t("client::x_y");
+                const uint32_t newX = __x, newY = __y;
+
+                xcb_configure_window_checked(conn, frame, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, (const uint32_t[2]){newX, newY});
+                xcb_flush(conn);
+                frame.update(newX, newY, frame.width(), frame.height());
+                update();
             }
             
             void
-            _x(int16_t x)
+            _x(int16_t __x)
             {
                 /* frame.x(x); */
                 AutoTimer t("client::_x");
 
-                const uint32_t newX = x;
+                const uint32_t newX = __x;
                 xcb_configure_window_checked(conn, frame, XCB_CONFIG_WINDOW_X, (const uint32_t[1]){newX});
                 xcb_flush(conn);
                 frame.update(newX, frame.y(), frame.width(), frame.height());
                 update();
             }
 
-            void _y(int16_t y) {
-                frame.y(y);
-        
+            void
+            _y(int16_t __y)
+            {
+                /* frame.y(y); */
+
+                /* frame.x(x); */
+                AutoTimer t("client::_y");
+
+                const uint32_t newY = __y;
+                xcb_configure_window_checked(conn, frame, XCB_CONFIG_WINDOW_Y, (const uint32_t[1]){newY});
+                xcb_flush(conn);
+                frame.update(frame.x(), __y, frame.width(), frame.height());
+                update();
             }
-            void _width(uint16_t width) {
+
+            void _width(uint16_t width)
+            {
                 win.width((width - (BORDER_SIZE * 2)));
                 xcb_flush(conn);
                 frame.width((width));
@@ -7734,7 +7755,6 @@ class client {
                 border[top_right].x((width - BORDER_SIZE));
                 border[bottom_right].x((width - BORDER_SIZE));
                 xcb_flush(conn);
-        
             }
 
             void
@@ -8066,38 +8086,36 @@ class client {
             update();
             xcb_flush(conn);
     
-            /* CONN(XCB_FOCUS_IN,
-            {
+            ConnSig(win, XCB_FOCUS_IN,
+            
                 win.ungrab_button({{L_MOUSE_BUTTON, NULL}});
                 xcb_flush(conn);
-            },
-            win);
+            );
 
-            CONN(XCB_FOCUS_OUT,
-            {
+            ConnSig(win, XCB_FOCUS_OUT,
+            
                 win.grab_button({{L_MOUSE_BUTTON, NULL}});
                 xcb_flush(conn);
-            },
-            win); */
+            );
 
-            CONN(L_MOUSE_BUTTON_EVENT,
-            {
+            ConnSig(win, L_MOUSE_BUTTON_EVENT,
+            
                 focus();
                 xcb_flush(conn);
-            },
-            win);
+            );
 
             frame.set_event_mask(FRAME_EVENT_MASK);
             frame.map();
 
-            CWC( frame );
-            CWC( win );
+            CWC(frame);
+            CWC(win);
         }
         
         void
         make_titlebar()
         {
             AutoTimer timer(__func__);
+
             titlebar.create_window(
                 frame,
                 BORDER_SIZE,
@@ -8113,7 +8131,6 @@ class client {
 
             titlebar.grab_button({{L_MOUSE_BUTTON, NULL}});
             draw_title(TITLE_REQ_DRAW);
-            /* icon.raise(); */
 
             ConnSig(titlebar, XCB_EXPOSE,
             
@@ -9230,7 +9247,7 @@ class Window_Manager {
                     {
                         { L_MOUSE_BUTTON, ALT },
                         { R_MOUSE_BUTTON, ALT },
-                        { L_MOUSE_BUTTON, 0   }
+                        { L_MOUSE_BUTTON, NULL }
                     }
                 );
 
@@ -9770,20 +9787,21 @@ class Window_Manager {
                 
                 ConnSig(screen->root, R_MOUSE_BUTTON_EVENT, context_menu->show(););
 
-                ConnSig(screen->root, XCB_FOCUS_IN ,
+                /* ConnSig(screen->root, XCB_FOCUS_IN,
 
                     if (w == screen->root) return;
 
                     client *c = this->client_from_window(&w);
                     if (c == nullptr) return;
-                    c->focus();
                     c->win.ungrab_button({{L_MOUSE_BUTTON, NULL}});
+                    xcb_flush(conn);
+                    c->focus();
                     xcb_flush(conn);
                     this->focused_client = c;
                     this->cur_d->focused_client = c;
                 );
 
-                ConnSig(screen->root, XCB_FOCUS_OUT, 
+                ConnSig(screen->root, XCB_FOCUS_OUT,
 
                     if (w == screen->root) return;
 
@@ -9791,7 +9809,7 @@ class Window_Manager {
                     if (c == nullptr) return;
                     c->win.grab_button({{L_MOUSE_BUTTON, NULL}});
                     xcb_flush(conn);
-                );
+                ); */
 
                 /* ConnSig(screen->root, SET_FOCUSED_CLIENT,
                     

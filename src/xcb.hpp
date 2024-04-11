@@ -1,20 +1,24 @@
 #ifndef XCB__HPP
 #define XCB__HPP
 
-#include <atomic>
 #include <cstdint>
 #include <cstdlib>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 #include <xcb/xproto.h>
-#include "data.hpp"
 #include "tools.hpp"
 #include "Log.hpp"
 #include "globals.h"
 
-using namespace std;
+/** UNUSED: HEADERS:
 
+    #include <atomic>
+    #include <vector>
+    #include "data.hpp"
+    #include "prof.hpp"
+*/
+
+using namespace std;
 
 #define X_CONN_ERROR 1
 #define X_REQ_ERROR 2
@@ -504,7 +508,7 @@ public:
     xcb_atom_t get_atom(uint8_t __only_if_exists, const char *name);
     xcb_intern_atom_reply_t *intern_atom_reply(xcb_intern_atom_cookie_t __cookie);
     xcb_atom_t intern_atom(const char *__name);
-    bool window_exists(uint32_t __w);
+    /* bool window_exists(uint32_t __w); */
     uint32_t gen_Xid();
     void window_stack(uint32_t __window1, uint32_t __window2, uint32_t __mode);
     inline bool check_req_err() { return ((_flags & (1ULL << X_REQ_ERROR)) != 0); }
@@ -515,6 +519,9 @@ public:
                     uint16_t __width, uint16_t __height);
 
     xcb_font_t get_font(const char *font_name);
+    uint32_t get_input_focus();
+    uint32_t get_input_focus_unchecked();
+    uint32_t window_exists(uint32_t w);
 
     xcb(/* xcb_connection_t *__conn, */ xcb_screen_t *__s);
 };
