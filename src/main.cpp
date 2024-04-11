@@ -16229,7 +16229,7 @@ buttonPressH(const xcb_generic_event_t *ev)
 {
     RE_CAST_EV(xcb_button_press_event_t);
     /* client *c = signal_manager->_window_client_map.retrive(e->event); */
-    client *c = wm->client_from_window(&e->event); /** <- EDIT: */
+    client *c = wm->client_from_any_window(&e->event); /** <- EDIT: */
     if (c == nullptr) return;
 
     if (e->detail == L_MOUSE_BUTTON)
