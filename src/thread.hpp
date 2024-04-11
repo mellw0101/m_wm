@@ -28,10 +28,10 @@ class Thread {
         template<typename Callable, typename... Args>
         Thread(Callable&& func, Args&&... args)
         : active(true), paused(false),
-        worker([this, func = std::forward<Callable>(func), ...args = 
-        std::forward<Args>(args)]()
+        worker([this, func = std::forward<Callable>(func), ...args = std::forward<Args>(args)]()
         {
-            try {
+            try
+            {
                 while (active)
                 {
                     if (!paused)
@@ -46,8 +46,7 @@ class Thread {
                 lastException = std::current_exception(); // Capture any exception
                 // Optionally, notify about the exception here
             }
-        })
-        {}
+        }){}
 
         ~Thread() {
             stop(); // Ensure the thread is signaled to stop
@@ -62,16 +61,16 @@ class Thread {
 
         void pause() { paused = true; }
         void resume() { paused = false; }
-        void stop() {
-            if (active) {
+        void stop()
+        {
+            if (active)
+            {
                 active = false;
-                if (worker.joinable()) {
+                if (worker.joinable())
+                {
                     worker.join();
-
                 }
-
             }
-
         }
 
         bool isPaused() const { return paused; }
@@ -80,12 +79,12 @@ class Thread {
 
         // New Functionality: Error handling
         bool hasExceptionOccurred() const { return static_cast<bool>(lastException); }
-        void rethrowException() const {
-            if (lastException) {
+        void rethrowException() const
+        {
+            if (lastException)
+            {
                 std::rethrow_exception(lastException);
-
             }
-
         }
 
     private:
@@ -105,16 +104,21 @@ class iter_thread_t {
         std::function<void()> task_; // The task to be performed, adjusted as needed
         std::tuple<ParamTypes...> params_; // Parameters to be used with the task
 
-        void loop() {
+        void loop()
+        {
             using namespace std::chrono;
             auto next_run_time = steady_clock::now() + milliseconds(interval_);
 
-            while (active_.load()) {
+            while (active_.load())
+            {
                 auto now = steady_clock::now();
-                if (now >= next_run_time) {
+                if (now >= next_run_time)
+                {
                     std::apply(task_, params_); // Use std::apply to pass tuple elements as arguments
                     next_run_time = now + milliseconds(interval_); // Schedule the next run
-                } else {
+                }
+                else
+                {
                     std::this_thread::sleep_for(milliseconds(1)); // Sleep for a short while to prevent busy waiting
                 }
             }
@@ -127,9 +131,11 @@ class iter_thread_t {
             worker_ = std::thread([this]() { this->loop(); });
         }
 
-        ~iter_thread_t() {
+        ~iter_thread_t()
+        {
             active_.store(false);
-            if (worker_.joinable()) {
+            if (worker_.joinable())
+            {
                 worker_.join();
             }
         }
@@ -266,23 +272,31 @@ public:
 
 #define enqueueT(__Name, __Pool, ...) \
     std::future<void> __Name = __Pool.enqueue(__VA_ARGS__)
+
 template<typename ThreadPoolType, typename Func, typename... Args>
-auto enqueueTask(ThreadPoolType& pool, Func&& func, Args&&... args) -> std::future<decltype(func(args...))> {
+auto enqueueTask(ThreadPoolType& pool, Func&& func, Args&&... args) -> std::future<decltype(func(args...))>
+{
     return pool.enqueue(std::forward<Func>(func), std::forward<Args>(args)...);
 }
 
 class ThreadPool {
     public:
-        ThreadPool(size_t threads) : stop(false) {
-            for(size_t i = 0; i < threads; ++i) {
-                workers.emplace_back([this] {
-                    while(true) {
+        ThreadPool(size_t threads) : stop(false)
+        {
+            for(size_t i = 0; i < threads; ++i)
+            {
+                workers.emplace_back([this]
+                {
+                    while(true)
+                    {
                         std::function<void()> task;
                         {
                             std::unique_lock<std::mutex> lock(this->queueMutex);
                             this->condition.wait(lock, [this] { return this->stop || !this->tasks.empty(); });
-                            if(this->stop && this->tasks.empty())
+                            if (this->stop && this->tasks.empty())
+                            {
                                 return;
+                            }
                             task = std::move(this->tasks.front());
                             this->tasks.pop();
 
@@ -298,37 +312,43 @@ class ThreadPool {
 
         template<class Callback, class... Args>
         auto enqueue(Callback&& f, Args&&... args)
-        -> std::future<typename std::invoke_result<Callback, Args...>::type> {
+        -> std::future<typename std::invoke_result<Callback, Args...>::type>
+        {
             using return_type = typename std::invoke_result<Callback, Args...>::type;
 
-            auto task = std::make_shared<std::packaged_task<return_type()>>(
+            auto task = std::make_shared<std::packaged_task<return_type()>>
+            (
                 std::bind(std::forward<Callback>(f), std::forward<Args>(args)...)
             );
 
             std::future<return_type> res = task->get_future();
             {
                 std::unique_lock<std::mutex> lock(queueMutex);
-                if(stop)
+                if (stop)
+                {
                     throw std::runtime_error("enqueue on stopped ThreadPool");
+                }
                 tasks.emplace([task](){ (*task)(); });
             
-            } condition.notify_one();
+            }
+            condition.notify_one();
 
             return res;
         }
         
-        ~ThreadPool() {
+        ~ThreadPool()
+        {
             {
                 std::unique_lock<std::mutex> lock(queueMutex);
                 stop = true;
             
-            } condition.notify_all();
-
-            for(std::thread &worker: workers) {
-                worker.join();
-
             }
+            condition.notify_all();
 
+            for(std::thread &worker: workers)
+            {
+                worker.join();
+            }
         }
 
     private:
@@ -418,46 +438,223 @@ class ThreadWrapper {
 };
 
 class TimedDataSender {
-        void loop() {
-            using namespace std::chrono;
-            auto next_run_time = steady_clock::now() + milliseconds(interval_);
+    void loop()
+    {
+        using namespace std::chrono;
+        auto next_run_time = steady_clock::now() + milliseconds(interval_);
 
-            while (active_.load()) {
-                auto now = steady_clock::now();
-                if (now >= next_run_time) {
-                    task_();/* It's time to perform the task */
-                    next_run_time = now + milliseconds(interval_);/* Schedule the next run */
-                }
-                else {
-                    this_thread::sleep_for(milliseconds(1));/* Sleep for a short while to prevent busy waiting */
-                }
+        while (active_.load())
+        {
+            auto now = steady_clock::now();
+            if (now >= next_run_time)
+            {
+                task_();/* It's time to perform the task */
+                next_run_time = now + milliseconds(interval_);/* Schedule the next run */
+            }
+            else
+            {
+                this_thread::sleep_for(milliseconds(1));/* Sleep for a short while to prevent busy waiting */
             }
         }
+    }
 
-        thread worker_;
-        atomic<bool> active_;
-        unsigned int interval_; // The interval between task executions, in milliseconds
-        function<void()> task_; // The task to be performed
+    thread worker_;
+    atomic<bool> active_;
+    unsigned int interval_; // The interval between task executions, in milliseconds
+    function<void()> task_; // The task to be performed
 
-    public:
-        // Constructor: Takes the interval in milliseconds and the task to perform
-        TimedDataSender(unsigned interval, std::function<void()> task)
-        : interval_(interval), task_(std::move(task)), active_(true) {
-            worker_ = std::thread([this]() { this->loop(); });
+    atomic<bool> paused_; // Added to indicate whether the loop is paused
+    mutex mtx_; // Mutex for condition variable
+    condition_variable cv_; // Condition variable for pausing and resuming
+
+
+public:
+    // Constructor: Takes the interval in milliseconds and the task to perform
+    TimedDataSender(unsigned interval, std::function<void()> task)
+    : interval_(interval), task_(std::move(task)), active_(true)
+    {
+        worker_ = std::thread([this]() { this->loop(); });
+    }
+
+    ~TimedDataSender()
+    {
+        // Signal the loop to stop and join the thread upon destruction
+        active_.store(false);
+        if (worker_.joinable())
+        {
+            worker_.join();
         }
+    }
 
-        ~TimedDataSender() {
-            // Signal the loop to stop and join the thread upon destruction
-            active_.store(false);
-            if (worker_.joinable()) {
+    TimedDataSender(const TimedDataSender&) = delete;
+    TimedDataSender& operator=(const TimedDataSender&) = delete;
+    TimedDataSender(TimedDataSender&&) = delete;
+    TimedDataSender& operator=(TimedDataSender&&) = delete;
+
+    void stop()
+    {
+        active_.store(false);
+        resume(); // Ensure we wake up the loop for it to exit
+        if (worker_.joinable())
+        {
+            worker_.join();
+        }
+    }
+
+    void pause()
+    {
+        paused_.store(true);
+    }
+
+    void resume()
+    {
+        paused_.store(false);
+        cv_.notify_one(); // Signal the condition variable to wake the loop
+    }
+};
+
+
+class TimedDataSenderSeperateThread {
+    void loop()
+    {
+        using namespace std::chrono;
+        auto next_run_time = steady_clock::now() + milliseconds(interval_);
+
+        while (active_.load())
+        {
+            auto now = steady_clock::now();
+            if (now >= next_run_time)
+            {
+                // Launch the task in a detached thread to allow the loop to continue immediately
+                thread([this]() { task_(); }).detach();
+                next_run_time += milliseconds(interval_); // Schedule the next run
+            }
+            else
+            {
+                this_thread::sleep_for(milliseconds(1)); // Sleep to prevent busy waiting
+            }
+        }
+    }
+
+    thread worker_;
+    atomic<bool> active_;
+    unsigned int interval_; // The interval between task executions, in milliseconds
+    function<void()> task_; // The task to be performed
+
+public:
+    // Constructor: Takes the interval in milliseconds and the task to perform
+    TimedDataSenderSeperateThread(unsigned interval, function<void()> task)
+    : interval_(interval), task_(std::move(task)), active_(true)
+    {
+        worker_ = thread([this]() { this->loop(); });
+    }
+
+    ~TimedDataSenderSeperateThread()
+    {
+        // Signal the loop to stop and join the thread upon destruction
+        active_.store(false);
+        if (worker_.joinable())
+        {
+            worker_.join();
+        }
+    }
+
+    // Deleted copy/move constructors and assignment operators for thread safety
+    TimedDataSenderSeperateThread(const TimedDataSenderSeperateThread&) = delete;
+    TimedDataSenderSeperateThread& operator=(const TimedDataSenderSeperateThread&) = delete;
+    TimedDataSenderSeperateThread(TimedDataSenderSeperateThread&&) = delete;
+    TimedDataSenderSeperateThread& operator=(TimedDataSenderSeperateThread&&) = delete;
+
+    void stop()
+    {
+        if (active_.exchange(false))
+        {
+            if (worker_.joinable())
+            {
                 worker_.join();
             }
         }
+    }
+};
+using tdssp = TimedDataSenderSeperateThread;
 
-        TimedDataSender(const TimedDataSender&) = delete;
-        TimedDataSender& operator=(const TimedDataSender&) = delete;
-        TimedDataSender(TimedDataSender&&) = delete;
-        TimedDataSender& operator=(TimedDataSender&&) = delete;
+class TimedDataSender_pause {
+private:
+    thread worker_;
+    atomic<bool> active_;
+    atomic<bool> paused_; // Added to indicate whether the loop is paused
+    unsigned int interval_; // The interval between task executions, in milliseconds
+    function<void()> task_; // The task to be performed
+    mutex mtx_; // Mutex for condition variable
+    condition_variable cv_; // Condition variable for pausing and resuming
+
+    void loop()
+    {
+        using namespace std::chrono;
+        auto next_run_time = steady_clock::now() + milliseconds(interval_);
+
+        while (active_.load())
+        {
+            // Check if paused
+            unique_lock<mutex> lock(mtx_);
+            cv_.wait(lock, [this](){ return !paused_.load() || !active_.load(); });
+
+            if (!active_.load()) break; // If active_ is false, exit loop
+
+            lock.unlock(); // Unlock before potentially lengthy operation
+
+            auto now = steady_clock::now();
+            if (now >= next_run_time)
+            {
+                task_(); // It's time to perform the task
+                next_run_time = now + milliseconds(interval_); // Schedule the next run
+            }
+            else
+            {
+                this_thread::sleep_for(milliseconds(1)); // Sleep for a short while to prevent busy waiting
+            }
+        }
+    }
+
+public:
+    // Constructor: Takes the interval in milliseconds and the task to perform
+    TimedDataSender_pause(unsigned interval, function<void()> task)
+        : interval_(interval), task_(std::move(task)), active_(true), paused_(false)
+    {
+        worker_ = thread([this]() { this->loop(); });
+    }
+
+    ~TimedDataSender_pause()
+    {
+        stop(); // Ensure the loop is stopped and the thread is joined upon destruction
+    }
+
+    // Disallow copy and move semantics
+    TimedDataSender_pause(const TimedDataSender_pause&) = delete;
+    TimedDataSender_pause& operator=(const TimedDataSender_pause&) = delete;
+    TimedDataSender_pause(TimedDataSender&&) = delete;
+    TimedDataSender_pause& operator=(TimedDataSender_pause&&) = delete;
+
+    void stop()
+    {
+        active_.store(false);
+        resume(); // Ensure we wake up the loop for it to exit
+        if (worker_.joinable())
+        {
+            worker_.join();
+        }
+    }
+
+    void pause()
+    {
+        paused_.store(true);
+    }
+
+    void resume()
+    {
+        paused_.store(false);
+        cv_.notify_one(); // Signal the condition variable to wake the loop
+    }
 };
 
 #include "Log.hpp"

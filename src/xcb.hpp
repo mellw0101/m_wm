@@ -514,6 +514,8 @@ public:
     void create_w(uint32_t __pw, uint32_t __w, int16_t __x, int16_t __y,
                     uint16_t __width, uint16_t __height);
 
+    xcb_font_t get_font(const char *font_name);
+
     xcb(/* xcb_connection_t *__conn, */ xcb_screen_t *__s);
 };
 static class xcb *xcb(nullptr);

@@ -174,44 +174,56 @@ xcb::check_error()
     }
 }
 
-void
-xcb::mapW(uint32_t __w)
+void xcb::mapW(uint32_t __w)
 {
     VoidC cookie = xcb_map_window(conn, __w);
     CheckVoidC(cookie, "window map failed");
     xcb_flush(conn);
 }
 
-// void atoms_t::fetch_atom_data(xcb_connection_t *conn, char *__name) {
-//     // atom_t *atom = new atom_t;
-//     atom_t *atom = Malloc<atom_t>().allocate();
-//     intern_atom_cok_t cookie(conn, 0, __name);
-//     xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(conn, cookie, nullptr);
-//     if (!reply) {
-//         loutE << "reply = nullptr" << loutEND;
+xcb_font_t xcb::get_font(const char *font_name)
+{
+    xcb_font_t font = xcb_generate_id(conn);
+    xcb_open_font(
+        conn,
+        font,
+        slen(font_name),
+        font_name
+    );
+    xcb_flush(conn);
+    return font;
+}
+
+/* void atoms_t::fetch_atom_data(xcb_connection_t *conn, char *__name) {
+    // atom_t *atom = new atom_t;
+    atom_t *atom = Malloc<atom_t>().allocate();
+    intern_atom_cok_t cookie(conn, 0, __name);
+    xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(conn, cookie, nullptr);
+    if (!reply) {
+        loutE << "reply = nullptr" << loutEND;
         
-//     }
+    }
 
-//     atom->response_type = reply->response_type;
-//     atom->pad0          = reply->pad0;
-//     atom->sequence      = reply->sequence;
-//     atom->length        = reply->length;
-//     atom->atom          = reply->atom;
+    atom->response_type = reply->response_type;
+    atom->pad0          = reply->pad0;
+    atom->sequence      = reply->sequence;
+    atom->length        = reply->length;
+    atom->atom          = reply->atom;
 
-//     // _data.push_back(std::move(atom));
+    // _data.push_back(std::move(atom));
 
-// }
-// atoms_t::atoms_t(xcb_connection_t *conn, char **__atoms){
-//     for (int i = 0; __atoms[i]; ++i) {
-//         fetch_atom_data(conn, __atoms[i]);
+}
+atoms_t::atoms_t(xcb_connection_t *conn, char **__atoms){
+    for (int i = 0; __atoms[i]; ++i) {
+        fetch_atom_data(conn, __atoms[i]);
 
-//     }
+    }
 
-// }
-// atoms_t::~atoms_t() {
-//     for (const auto &atom : _data) Malloc<atom_t>().deallocate(atom); /* delete atom; */
+}
+atoms_t::~atoms_t() {
+    for (const auto &atom : _data) Malloc<atom_t>().deallocate(atom); // delete atom;
     
-// }
+} */
 
 uint32_t
 xcb::get_atom(uint8_t __only_if_exists, const char *__atom_name)
