@@ -8066,7 +8066,7 @@ class client {
             update();
             xcb_flush(conn);
     
-            CONN(XCB_FOCUS_IN,
+            /* CONN(XCB_FOCUS_IN,
             {
                 win.ungrab_button({{L_MOUSE_BUTTON, NULL}});
                 xcb_flush(conn);
@@ -8078,7 +8078,7 @@ class client {
                 win.grab_button({{L_MOUSE_BUTTON, NULL}});
                 xcb_flush(conn);
             },
-            win);
+            win); */
 
             CONN(L_MOUSE_BUTTON_EVENT,
             {
@@ -9770,7 +9770,30 @@ class Window_Manager {
                 
                 ConnSig(screen->root, R_MOUSE_BUTTON_EVENT, context_menu->show(););
 
-                ConnSig(screen->root, SET_FOCUSED_CLIENT,
+                ConnSig(screen->root, XCB_FOCUS_IN ,
+
+                    if (w == screen->root) return;
+
+                    client *c = this->client_from_window(&w);
+                    if (c == nullptr) return;
+                    c->focus();
+                    c->win.ungrab_button({{L_MOUSE_BUTTON, NULL}});
+                    xcb_flush(conn);
+                    this->focused_client = c;
+                    this->cur_d->focused_client = c;
+                );
+
+                ConnSig(screen->root, XCB_FOCUS_OUT, 
+
+                    if (w == screen->root) return;
+
+                    client *c = this->client_from_window(&w);
+                    if (c == nullptr) return;
+                    c->win.grab_button({{L_MOUSE_BUTTON, NULL}});
+                    xcb_flush(conn);
+                );
+
+                /* ConnSig(screen->root, SET_FOCUSED_CLIENT,
                     
                     if (w == screen->root) return;
 
@@ -9778,14 +9801,14 @@ class Window_Manager {
                     if (c == nullptr)
                     {
                         loutE << "c = nullptr " << Var_(w) << '\n';
-                        /* focused_client = nullptr; */
+                        focused_client = nullptr;
                         return;
                     }
-                    /* c->raise(); */
+                    c->raise();
                     focused_client = c;
                     cur_d->focused_client = c;
-                    /* c->set_active_EWMH_window(); */
-                );
+                    c->set_active_EWMH_window();
+                ); */
                 
                 if (BORDER_SIZE == 0)
                 {
