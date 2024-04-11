@@ -9771,6 +9771,8 @@ class Window_Manager {
                 ConnSig(screen->root, R_MOUSE_BUTTON_EVENT, context_menu->show(););
 
                 ConnSig(screen->root, SET_FOCUSED_CLIENT,
+                    
+                    if (w == screen->root) return;
 
                     client *c = client_from_any_window(&w);
                     if (c == nullptr)
