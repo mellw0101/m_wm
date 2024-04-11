@@ -4599,10 +4599,10 @@ window {
             focus_input()
             {
                 AutoTimer timer(__func__);
-
+                
                 xcb_set_input_focus(
                     conn,
-                    XCB_INPUT_FOCUS_POINTER_ROOT,
+                    /* XCB_INPUT_FOCUS_PARENT, */XCB_INPUT_FOCUS_POINTER_ROOT,
                     _window,
                     XCB_CURRENT_TIME
                 );
@@ -4991,7 +4991,7 @@ window {
             {
                 AutoTimer t(__func__);
 
-                VoidC cookie = xcb_change_property(
+                xcb_change_property(
                     conn,
                     XCB_PROP_MODE_REPLACE,
                     _window,
@@ -5001,8 +5001,7 @@ window {
                     0,
                     0
                 );
-                CheckVoidC(cookie, "ERROR: ( xcb_change_property ) Failed");
-                FlushX_Win(_window);
+                xcb_flush(conn);
             }
         
         /* Get           */
@@ -6394,8 +6393,8 @@ window {
                     {   U_ARROW,    SUPER                   },
                     {   D_ARROW,    SUPER                   },
                     {   TAB,        ALT                     },
-                    {   S,          SUPER                   }, // key_binding for 'system_settings'
-                    {   K,          SUPER                   }/* ,
+                    /* {   S,          SUPER                   }, // key_binding for 'system_settings'
+                    {   K,          SUPER                   } *//* ,
                     {   R,          SUPER                   }, // key_binding for 'runner_window'
                     {   F,          SUPER                   }, // key_binding for 'file_app'
                     {   D,          SUPER                   }  // key_binding for 'debub menu' */
@@ -6421,7 +6420,7 @@ window {
                         {
                             xcb_grab_key(
                                 conn,
-                                1,
+                                0,
                                 _window,
                                 binding.second, 
                                 *kc,        
@@ -6517,7 +6516,7 @@ window {
                 {
                     xcb_grab_button(
                         conn, 
-                        1,
+                        0,
                         _window, 
                         XCB_EVENT_MASK_BUTTON_PRESS,
                         XCB_GRAB_MODE_ASYNC, 
@@ -7744,8 +7743,6 @@ class client {
 
                 xcb_flush(conn);
 
-                win.send_intern_struct_update();
-
                 win.update(win.x(), win.y(), win.width(), ((height - TITLE_BAR_HEIGHT) - (BORDER_SIZE * 2)));
                 frame.update(frame.x(), y, frame.width(), height);
                 border[left].update(border[left].x(), border[left].y(), border[left].width(), (height - (BORDER_SIZE * 2)));
@@ -8792,6 +8789,7 @@ class Window_Manager {
                 context_menu->add_entry("code",                 [this]() { launcher.launch_child_process("code"); });
                 context_menu->add_entry("dolphin",              [this]() { launcher.launch_child_process("dolphin"); });
                 context_menu->add_entry("alacritty",            [this]() { launcher.launch_child_process("alacritty"); });
+                context_menu->add_entry("falkon",               [this]() { launcher.launch_child_process("falkon"); });
                 context_menu->add_entry("quit",                 [this]() { quit(0); });
 
                 setup_events(); 
@@ -8927,7 +8925,7 @@ class Window_Manager {
 
                             return;
                         }
-                        if (i == (cur_d->current_clients.size() - 1)) i = 0;
+                        /* if (i == (cur_d->current_clients.size() - 1)) i = 0; */
                     }
                 }
 
@@ -8947,7 +8945,7 @@ class Window_Manager {
                     tmp.unmap();
                     tmp.kill();
                     focused_client = nullptr;
-                    cur_d->focused_client = nullptr;
+                    /* cur_d->focused_client = nullptr; */
                 }
 
             /* Fetch */
@@ -9406,6 +9404,7 @@ class Window_Manager {
                 {
                     { Q,       SHIFT  | ALT   },
                     { T,       CTRL   | ALT   },
+                    { TAB,     ALT            },
                     { L_ARROW, CTRL   | SUPER },
                     { R_ARROW, CTRL   | SUPER },
                     { F12,     NULL           },
@@ -9728,6 +9727,8 @@ class Window_Manager {
                     }
                     c->raise();
                     focused_client = c;
+                    cur_d->focused_client = c;
+                    c->set_active_EWMH_window();
                 );
                 
                 if (BORDER_SIZE == 0)
@@ -10835,18 +10836,23 @@ class Mwm_Animator {
             }
         }
     
-        void GFrameAnimation_X(const int & endX)
+        void GFrameAnimation_X(int endX)
         {
             while (true)
             {
                 if (currentX == endX)
                 {
-                    conf_client_x();
+                    if (c != nullptr)
+                    {
+                        conf_client_x();
+                    }
                     break;
                 }
 
-                conf_client_x();
-                c->titlebar.send_event(XCB_EVENT_MASK_EXPOSURE);
+                if (c != nullptr)
+                {
+                    conf_client_x();
+                }
                 thread_sleep(GAnimDuration);
             }
         }
@@ -11186,7 +11192,10 @@ class __animate__ {
         }
 };
 
-void animate(client * & c, const int & endX, const int & endY, const int & endWidth, const int & endHeight, const int & duration) {
+void animate(client * & c, const int & endX, const int & endY, const int & endWidth, const int & endHeight, const int & duration)
+{
+    if (c == nullptr) return;
+
     Mwm_Animator anim(c->frame);
     anim.animate(
         c->x,
@@ -11199,11 +11208,14 @@ void animate(client * & c, const int & endX, const int & endY, const int & endWi
         endHeight, 
         duration
 
-    ); c->update();
-
+    );
+    c->update();
 }
+
 void animate_client(client * & c, const int & endX, const int & endY, const int & endWidth, const int & endHeight, const int & duration)
 {
+    if (c == nullptr) return;
+
     Mwm_Animator client_anim(c);
     client_anim.animate_client(
         c->x,
@@ -11216,8 +11228,10 @@ void animate_client(client * & c, const int & endX, const int & endY, const int 
         endHeight,
         duration
 
-    ); c->update();
+    );
+    c->update();
 }
+
 class button
 {
     public:
@@ -13823,7 +13837,6 @@ class change_desktop {
                         {
                             wm->cur_d->current_clients[0]->focus();
                             wm->focused_client = wm->cur_d->current_clients[0];
-                            wm->cur_d->focused_client = wm->cur_d->current_clients[0];
                         }
                     }
                     else
@@ -13863,7 +13876,6 @@ class change_desktop {
                         {
                             wm->cur_d->current_clients[0]->focus();
                             wm->focused_client = wm->cur_d->current_clients[0];
-                            wm->cur_d->focused_client = wm->cur_d->current_clients[0];
                         }
                     }
                     else
@@ -13876,10 +13888,11 @@ class change_desktop {
                 }
             }
 
-            mtx.lock();
-            thread_sleep(duration + 20);
+            /* mtx.lock(); */
+            lock_guard<mutex> lock(mtx);
+            thread_sleep(duration + 40);
             joinAndClearThreads();
-            mtx.unlock();
+            /* mtx.unlock(); */
         }
 
         void
@@ -14058,7 +14071,7 @@ class change_desktop {
         void
         anim_cli(client *c, const int &endx)
         {
-            if ( c == nullptr ) return;
+            if (c == nullptr) return;
  
             Mwm_Animator anim(c);
             anim.animate_client_x(
@@ -14331,7 +14344,9 @@ class resize_client {
                 border(client *&c, edge _edge)
                 : c(c)
                 {
+                    if (c == nullptr) return;
                     if (c->win.is_EWMH_fullscreen()) return;
+
                     map<client *, edge> map = wm->get_client_next_to_client(c, _edge);
                     for (const auto &pair : map)
                     {
@@ -14970,7 +14985,8 @@ class max_win {
         client(*c);
 
     /* Methods     */
-        void max_win_animate(const int &endX, const int &endY, const int &endWidth, const int &endHeight) {
+        void max_win_animate(const int &endX, const int &endY, const int &endWidth, const int &endHeight)
+        {
             animate_client(
                 c,
                 endX,
@@ -14980,7 +14996,6 @@ class max_win {
                 MAXWIN_ANIMATION_DURATION
             );
             xcb_flush(conn);
-
         }
         
         void button_unmax_win()
@@ -15050,7 +15065,7 @@ class max_win {
         max_win(client *c, max_win_type type)
         : c(c)
         {
-            if ( !c ) return;
+            if (c == nullptr) return;
 
             switch (type)
             {
@@ -15276,15 +15291,20 @@ class tile {
 
     public:
     /* Constructor */
-        tile(client *&c, TILE tile) : c(c) {
+        tile(client *&c, TILE tile)
+        : c(c)
+        {
+            if (c == nullptr) return;
             if (c->is_EWMH_fullscreen()) return;
+            
             switch (tile) {
-                case   TILE::LEFT  : {
+                case TILE::LEFT:
+                {
                     // IF 'CURRENTLT_TILED' TO 'LEFT'
-                    if (current_tile_pos(TILEPOS::LEFT)) {
+                    if (current_tile_pos(TILEPOS::LEFT))
+                    {
                         restore_og_tile_pos();
                         return;
-
                     }
 
                     // IF 'CURRENTLY_TILED' TO 'RIGHT', 'LEFT_DOWN' OR 'LEFT_UP'
