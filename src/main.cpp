@@ -14660,7 +14660,7 @@ class resize_client {
                             case XCB_MOTION_NOTIFY:
                             {
                                 /* if (e->time == XCB_CURRENT_TIME) {} */
-                                if (motion_bit++ > 3)
+                                if (motion_bit++ > 1)
                                 {
                                     AutoTimer t("resize_client::border::pollForEvents XCB_MOTION_NOTIFY");
                                     
