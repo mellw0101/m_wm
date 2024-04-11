@@ -5798,7 +5798,6 @@ window {
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X, (uint32_t[]){x});
                     _x = x;
-                    send_intern_struct_update();
                     xcb_flush(conn);
                 }
                 
@@ -5807,7 +5806,6 @@ window {
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_Y, (uint32_t[]){y});
                     _y = y;
-                    send_intern_struct_update();
                     xcb_flush(conn);
                 }
                 
@@ -5816,7 +5814,6 @@ window {
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_WIDTH, (uint32_t[]){width});
                     _width = width;
-                    send_intern_struct_update();
                     xcb_flush(conn);
                 }
                 
@@ -5825,7 +5822,6 @@ window {
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_HEIGHT, (uint32_t[]){height});
                     _height = height;
-                    send_intern_struct_update();
                     xcb_flush(conn);
                 }
                 
@@ -5835,7 +5831,6 @@ window {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, (uint32_t[]){x, y});
                     _x = x;
                     _y = y;
-                    send_intern_struct_update();
                     xcb_flush(conn);
                 }
 
@@ -5845,7 +5840,6 @@ window {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, (uint32_t[]){width, height});
                     _width = width;
                     _height = height;
-                    send_intern_struct_update();
                     xcb_flush(conn);
                 }
                 
@@ -5857,7 +5851,6 @@ window {
                     _y      = y;
                     _width  = width;
                     _height = height;
-                    send_intern_struct_update();
                     xcb_flush(conn);
                 }
 
@@ -5868,81 +5861,73 @@ window {
                     _x      = x;
                     _width  = width;
                     _height = height;
-                    send_intern_struct_update();
                     xcb_flush(conn);
                 }
 
                 void
                 y_width_height(uint32_t y, uint32_t width, uint32_t height)
                 {
-                    /* config_window(XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, (uint32_t[4]){y, width, height});
-                    update(_x, y, width, height); */
-                    ConfW(_window, XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, y, width, height);
+                    xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, (const uint32_t[3]){y, width, height});
                     _y      = y;
                     _width  = width;
                     _height = height;
+                    xcb_flush(conn);
                 }
 
                 void
                 x_width(uint32_t x, uint32_t width)
                 {
-                    /* config_window(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_WIDTH, (uint32_t[2]){x, width});
-                    update(x, _y, width, _height); */
-                    ConfW(_window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_WIDTH, x, width);
+                    xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_WIDTH, (const uint32_t[2]){x, width});
                     _x      = x;
                     _width  = width;
+                    xcb_flush(conn);
                 }
 
                 void
                 x_height(uint32_t x, uint32_t height)
                 {
-                    /* config_window(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_HEIGHT, (uint32_t[2]){x, height});
-                    update(x, _y, _width, height); */
-                    ConfW(_window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_HEIGHT, x, height);
+                    xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_HEIGHT, (const uint32_t[2]){x, height});
                     _x      = x;
                     _height = height;
+                    xcb_flush(conn);
                 }
 
                 void
                 y_width(uint32_t y, uint32_t width)
                 {
-                    /* config_window(XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH, (uint32_t[2]){y, width});
-                    update(_x, y, width, _height); */
-                    ConfW(_window, XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH, y, width);
+                    xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH, (const uint32_t[2]){y, width});
                     _y      = y;
                     _width  = width;
+                    xcb_flush(conn);
                 }
                 
                 void
                 y_height(uint32_t y, uint32_t height)
                 {
-                    /* config_window(XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT, (uint32_t[2]){y, height});
-                    update(_x, y, _width, height); */
-                    ConfW(_window, XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT, y, height);
+                    xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT, (const uint32_t[2]){y, height});
                     _y      = y;
                     _height = height;
+                    xcb_flush(conn);
                 }
 
                 void
                 x_y_width(uint32_t x, uint32_t y, uint32_t width)
                 {
-                    /* config_window(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH, (uint32_t[3]){x, y, width});
-                    update(x, y, width, _height); */
-                    ConfW(_window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH, x, y, width);
+                    xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH, (const uint32_t[3]){x, y, width});
                     _x      = x;
                     _y      = y;
                     _width  = width;
+                    xcb_flush(conn);
                 }
                 
                 void
                 x_y_height(uint32_t x, uint32_t y, uint32_t height)
                 {
-                    /* config_window(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT, (uint32_t[3]){x, y, height});
-                    update(x, y, _width, height); */
-                    ConfW(_window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT, x, y, height);
+                    xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT, (const uint32_t[3]){x, y, height});
                     _x      = x;
                     _y      = y;
                     _height = height;
+                    xcb_flush(conn);
                 }
 
         /* Backround     */
@@ -7400,7 +7385,7 @@ class client {
             void
             update()
             {
-                AutoTimer t("client:" + string(__func__));
+                AutoTimer t("client:update");
 
                 x = frame.x();
                 y = frame.y();
@@ -7509,122 +7494,142 @@ class client {
             
             #define CLI_RIGHT  screen->width_in_pixels  - this->width
             #define CLI_BOTTOM screen->height_in_pixels - this->height
-            void
+            void /** @brief client to client snaping */
             snap(int x, int y, const vector<client *> &__vec )
             {
-                for (client *const &c : __vec) {
+                /* WINDOW TO WINDOW SNAPPING */
+                for (client *const &c : __vec)
+                {
                     if (c == this) continue;
                     
+                    /* SNAP WINDOW TO 'RIGHT' BORDER OF 'NON_CONTROLLED' WINDOW */
                     if (x > c->x + c->width - N && x < c->x + c->width + N
-                    &&  y + this->height > c->y && y < c->y + c->height) {
+                    &&  y + this->height > c->y && y < c->y + c->height)
+                    {    
                         /* SNAP WINDOW TO 'RIGHT_TOP' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
-                        if (y > c->y - NC && y < c->y + NC) {
+                        if (y > c->y - NC && y < c->y + NC)
+                        {
                             this->frame.x_y((c->x + c->width), c->y);
                             return;
-
                         }
                         
-                        if (y + this->height > c->y + c->height - NC && y + this->height < c->y + c->height + NC) {
+                        /* SNAP WINDOW TO 'RIGHT_BOTTOM' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        if (y + this->height > c->y + c->height - NC && y + this->height < c->y + c->height + NC)
+                        {
                             this->frame.x_y((c->x + c->width), (c->y + c->height) - this->height);
                             return;
-
-                        } /* SNAP WINDOW TO 'RIGHT_BOTTOM' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        }
                         
                         this->frame.x_y((c->x + c->width), y);
                         return;
-
-                    } /* SNAP WINDOW TO 'RIGHT' BORDER OF 'NON_CONTROLLED' WINDOW */
+                    }
                     
+                    /* SNAP WINDOW TO 'LEFT' BORDER OF 'NON_CONTROLLED' WINDOW */
                     if (x + this->width > c->x - N && x + this->width < c->x + N
-                    &&  y + this->height > c->y && y < c->y + c->height) {
-                        if (y > c->y - NC && y < c->y + NC)                                                       {
+                    &&  y + this->height > c->y && y < c->y + c->height)
+                    {
+                        /* SNAP WINDOW TO 'LEFT_TOP' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        if (y > c->y - NC && y < c->y + NC)
+                        {
                             this->frame.x_y((c->x - this->width), c->y);
                             return;
-
-                        } /* SNAP WINDOW TO 'LEFT_TOP' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        }
                         
-                        if (y + this->height > c->y + c->height - NC && y + this->height < c->y + c->height + NC) {
+                        /* SNAP WINDOW TO 'LEFT_BOTTOM' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        if (y + this->height > c->y + c->height - NC && y + this->height < c->y + c->height + NC)
+                        {
                             this->frame.x_y((c->x - this->width), (c->y + c->height) - this->height);
                             return;
-
-                        } /* SNAP WINDOW TO 'LEFT_BOTTOM' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        }
                         
                         this->frame.x_y((c->x - this->width), y);
                         return;
+                    }
 
-                    } /* SNAP WINDOW TO 'LEFT' BORDER OF 'NON_CONTROLLED' WINDOW */
-                    
+                    /* SNAP WINDOW TO 'BOTTOM' BORDER OF 'NON_CONTROLLED' WINDOW */
                     if (y > c->y + c->height - N && y < c->y + c->height + N 
-                    &&  x + this->width > c->x && x < c->x + c->width)   {
-                        if (x > c->x - NC && x < c->x + NC)                                                   {
+                    &&  x + this->width > c->x && x < c->x + c->width)
+                    {
+                        /* SNAP WINDOW TO 'BOTTOM_LEFT' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        if (x > c->x - NC && x < c->x + NC)
+                        {
                             this->frame.x_y(c->x, (c->y + c->height));
                             return;
-
-                        } /* SNAP WINDOW TO 'BOTTOM_LEFT' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        }
                         
-                        if (x + this->width > c->x + c->width - NC && x + this->width < c->x + c->width + NC) {
+                        /* SNAP WINDOW TO 'BOTTOM_RIGHT' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        if (x + this->width > c->x + c->width - NC && x + this->width < c->x + c->width + NC)
+                        {
                             this->frame.x_y(((c->x + c->width) - this->width), (c->y + c->height));
                             return;
-
-                        } /* SNAP WINDOW TO 'BOTTOM_RIGHT' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        }
                         
                         this->frame.x_y(x, (c->y + c->height));
                         return;
-
-                    } /* SNAP WINDOW TO 'BOTTOM' BORDER OF 'NON_CONTROLLED' WINDOW */
+                    }
                     
+                    /* SNAP WINDOW TO 'TOP' BORDER OF 'NON_CONTROLLED' WINDOW */
                     if (y + this->height > c->y - N && y + this->height < c->y + N     
-                    &&  x + this->width > c->x && x < c->x + c->width)   {
-                        if (x > c->x - NC && x < c->x + NC)                                                       {
+                    &&  x + this->width > c->x && x < c->x + c->width)
+                    {
+                        /* SNAP WINDOW TO 'TOP_LEFT' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        if (x > c->x - NC && x < c->x + NC)
+                        {
                             this->frame.x_y(c->x, (c->y - this->height));
                             return;
-
-                        } /* SNAP WINDOW TO 'TOP_LEFT' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        }
                         
-                        if (x + this->width > c->x + c->width - NC && x + this->width < c->x + c->width + NC) {
+                        /* SNAP WINDOW TO 'TOP_RIGHT' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        if (x + this->width > c->x + c->width - NC && x + this->width < c->x + c->width + NC)
+                        {
                             this->frame.x_y(((c->x + c->width) - this->width), (c->y - this->height));
                             return;
-
-                        } /* SNAP WINDOW TO 'TOP_RIGHT' CORNER OF NON_CONROLLED WINDOW WHEN APPROPRIET */
+                        }
                         
                         this->frame.x_y(x, (c->y - this->height));
                         return;
-
-                    } /* SNAP WINDOW TO 'TOP' BORDER OF 'NON_CONTROLLED' WINDOW */
-
-                } /* WINDOW TO WINDOW SNAPPING */
-
-                /* WINDOW TO EDGE OF SCREEN SNAPPING */
-                if        (((x < N) && (x > -N)) && ((y < N) && (y > -N)))                                          {
-                    this->frame.x_y(0, 0);
-
-                } else if  ((x < CLI_RIGHT + N && x > CLI_RIGHT - N) && (y < N && y > -N))                          {
-                    this->frame.x_y(CLI_RIGHT, 0);
-
-                } else if  ((y < CLI_BOTTOM + N && y > CLI_BOTTOM - N) && (x < N && x > -N))                        {
-                    this->frame.x_y(0, CLI_BOTTOM);
-
-                } else if  ((x < N) && (x > -N))                                                                    {
-                    this->frame.x_y(0, y);
-
-                } else if   (y < N && y > -N)                                                                       {
-                    this->frame.x_y(x, 0);
-
-                } else if  ((x < CLI_RIGHT + N && x > CLI_RIGHT - N) && (y < CLI_BOTTOM + N && y > CLI_BOTTOM - N)) {
-                    this->frame.x_y(CLI_RIGHT, CLI_BOTTOM);
-
-                } else if  ((x < CLI_RIGHT + N) && (x > CLI_RIGHT - N))                                             {
-                    this->frame.x_y(CLI_RIGHT, y);
-
-                } else if   (y < CLI_BOTTOM + N && y > CLI_BOTTOM - N)                                              {
-                    this->frame.x_y(x, CLI_BOTTOM);
-                    
-                } else {
-                    this->frame.x_y(x, y);
-
+                    }
                 }
 
-            }/** @brief client to client snaping */
+                /* WINDOW TO EDGE OF SCREEN SNAPPING */
+                if        (((x < N) && (x > -N)) && ((y < N) && (y > -N)))
+                {
+                    this->frame.x_y(0, 0);
+                }
+                else if  ((x < CLI_RIGHT + N && x > CLI_RIGHT - N) && (y < N && y > -N))
+                {
+                    this->frame.x_y(CLI_RIGHT, 0);
+                }
+                else if  ((y < CLI_BOTTOM + N && y > CLI_BOTTOM - N) && (x < N && x > -N))
+                {
+                    this->frame.x_y(0, CLI_BOTTOM);
+                }
+                else if  ((x < N) && (x > -N))
+                {
+                    this->frame.x_y(0, y);
+                }
+                else if   (y < N && y > -N)
+                {
+                    this->frame.x_y(x, 0);
+                }
+                else if  ((x < CLI_RIGHT + N && x > CLI_RIGHT - N) && (y < CLI_BOTTOM + N && y > CLI_BOTTOM - N))
+                {
+                    this->frame.x_y(CLI_RIGHT, CLI_BOTTOM);
+                }
+                else if  ((x < CLI_RIGHT + N) && (x > CLI_RIGHT - N))
+                {
+                    this->frame.x_y(CLI_RIGHT, y);
+                }
+                else if   (y < CLI_BOTTOM + N && y > CLI_BOTTOM - N)
+                {
+                    this->frame.x_y(x, CLI_BOTTOM);    
+                }
+                else
+                {
+                    this->frame.x_y(x, y);
+                }
+            }
+            
         
         /* Config    */
             void x_y(const uint32_t &x, const uint32_t &y) {
@@ -8715,11 +8720,11 @@ class Window_Manager {
                 create_new_desktop( 5 );
 
                 context_menu = new class context_menu();
-                context_menu->add_entry("konsole",              [this]() { launcher.program( (char *) "konsole" ); });
-                context_menu->add_entry("google-chrome-stable", [this]() { launcher.launch_child_process( "google-chrome-stable" ); });
-                context_menu->add_entry("code",                 [this]() { launcher.launch_child_process( "code" ); });
-                context_menu->add_entry("dolphin",              [this]() { launcher.launch_child_process( "dolphin" ); });
-                context_menu->add_entry("alacritty",            [this]() { launcher.launch_child_process( "alacritty" ); });
+                context_menu->add_entry("konsole",              [this]() { launcher.program((char *)"konsole"); });
+                context_menu->add_entry("google-chrome-stable", [this]() { launcher.launch_child_process("google-chrome-stable"); });
+                context_menu->add_entry("code",                 [this]() { launcher.launch_child_process("code"); });
+                context_menu->add_entry("dolphin",              [this]() { launcher.launch_child_process("dolphin"); });
+                context_menu->add_entry("alacritty",            [this]() { launcher.launch_child_process("alacritty"); });
                 context_menu->add_entry("quit",                 [this]() { quit(0); });
 
                 setup_events(); 
@@ -8741,7 +8746,7 @@ class Window_Manager {
             get_atom(char *name, xcb_atom_t *atom)
             {
                 xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(conn, xcb_intern_atom(conn, 0, slen(name), name), NULL);
-                if ( reply == nullptr )
+                if (reply == nullptr)
                 {
                     *atom = XCB_NONE;
                     return;
@@ -9076,7 +9081,7 @@ class Window_Manager {
                 AutoTimer timer(__func__);
 
                 client *c = make_client(__window);
-                if ( !c )
+                if (c == nullptr)
                 {
                     loutE << "could not make client" << loutEND;
                     return;
@@ -9139,7 +9144,6 @@ class Window_Manager {
                 c->focus();
 
                 return c;
-
             }
             
             void
@@ -9168,15 +9172,22 @@ class Window_Manager {
                     cur_d->focused_client = nullptr;
                 }
 
-                client_list.erase(remove(
-                    client_list.begin(),
-                    client_list.end(),
-                    c
-
-                ), client_list.end());
+                client_list.erase(
+                    remove(
+                        client_list.begin(),
+                        client_list.end(),
+                        c
+                    ),
+                    client_list.end()
+                );
 
                 for (int i = 0; i < desktop_list.size(); ++i)
                 {
+                    if (c == desktop_list[i]->focused_client)
+                    {
+                        desktop_list[i]->focused_client = nullptr;
+                    }
+
                     desktop_list[i]->current_clients.erase(
                         remove(
                             desktop_list[i]->current_clients.begin(),
@@ -9185,11 +9196,6 @@ class Window_Manager {
                         ),
                         desktop_list[i]->current_clients.end()
                     );
-
-                    if (c == desktop_list[i]->focused_client)
-                    {
-                        desktop_list[i]->focused_client = nullptr;
-                    }
 
                     loutI << "desktop" << (i + 1) << " client vec size" << desktop_list[i]->current_clients.size() << '\n';
                 }
@@ -11675,12 +11681,11 @@ class search_window {
 class add_app_dialog_window {
     public:
     // Variables.
-        window(main_window);
-        search_window(search_window);
-        client(*c);
-        buttons(buttons);
-        pointer(pointer);
-        Logger(log);
+        window main_window;
+        search_window search_window;
+        client *c;
+        buttons buttons;
+        pointer pointer;
     
     // Methods.
         void init()
@@ -14547,7 +14552,6 @@ class resize_client {
                                     xcb_flush(conn);
                                 }
                                 break;
-
                             }
                             case XCB_BUTTON_RELEASE:
                             {
@@ -14563,7 +14567,12 @@ class resize_client {
                                     Emit(e->window, XCB_PROPERTY_NOTIFY);
                                 }
                                 break;
-                            }   
+                            }
+                            case XCB_EXPOSE:
+                            {
+                                RE_CAST_EV(xcb_expose_event_t);
+                                Emit(e->window, XCB_EXPOSE);
+                            }
                         }
                         free(ev);
                     }
