@@ -9777,7 +9777,7 @@ class Window_Manager {
                     client *c = client_from_any_window(&w);
                     if (c == nullptr)
                     {
-                        loutE << "c = nullptr" << '\n';
+                        loutE << "c = nullptr " << Var_(w) << '\n';
                         /* focused_client = nullptr; */
                         return;
                     }
