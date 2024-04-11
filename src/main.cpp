@@ -9783,7 +9783,7 @@ class Window_Manager {
 
                 ConnSig(screen->root, SET_FOCUSED_CLIENT,
 
-                    client *c = client_from_window(&w);
+                    client *c = client_from_any_window(&w);
                     if (c == nullptr)
                     {
                         loutE << "c = nullptr" << '\n';
@@ -13605,9 +13605,17 @@ class __dock__ {
 
 }; static __dock__ *dock( nullptr );
 
+/**
+*****************************************
+*****************************************
+**** @class @c 'DropDownTerm'
+*****************************************
+*****************************************
+*/
 class DropDownTerm
-{        
-public:
+{
+    public:
+    
     window w;
     vector<window> w_vec;
 
