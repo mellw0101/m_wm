@@ -8317,7 +8317,8 @@ class client {
         {
             AutoTimer timer(__func__);
             
-            border[left].create_window(
+            border[left].create_window
+            (
                 frame,
                 0,
                 BORDER_SIZE,
@@ -8328,14 +8329,14 @@ class client {
                 MAP,
                 nullptr,
                 CURSOR::left_side
-
             );
             xcb_flush(conn);
 
             CWC(border[left]);
             border[left].grab_button({{L_MOUSE_BUTTON, NULL}});
 
-            border[right].create_window(
+            border[right].create_window
+            (
                 frame,
                 (width - BORDER_SIZE),
                 BORDER_SIZE,
@@ -8352,7 +8353,8 @@ class client {
             CWC(border[right]);
             border[right].grab_button({{L_MOUSE_BUTTON, NULL}});
 
-            border[top].create_window(
+            border[top].create_window
+            (
                 frame,
                 BORDER_SIZE,
                 0,
@@ -8363,7 +8365,6 @@ class client {
                 MAP,
                 nullptr,
                 CURSOR::top_side
-
             );
             xcb_flush(conn);
 
@@ -8612,6 +8613,14 @@ class Key_Codes {
     // variabels.
         xcb_key_symbols_t *keysyms;
 };
+
+/**
+*****************************************
+*****************************************
+**** @class @c 'Entry'
+*****************************************
+*****************************************
+*/
 class Entry {
     public:
     /* Constructor */
@@ -8650,6 +8659,14 @@ class Entry {
         }
 
 };
+
+/**
+*****************************************
+*****************************************
+**** @class @c 'context_menu'
+*****************************************
+*****************************************
+*/
 class context_menu {
     private:
     /* Variabels */
@@ -8754,7 +8771,8 @@ class context_menu {
 *****************************************
 *****************************************
 */
-class Window_Manager {
+class Window_Manager
+{
     /* Defines     */
         #define INIT_NEW_WM(__inst, __class) \
             __inst = new __class;                                               \
@@ -8906,7 +8924,7 @@ class Window_Manager {
             }
 
         /* Window       */
-            bool window_exists(uint32_t __window) {
+            /* bool window_exists(uint32_t __window) {
                 xcb_generic_error_t *err;
                 free(xcb_query_tree_reply(conn, xcb_query_tree(conn, __window), &err));
 
@@ -8916,6 +8934,24 @@ class Window_Manager {
 
                 } return true;
 
+            } */
+
+            uint32_t
+            window_exists(xcb_window_t __w)
+            {
+                // Attempt to retrieve the WM_NAME property of the window
+                xcb_get_property_cookie_t cookie = xcb_get_property_unchecked(conn, 0, __w, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 0, 0);
+                xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, NULL);
+
+                if (reply == nullptr)
+                {
+                    // The window does not exist
+                    return UINT32_MAX;
+                }
+
+                // The window exists, free the reply and return true
+                free(reply);
+                return __w;
             }
             
             void
@@ -9259,6 +9295,7 @@ class Window_Manager {
                     c->update();
                     c->focus();
                     focused_client = c;
+                    cur_d->focused_client = c;
                     /* check_client(c); */
                     c->frame.grab_default_keys();
                     /* c->add_to_map(); */
@@ -9834,7 +9871,8 @@ class Window_Manager {
                 }
             }
 
-}; static Window_Manager *wm(nullptr);
+};
+static Window_Manager *wm(nullptr);
 
 class __network__ {
     public:
