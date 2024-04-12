@@ -3078,7 +3078,9 @@ getMappedEv(uint8_t __ev)
     return it->second;
 }
 
-class evH {
+class evH
+{
+private:
     xcb_generic_event_t *ev;
     __key_codes__ key_codes;
 
@@ -3259,8 +3261,7 @@ static evH *ev_hand(nullptr);
 
 using Ev = const xcb_generic_event_t *;
 
-class
-__event_handler__
+class __event_handler__
 {
     /* Defines   */
         #define EV_ID \
@@ -7755,8 +7756,7 @@ class client {
                 xcb_flush(conn);
             }
 
-            /* void
-            y_height(const uint32_t & y, const uint32_t & height)
+            /* void y_height(const uint32_t & y, const uint32_t & height)
             {
                 win.height((height - TITLE_BAR_HEIGHT) - (BORDER_SIZE * 2));
                 xcb_flush(conn);
@@ -8594,7 +8594,7 @@ class Key_Codes {
 /**
 *****************************************
 *****************************************
-**** CLASS: @c 'Entry'
+**** CLASS: @c Entry
 *****************************************
 ****************************************/
 class Entry
@@ -8610,8 +8610,7 @@ class Entry
         function<void()> action;
 
     /* Methods */
-        void
-        make_window(uint32_t __parent, int16_t __x, int16_t __y, uint16_t __width, uint16_t __height)
+        void make_window(uint32_t __parent, int16_t __x, int16_t __y, uint16_t __width, uint16_t __height)
         {
             AutoTimer t("Entry:make_window");
 
@@ -8639,7 +8638,7 @@ class Entry
 /**
 *****************************************
 *****************************************
-**** @class @c 'context_menu'
+**** @class @c context_menu
 *****************************************
 ****************************************/
 class context_menu
@@ -8653,8 +8652,7 @@ class context_menu
         vector<Entry> entries;
 
     /* Methods   */
-        void
-        create_dialog_win__()
+        void create_dialog_win__()
         {
             context_window.create_window(
                 screen->root,
@@ -8669,8 +8667,7 @@ class context_menu
             ConnSig(context_window, L_MOUSE_BUTTON_EVENT, hide__(););
         }
 
-        void
-        hide__()
+        void hide__()
         {
             context_window.unmap();
             context_window.kill();
@@ -8681,8 +8678,7 @@ class context_menu
             }
         }
         
-        void
-        make_entries__()
+        void make_entries__()
         {
             for (int i(0); i < entries.size(); ++i)
             {
@@ -8775,8 +8771,7 @@ class Window_Manager
 
     /* Methods     */
         /* Main         */
-            void
-            init()
+            void init()
             {
                 AutoTimer timer("Class Window_Manager: " + string(__func__));
 
@@ -8857,8 +8852,7 @@ class Window_Manager
                 setup_events(); 
             }
 
-            void
-            quit( int __status )
+            void quit( int __status )
             {
                 pid_manager->kill_all_pids();
                 xcb_flush( conn );
@@ -8869,8 +8863,7 @@ class Window_Manager
                 exit( __status );
             }
             
-            void
-            get_atom(char *name, xcb_atom_t *atom)
+            void get_atom(char *name, xcb_atom_t *atom)
             {
                 xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(conn, xcb_intern_atom(conn, 0, slen(name), name), NULL);
                 if (reply == nullptr)
@@ -8883,8 +8876,7 @@ class Window_Manager
                 free(reply);
             }
             
-            void
-            focus_none()
+            void focus_none()
             {
                 AutoTimer t(__func__);
 
@@ -8910,8 +8902,7 @@ class Window_Manager
 
             } */
 
-            uint32_t
-            window_exists(uint32_t __w)
+            uint32_t window_exists(uint32_t __w)
             {
                 xcb_get_property_cookie_t cookie = xcb_get_property_unchecked(conn, 0, __w, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 0, 0);
                 xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, NULL);
@@ -8923,8 +8914,7 @@ class Window_Manager
                 return __w;
             }
             
-            void
-            window_stack(uint32_t __window1, uint32_t __window2, uint32_t __mode)
+            void window_stack(uint32_t __window1, uint32_t __window2, uint32_t __mode)
             {
                 if (__window2 == XCB_NONE) return;
                 
@@ -8934,8 +8924,7 @@ class Window_Manager
                 xcb_configure_window(conn, __window1, mask, values);    
             }
             
-            void
-            window_above(const uint32_t &__window1, const uint32_t &__window2)
+            void window_above(const uint32_t &__window1, const uint32_t &__window2)
             {
                 window_stack(
                     __window1,
@@ -8944,8 +8933,7 @@ class Window_Manager
                 );
             }/* stack '__window1' above '__window2' */
             
-            void
-            window_below(const uint32_t &__window1, const uint32_t &__window2)
+            void window_below(const uint32_t &__window1, const uint32_t &__window2)
             {
                 window_stack(
                     __window1,
@@ -8954,8 +8942,7 @@ class Window_Manager
                 );
             }/* stack '__window1' below '__window2' */
             
-            void
-            unmap_window(uint32_t __window)
+            void unmap_window(uint32_t __window)
             {
                 xcb_unmap_window(conn, __window);
                 xcb_flush(conn);
@@ -8963,8 +8950,7 @@ class Window_Manager
 
         /* Client       */
             /* Focus */
-                void
-                cycle_focus()
+                void cycle_focus()
                 {
                     if (focused_client == nullptr)
                     {
@@ -9004,8 +8990,7 @@ class Window_Manager
                     }
                 }
 
-                void
-                unfocus()
+                void unfocus()
                 {
                     window(tmp);
                     tmp.create_default(
@@ -9024,8 +9009,7 @@ class Window_Manager
                 }
 
             /* Fetch */
-                client *
-                client_from_window(const xcb_window_t *window)
+                client *client_from_window(const xcb_window_t *window)
                 {
                     AutoTimer t(__func__);
 
@@ -9039,8 +9023,7 @@ class Window_Manager
                     return nullptr;
                 }
                 
-                client *
-                client_from_any_window(const xcb_window_t *window)
+                client *client_from_any_window(const xcb_window_t *window)
                 {
                     AutoTimer t(__func__);
 
@@ -9067,8 +9050,7 @@ class Window_Manager
                     return nullptr;
                 }
                 
-                client *
-                client_from_pointer(const int &prox)
+                client *client_from_pointer(const int &prox)
                 {
                     const uint32_t &x = pointer.x();
                     const uint32_t &y = pointer.y();
@@ -9090,8 +9072,7 @@ class Window_Manager
                     return nullptr;
                 }
 
-                map<client *, edge>
-                get_client_next_to_client(client *c, edge c_edge)
+                map<client *, edge> get_client_next_to_client(client *c, edge c_edge)
                 {
                     map<client *, edge> map;
                     for (client *c2:cur_d->current_clients)
@@ -9201,8 +9182,7 @@ class Window_Manager
 
                 }
                 
-                client *
-                get_client_from_pointer()
+                client *get_client_from_pointer()
                 {
                     const int16_t x = pointer.x();
                     const int16_t y = pointer.y();
@@ -9218,8 +9198,7 @@ class Window_Manager
                     return nullptr;
                 }
 
-            void
-            manage_new_client(uint32_t __window)
+            void manage_new_client(uint32_t __window)
             {
                 AutoTimer timer(__func__);
 
@@ -9273,8 +9252,7 @@ class Window_Manager
                 xcb_flush(conn);
             }
 
-            client *
-            make_internal_client(window &window)
+            client *make_internal_client(window &window)
             {
                 client *c = new client;
 
@@ -9292,15 +9270,13 @@ class Window_Manager
                 return c;
             }
             
-            void
-            send_sigterm_to_client(client *c)
+            void send_sigterm_to_client(client *c)
             {
                 c->kill();
                 remove_client(c);
             }
 
-            void
-            remove_client(client *c)
+            void remove_client(client *c)
             {
                 AutoTimer timer(__func__);
                 if (c == nullptr)
@@ -9351,8 +9327,7 @@ class Window_Manager
             }
 
         /* Desktop      */
-            void
-            create_new_desktop(const uint16_t &n)
+            void create_new_desktop(const uint16_t &n)
             {
                 AutoTimer timer(__func__);
                 desktop *d = new desktop;
@@ -9391,8 +9366,7 @@ class Window_Manager
             }
 
         /* Xcb          */
-            void
-            send_expose_event(window &__window)
+            void send_expose_event(window &__window)
             {
                 xcb_expose_event_t expose_event = {
                     .response_type = XCB_EXPOSE,
@@ -12979,8 +12953,7 @@ class DropDownTerm
     window w;
     vector<window> w_vec;
 
-    void
-    toggle__()
+    void toggle__()
     {
         if (w.y() == - (screen->height_in_pixels / 2))
         {
@@ -12995,8 +12968,7 @@ class DropDownTerm
         }
     }
 
-    void
-    init()
+    void init()
     {
         w.create_window(
             screen->root,
@@ -13546,7 +13518,8 @@ class change_desktop {
         }
 };
 
-class resize_client {
+class resize_client
+{
     public:
     /* Constructor */
         /**
@@ -13755,11 +13728,11 @@ class resize_client {
                 }
         };
 
-        class border {
+        class border
+        {
             public:
             /* Constructor */
-                border(client *&c, edge _edge)
-                : c(c)
+                border(client *&c, edge _edge) : c(c)
                 {
                     if (c == nullptr) return;
                     if (c->win.is_EWMH_fullscreen()) return;
@@ -13801,8 +13774,7 @@ class resize_client {
                 STATIC_CONSTEXPR_TYPE(double, frameDuration, (1000 / frameRate));
 
             /* Methods     */
-                void
-                teleport_mouse(edge edge)
+                void teleport_mouse(edge edge)
                 {
                     switch (edge)
                     {
@@ -13861,8 +13833,7 @@ class resize_client {
                     }
                 }
 
-                void
-                resize_client(const uint32_t x, const uint32_t y, edge edge)
+                void resize_client(const uint32_t x, const uint32_t y, edge edge)
                 {
                     switch (edge)
                     {
@@ -13916,8 +13887,7 @@ class resize_client {
 
                 }
                 
-                void
-                resize_client(client *c, const uint32_t x, const uint32_t y, edge edge)
+                void resize_client(client *c, const uint32_t x, const uint32_t y, edge edge)
                 {
                     switch (edge) {
                         case edge::LEFT: {
@@ -13969,8 +13939,7 @@ class resize_client {
 
                 }
 
-                void
-                snap(const uint32_t x, const uint32_t y, edge edge, const uint8_t & prox)
+                void snap(const uint32_t x, const uint32_t y, edge edge, const uint8_t & prox)
                 {
                     uint16_t left_border(0), right_border(0), top_border(0), bottom_border(0);
 
@@ -14045,8 +14014,7 @@ class resize_client {
                     BUTTON_RELEASE_BIT  = 1 << 3
                 };
 
-                vector<vector<uint32_t>>
-                pollForEvents()
+                vector<vector<uint32_t>> pollForEvents()
                 {
                     AutoTimer t("resize_client::border::pollForEvents");
                     
@@ -14133,8 +14101,7 @@ class resize_client {
                     return evVec;
                 }
 
-                void
-                run(edge edge)
+                void run(edge edge)
                 {
                     xcb_generic_event_t *ev;
                     bool shouldContinue = true;
@@ -14189,20 +14156,18 @@ class resize_client {
                     }
                 }
 
-                void /** NOTE: Works great  */
-                run_test(edge edge)
+                /** NOTE: Works great  */
+                void run_test(edge edge)
                 {
                     xcb_generic_event_t *ev;
                     bool shouldContinue = true;
-                    const int targetFrequency = 120; // Target frequency in Hz
-                    const auto targetFrameDuration = std::chrono::milliseconds(1000) / targetFrequency; // Duration of each frame
+                    /* const int targetFrequency = 120; // Target frequency in Hz
+                    const auto targetFrameDuration = std::chrono::milliseconds(1000) / targetFrequency; // Duration of each frame */
 
 
                     while (shouldContinue)
                     {
                         AutoTimer t("resize_client::border::run full_loop");
-                        
-
                         if (isTimeToRender())
                         {
                             vector<vector<uint32_t>> vec = pollForEvents();
@@ -14238,61 +14203,6 @@ class resize_client {
                                 c->update();
                             }
                         }
-                        Emit(c->titlebar, XCB_EXPOSE);
-                        for (int i = 0; i < expose_evVec.size(); ++i)
-                        {
-                            Emit(expose_evVec[i], XCB_EXPOSE);
-                        }
-                        usleep(2800);
-                    }
-                }
-
-                void /** NOTE: Works great  */
-                run_test_2(edge edge)
-                {
-                    xcb_generic_event_t *ev;
-                    bool shouldContinue = true;
-                    const int targetFrequency = 120; // Target frequency in Hz
-                    const auto targetFrameDuration = std::chrono::milliseconds(1000) / targetFrequency; // Duration of each frame
-
-
-                    while (shouldContinue)
-                    {
-                        AutoTimer t("resize_client::border::run full_loop");
-
-                        vector<vector<uint32_t>> vec = pollForEvents();
-                        vector<uint32_t> last_motion_ev{};
-
-                        for (int i = 0; i < vec.size(); ++i)
-                        {
-                            if (vec[i][0] & EXPOSE_BIT)
-                            {
-                                Emit(vec[i][1], XCB_EXPOSE);
-                            }
-                            if (vec[i][0] & PROPERTY_NOTIFY_BIT)
-                            {
-                                Emit(vec[i][1], XCB_PROPERTY_NOTIFY);
-                            }
-                            if (vec[i][0] & MOTION_NOTIFY_BIT)
-                            {
-                                last_motion_ev = vec[i];
-                                /* snap(vec[i][1], vec[i][2], edge, 12);
-                                xcb_flush(conn); */
-                            }
-                            if (vec[i][0] & BUTTON_RELEASE_BIT)
-                            {
-                                shouldContinue = false;                        
-                                c->update();
-                            }
-                        }
-                        if (!last_motion_ev.empty())
-                        {
-                            AutoTimer t("resize_client::border::run_test final size exec");
-                            snap(last_motion_ev[1], last_motion_ev[2], edge, 12);
-                            xcb_flush(conn);
-                            c->update();
-                        }
-
                         Emit(c->titlebar, XCB_EXPOSE);
                         for (int i = 0; i < expose_evVec.size(); ++i)
                         {

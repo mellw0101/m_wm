@@ -279,7 +279,8 @@ auto enqueueTask(ThreadPoolType& pool, Func&& func, Args&&... args) -> std::futu
     return pool.enqueue(std::forward<Func>(func), std::forward<Args>(args)...);
 }
 
-class ThreadPool {
+class ThreadPool
+{
     public:
         ThreadPool(size_t threads) : stop(false)
         {
@@ -301,13 +302,9 @@ class ThreadPool {
                             this->tasks.pop();
 
                         } task();
-
                     }
-
                 });
-
             }
-                
         }
 
         template<class Callback, class... Args>
@@ -330,9 +327,7 @@ class ThreadPool {
                 }
                 tasks.emplace([task](){ (*task)(); });
             
-            }
-            condition.notify_one();
-
+            } condition.notify_one();
             return res;
         }
         
@@ -342,8 +337,7 @@ class ThreadPool {
                 std::unique_lock<std::mutex> lock(queueMutex);
                 stop = true;
             
-            }
-            condition.notify_all();
+            } condition.notify_all();
 
             for(std::thread &worker: workers)
             {
