@@ -1097,8 +1097,7 @@ namespace XCB
 *****************************************
 **** @class @c __signal_manager__
 *****************************************
-*****************************************
-*/
+****************************************/
 class __signal_manager__ {
     /* Defines   */
         #define WS_conn signal_manager->_window_signals.conect
@@ -4163,8 +4162,14 @@ namespace { /* 'window' class Namespace */
     };
 }
 
-class
-window {
+/**
+*****************************************
+*****************************************
+**** @class @c window
+*****************************************
+****************************************/
+class window
+{
     public:
     /* Constructor */
         window() {}
@@ -4174,9 +4179,10 @@ window {
         {
             return _window;
 
-        }    
-        window& operator=( uint32_t new_window ) // Overload the assignment operator for uint32_t
-        { 
+        }
+    
+        window& operator=(uint32_t new_window) // Overload the assignment operator for uint32_t
+        {
             _window = new_window;
             return *this;
         }
@@ -4193,7 +4199,8 @@ window {
                         const uint16_t &_class,
                         const uint32_t &visual,
                         const uint32_t &value_mask,
-                        const void     *value_list) {
+                        const void     *value_list)
+            {
                 _depth = depth;
                 _parent = parent;
                 _x = x;
@@ -4209,6 +4216,7 @@ window {
                 make_window();
 
             }
+
             void create_default(const uint32_t &parent, const int16_t &x, const int16_t &y, const uint16_t &width, const uint16_t &height) {
                 _depth = 0L;
                 _parent = parent;
@@ -4328,8 +4336,7 @@ window {
 
             }
             
-            void
-            create_window( uint32_t __parent,
+            void create_window( uint32_t __parent,
                                 int16_t  __x,
                                 int16_t  __y,
                                 uint16_t __width,
@@ -4385,7 +4392,8 @@ window {
             
             }
             
-            void create_client_window(const uint32_t &parent, const int16_t &x, const int16_t &y, const uint16_t &width, const uint16_t &height) {
+            void create_client_window(const uint32_t &parent, const int16_t &x, const int16_t &y, const uint16_t &width, const uint16_t &height)
+            {
                 _window = xcb_generate_id(conn);
                 uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
                 uint32_t value_list[2];
@@ -4405,12 +4413,10 @@ window {
                 _value_list = value_list;
                 
                 make_window();
-
             }
 
         /* Borders       */
-            void
-            make_borders(int __border_mask, uint32_t __size, int __color)
+            void make_borders(int __border_mask, uint32_t __size, int __color)
             {
                 if (__border_mask & UP   ) make_border_window(UP,    __size, __color);
                 if (__border_mask & DOWN ) make_border_window(DOWN,  __size, __color);
@@ -4428,8 +4434,7 @@ window {
                 }
             ;
             
-            void
-            change_border_color(int __color, int __border_mask = ALL)
+            void change_border_color(int __color, int __border_mask = ALL)
             {
                 if (__border_mask & UP   ) CHANGE_BORDER_COLOR(_border[0]);
                 if (__border_mask & DOWN ) CHANGE_BORDER_COLOR(_border[1]);
@@ -4437,8 +4442,7 @@ window {
                 if (__border_mask & RIGHT) CHANGE_BORDER_COLOR(_border[3]);
             }
             
-            void
-            make_xcb_borders(int __color)
+            void make_xcb_borders(int __color)
             {
                 xcb_change_window_attributes(
                     conn,
@@ -4453,8 +4457,7 @@ window {
             }
         
         /* Main          */
-            void
-            raise()
+            void raise()
             {
                 AutoTimer t("window::raise");
 
@@ -4475,8 +4478,7 @@ window {
                 xcb_flush(conn);
             }  
             
-            void
-            map()
+            void map()
             {
                 AutoTimer t(__func__);
 
@@ -4484,8 +4486,7 @@ window {
                 xcb_flush(conn);
             }
             
-            void
-            unmap()
+            void unmap()
             {
                 AutoTimer t(__func__);
 
@@ -4493,8 +4494,7 @@ window {
                 xcb_flush(conn);
             }
             
-            void
-            reparent(uint32_t __new_parent, int16_t __x, int16_t __y)
+            void reparent(uint32_t __new_parent, int16_t __x, int16_t __y)
             {
                 AutoTimer t(__func__);
 
@@ -4508,8 +4508,7 @@ window {
                 xcb_flush(conn);
             }
             
-            void
-            make_child(uint32_t __window_to_make_child, uint32_t __child_x, uint32_t __child_y)
+            void make_child(uint32_t __window_to_make_child, uint32_t __child_x, uint32_t __child_y)
             {
                 xcb_reparent_window(
                     conn,
@@ -4520,9 +4519,8 @@ window {
                 );
                 xcb_flush(conn);
             }            
-            
-            void
-            kill()
+             
+            void kill()
             {
                 xcb_intern_atom_cookie_t protocols_cookie = xcb_intern_atom( conn, 1, 12, "WM_PROTOCOLS" );
                 xcb_intern_atom_reply_t *protocols_reply = xcb_intern_atom_reply( conn, protocols_cookie, nullptr );
@@ -4556,8 +4554,7 @@ window {
                 signal_manager->_window_client_map.remove( _window );
             }
 
-            void
-            ewmh_kill()
+            void ewmh_kill()
             {
                 xcb_client_message_event_t ev = {0};
                 ev.response_type  = XCB_CLIENT_MESSAGE;
@@ -4572,8 +4569,7 @@ window {
                 xcb_flush(conn);
             }
             
-            void
-            kill_test()
+            void kill_test()
             {
                 AutoTimer t(__func__);
 
@@ -4598,8 +4594,7 @@ window {
                 signal_manager->_window_client_map.remove(w);
             }    
             
-            void
-            clear()
+            void clear()
             {
                 AutoTimer timer(__func__);
 
@@ -4615,8 +4610,7 @@ window {
                 xcb_flush(conn);
             }
             
-            /* void
-            focus_input()
+            /* void focus_input()
             {
                 AutoTimer timer(__func__);
                 
@@ -4629,8 +4623,7 @@ window {
                 xcb_flush(conn);
             } */
 
-            int
-            focus()
+            int focus()
             {
                 AutoTimer timer("window::focus");
                 focus_input();
@@ -4645,8 +4638,7 @@ window {
                 return 0;
             }
             
-            void
-            send_event(uint32_t __event_mask, void *__value_list = nullptr)
+            void send_event(uint32_t __event_mask, void *__value_list = nullptr)
             {
                 if (__event_mask & XCB_EVENT_MASK_EXPOSURE)
                 {
@@ -4728,14 +4720,12 @@ window {
                 }
             }
 
-            void
-            send_intern_struct_update()
+            void send_intern_struct_update()
             {
                 send_event(XCB_EVENT_MASK_STRUCTURE_NOTIFY, (uint32_t[]){static_cast<const uint32_t>(_x), static_cast<const uint32_t>(_y), _width, _height});
             }
             
-            void
-            update(uint32_t __x, uint32_t __y, uint32_t __width, uint32_t __height)
+            void update(uint32_t __x, uint32_t __y, uint32_t __width, uint32_t __height)
             {
                 AutoTimer t("window::update");
 
@@ -4758,52 +4748,51 @@ window {
             }
 
         /* Experimental  */
-            // template<typename Type>
-            // void setValue(Type&& value)
-            // {
-            //     _storedValue = forward<T>(value);
-            // }
+            /* template<typename Type>
+            void setValue(Type&& value)
+            {
+                _storedValue = forward<T>(value);
+            } */
 
-            // template<typename Type>
-            // Type getValue() const
-            // {
-            //     try
-            //     {
-            //         return any_cast<Type>(_storedValue);
-            //     }
-            //     catch (const bad_any_cast& e)
-            //     {
-            //         loutE << "Bad any_cast: " << e.what() << loutEND;
-            //         throw;
-            //     }
-            // }
+            /* template<typename Type>
+            Type getValue() const
+            {
+                try
+                {
+                    return any_cast<Type>(_storedValue);
+                }
+                catch (const bad_any_cast& e)
+                {
+                    loutE << "Bad any_cast: " << e.what() << loutEND;
+                    throw;
+                }
+            } */
 
-            // template<typename Func>
-            // void setAction(Func&& func)
-            // {
-            //     // Ensure the function is wrapped in a std::function with a known signature.
-            //     _action = function<void()>(forward<Func>(func));
-            // }
+            /* template<typename Func>
+            void setAction(Func&& func)
+            {
+                // Ensure the function is wrapped in a std::function with a known signature.
+                _action = function<void()>(forward<Func>(func));
+            } */
 
-            // void triggerAction()
-            // {
-            //     if (_action.has_value())
-            //     {
-            //         try
-            //         {
-            //             // We need to cast back to std::function<void()> before calling.
-            //             any_cast<function<void()>>(_action)();
-            //         }
-            //         catch (const bad_any_cast& e)
-            //         {
-            //             loutE << "Failed to invoke action. " << e.what() << loutEND;
-            //         }
-            //     }
-            // }
+            /* void triggerAction()
+            {
+                if (_action.has_value())
+                {
+                    try
+                    {
+                        // We need to cast back to std::function<void()> before calling.
+                        any_cast<function<void()>>(_action)();
+                    }
+                    catch (const bad_any_cast& e)
+                    {
+                        loutE << "Failed to invoke action. " << e.what() << loutEND;
+                    }
+                }
+            } */
 
         /* Check         */
-            bool
-            check_atom(xcb_atom_t __atom)
+            bool check_atom(xcb_atom_t __atom)
             {
                 AutoTimer timer(__func__);
 
@@ -4825,8 +4814,7 @@ window {
             }
 
             /* Function to fetch and check the _MOTIF_WM_HINTS property */
-            bool
-            check_frameless_window_hint()
+            bool check_frameless_window_hint()
             {
                 AutoTimer timer(__func__);
 
@@ -4855,8 +4843,7 @@ window {
                 return is_frameless;
             }
 
-            bool
-            is_EWMH_fullscreen()
+            bool is_EWMH_fullscreen()
             {
                 AutoTimer timer(__func__);
 
@@ -4877,8 +4864,7 @@ window {
                 return false;
             }
 
-            bool
-            is_active_EWMH_window()
+            bool is_active_EWMH_window()
             {
                 AutoTimer timer(__func__);
 
@@ -4898,8 +4884,7 @@ window {
                 return _window == active_window;
             }
 
-            uint32_t
-            check_event_mask_sum()
+            uint32_t check_event_mask_sum()
             {
                 xcb_get_window_attributes_cookie_t cookie = xcb_get_window_attributes(conn, _window);
                 xcb_get_window_attributes_reply_t *reply = xcb_get_window_attributes_reply(conn, cookie, nullptr);
@@ -4909,8 +4894,7 @@ window {
                 return mask;
             }
             
-            vector<xcb_event_mask_t>
-            check_event_mask_codes()
+            vector<xcb_event_mask_t> check_event_mask_codes()
             {
                 uint32_t maskSum = check_event_mask_sum();
                 vector<xcb_event_mask_t> setMasks;
@@ -4924,8 +4908,7 @@ window {
                 return setMasks;
             }
 
-            bool
-            is_mask_active( uint32_t event_mask )
+            bool is_mask_active( uint32_t event_mask )
             {
                 vector<xcb_event_mask_t>(masks) = check_event_mask_codes();
                 for (const auto &ev_mask : masks)
@@ -4938,8 +4921,7 @@ window {
                 return false;
             }
             
-            bool
-            is_mapped()
+            bool is_mapped()
             {
                 AutoTimer timer(__func__);
 
@@ -4990,8 +4972,7 @@ window {
             }
         
         /* Set           */
-            void
-            set_active_EWMH_window()
+            void set_active_EWMH_window()
             {
                 AutoTimer timer(__func__);
 
@@ -5004,8 +4985,7 @@ window {
                 xcb_flush(conn);
             }
 
-            void
-            set_EWMH_fullscreen_state()
+            void set_EWMH_fullscreen_state()
             {
                 AutoTimer t(__func__);
 
@@ -5168,8 +5148,7 @@ window {
                     return icon_data;
                 }
 
-                void
-                make_png_from_icon()
+                void make_png_from_icon()
                 {
                     AutoTimer t(__func__);
 
@@ -5194,8 +5173,7 @@ window {
                 }
 
             /* icccm */
-                void
-                get_override_redirect()
+                void get_override_redirect()
                 {
                     AutoTimer t(__func__);
 
@@ -5230,8 +5208,7 @@ window {
                     }
                 }
 
-                void
-                get_window_size_hints() {
+                void get_window_size_hints() {
                     xcb_size_hints_t hints;
                     memset(&hints, 0, sizeof(xcb_size_hints_t)); // Initialize hints structure
 
@@ -5266,8 +5243,7 @@ window {
 
                 }
 
-                void
-                set_client_size_as_hints(int16_t *__x, int16_t *__y, uint16_t *__width, uint16_t *__height)
+                void set_client_size_as_hints(int16_t *__x, int16_t *__y, uint16_t *__width, uint16_t *__height)
                 {
                     xcb_size_hints_t hints;
                     memset( &hints, 0, sizeof( xcb_size_hints_t )); // Initialize hints structure
@@ -5313,8 +5289,7 @@ window {
 
                 }
                 
-                string
-                get_window_icon_name()
+                string get_window_icon_name()
                 {
                     xcb_get_property_cookie_t cookie = xcb_icccm_get_wm_icon_name(conn, _window);
                     xcb_icccm_get_text_property_reply_t reply; string icon_name;
@@ -5333,8 +5308,7 @@ window {
 
                 } /** @brief @return the icon name of a window */
 
-            uint32_t
-            get_transient_for_window()
+            uint32_t get_transient_for_window()
             {
                 AutoTimer timer(__func__);
 
@@ -5350,8 +5324,7 @@ window {
                 return t_for;
             }
             
-            void
-            print_window_states()
+            void print_window_states()
             {
                 xcb_intern_atom_reply_t *atom_r = XCB::atom_r(XCB::atom_cok("_NET_WM_STATE"));
                 if (atom_r == nullptr)
@@ -5426,10 +5399,12 @@ window {
                 _pid = pid;
                 return pid;
             }
+            
             pid_t pid() const
             {
                 return _pid;
             }
+            
             string get_window_property(xcb_atom_t __atom)
             {
                 xcb_get_property_cookie_t cookie = xcb_get_property(ewmh->connection, 0, _window, __atom, XCB_GET_PROPERTY_TYPE_ANY, 0, 1024);
@@ -5451,8 +5426,7 @@ window {
                 return propertyValue;
             }
 
-            string
-            get_net_wm_name_by_req()
+            string get_net_wm_name_by_req()
             {
                 AutoTimer t(__func__);
 
@@ -5468,8 +5442,7 @@ window {
                 return windowName;
             }
 
-            string
-            get_net_wm_name() const
+            string get_net_wm_name() const
             {
                 return _name;
             }
@@ -5488,6 +5461,7 @@ window {
                 }
                 free(reply);
             }
+            
             void print_icccm_wm_class()
             {
                 xcb_get_property_cookie_t cookie = xcb_icccm_get_wm_class(conn, _window); /* Request WM_CLASS property */
@@ -5506,6 +5480,7 @@ window {
                 }
 
             }
+            
             string get_icccm_class()
             {
                 xcb_get_property_cookie_t cookie = xcb_icccm_get_wm_class(conn, _window);
@@ -5524,7 +5499,8 @@ window {
                 }
                 return result;
             }
-            char * property(const char *atom_name)
+            
+            char *property(const char *atom_name)
             {
                 unsigned int reply_len;
                 char * propertyValue;
@@ -5582,8 +5558,7 @@ window {
                 return rect;
             }
 
-            xcb_rectangle_t
-            get_xcb_rectangle_t_by_req_2()
+            xcb_rectangle_t get_xcb_rectangle_t_by_req_2()
             {
                 AutoTimer t(__func__);
                 xcb_rectangle_t rect{0, 0, 0, 0};
@@ -5595,6 +5570,7 @@ window {
             {
                 return (xcb_rectangle_t) {_x, _y, _width, _height};
             }
+            
             uint32_t root_window()
             {
                 xcb_query_tree_cookie_t cok = xcb_query_tree(conn, _window);
@@ -5608,6 +5584,7 @@ window {
                 free(r);
                 return w;
             }
+            
             uint32_t parent_by_req()
             {
                 uint32_t p = 0;
@@ -5627,10 +5604,12 @@ window {
                 free(r);
                 return p;
             }
+            
             uint32_t parent() const
             {
                 return _parent;
             }
+            
             uint32_t *children(uint32_t *child_count)
             {
                 *child_count = 0;
@@ -5657,14 +5636,17 @@ window {
                 free(reply);
                 return children;
             }
+            
             uint32_t get_min_width() const
             {
                 return _min_width;
             }
+            
             uint32_t get_min_height() const
             {
                 return _min_height;
             }        
+            
             int16_t x_from_req()
             {
                 xcb_get_geometry_cookie_t g_cok = xcb_get_geometry(conn, _window);
@@ -5679,6 +5661,7 @@ window {
                 free(g);
                 return x;
             }
+            
             int16_t y_from_req()
             {
                 xcb_get_geometry_cookie_t g_cok = xcb_get_geometry(conn, _window);
@@ -5693,6 +5676,7 @@ window {
                 free(g);
                 return y;
             }
+            
             uint16_t width_from_req()
             {
                 xcb_get_geometry_cookie_t g_cok = xcb_get_geometry(conn, _window);
@@ -5707,6 +5691,7 @@ window {
                 free(g);
                 return width;
             }
+            
             uint16_t height_from_req()
             {
                 xcb_get_geometry_cookie_t g_cok = XCB::g_cok(_window);
@@ -5722,14 +5707,12 @@ window {
             }
         
         /* Configuration */
-            void
-            set_event_mask(uint32_t __mask)
+            void set_event_mask(uint32_t __mask)
             {
                 apply_event_mask(&__mask);
             }
             
-            void
-            apply_event_mask(const uint32_t *__mask)
+            void apply_event_mask(const uint32_t *__mask)
             {
                 AutoTimer t(__func__);
 
@@ -5742,8 +5725,7 @@ window {
                 xcb_flush(conn);
             }
             
-            void
-            set_pointer(CURSOR cursor_type)
+            void set_pointer(CURSOR cursor_type)
             {
                 AutoTimer t("window:set_pointer");
 
@@ -5966,8 +5948,7 @@ window {
                 }
 
         /* Backround     */
-            void
-            set_backround_color(int __color)
+            void set_backround_color(int __color)
             {
                 AutoTimer t("window::set_backround_color");
                 _color = __color;
@@ -5975,8 +5956,7 @@ window {
                 _font_gc_good = false;
             }
 
-            void
-            change_backround_color(int __color)
+            void change_backround_color(int __color)
             {
                 AutoTimer t("window::change_backround_color");
                 set_backround_color(__color);
@@ -5986,20 +5966,17 @@ window {
                 _font_gc_good = false;
             }
             
-            void
-            set_backround_color_8_bit(const uint8_t &red_value, const uint8_t &green_value, const uint8_t &blue_value)
+            void set_backround_color_8_bit(const uint8_t &red_value, const uint8_t &green_value, const uint8_t &blue_value)
             {
                 change_back_pixel(get_color(red_value, green_value, blue_value));
             }
             
-            void
-            set_backround_color_16_bit(const uint16_t & red_value, const uint16_t & green_value, const uint16_t & blue_value)
+            void set_backround_color_16_bit(const uint16_t & red_value, const uint16_t & green_value, const uint16_t & blue_value)
             {
                 change_back_pixel(get_color(red_value, green_value, blue_value));
             }
             
-            void
-            set_backround_png(const char * imagePath)
+            void set_backround_png(const char * imagePath)
             {
                 AutoTimer t("window:set_backround_png");
 
@@ -6199,29 +6176,25 @@ window {
                 // clear_window();
             } */
             
-            void
-            make_then_set_png(const char * file_name, const std::vector<std::vector<bool>> &bitmap)
+            void make_then_set_png(const char * file_name, const std::vector<std::vector<bool>> &bitmap)
             {
                 create_png_from_vector_bitmap(file_name, bitmap);
                 set_backround_png(file_name);
             }
             
-            void
-            make_then_set_png(const string &__file_name, const std::vector<std::vector<bool>> &bitmap)
+            void make_then_set_png(const string &__file_name, const std::vector<std::vector<bool>> &bitmap)
             {
                 create_png_from_vector_bitmap(__file_name.c_str(), bitmap);
                 set_backround_png(__file_name.c_str());
             }
             
-            void
-            make_then_set_png(const string &__file_name, bool bitmap[20][20])
+            void make_then_set_png(const string &__file_name, bool bitmap[20][20])
             {
                 create_png_from_vector_bitmap(__file_name.c_str(), bitmap);
                 set_backround_png(__file_name.c_str());
             }
             
-            int
-            get_current_backround_color() const
+            int get_current_backround_color() const
             {
                 return _color;
             }
@@ -6250,8 +6223,7 @@ window {
                 xcb_flush(conn);
             }
             
-            void
-            draw_text(const char *str , int text_color, int backround_color, const char *font_name, int16_t x, int16_t y)
+            void draw_text(const char *str , int text_color, int backround_color, const char *font_name, int16_t x, int16_t y)
             {
                 AutoTimer t(__func__);
 
@@ -6269,8 +6241,7 @@ window {
                 xcb_flush(conn);
             }
             
-            void
-            draw_text_auto_color(const char *__str, int16_t __x, int16_t __y, int __text_color = WHITE, int __backround_color = 0, const char *__font_name = DEFAULT_FONT)
+            void draw_text_auto_color(const char *__str, int16_t __x, int16_t __y, int __text_color = WHITE, int __backround_color = 0, const char *__font_name = DEFAULT_FONT)
             {
                 AutoTimer t(__func__);
 
@@ -6303,8 +6274,7 @@ window {
              *       ALSO IF YOU ONLY WANT AUTO COLOR NOT CENTERING USE 'draw_text_auto_color' FUNCTION
              *
              */
-            void
-            draw_acc(const char *__str, int __text_color = WHITE, int __backround_color = 0, const char *__font_name = DEFAULT_FONT)
+            void draw_acc(const char *__str, int __text_color = WHITE, int __backround_color = 0, const char *__font_name = DEFAULT_FONT)
             {
                 AutoTimer t(__func__);
 
@@ -6329,8 +6299,7 @@ window {
                 xcb_flush(conn);
             }
 
-            void
-            draw_text_16(const char *str, int text_color, int background_color, const char *font_name, int16_t x, int16_t y)
+            void draw_text_16(const char *str, int text_color, int background_color, const char *font_name, int16_t x, int16_t y)
             {
                 AutoTimer t(__func__);
 
@@ -6353,8 +6322,7 @@ window {
                 free(char2b_str);
             }
 
-            void
-            draw_text_16_auto_color(const char *__str, int16_t __x, int16_t __y, int __text_color = WHITE, int __background_color = 0, const char *__font_name = DEFAULT_FONT)
+            void draw_text_16_auto_color(const char *__str, int16_t __x, int16_t __y, int __text_color = WHITE, int __background_color = 0, const char *__font_name = DEFAULT_FONT)
             {
                 AutoTimer t(__func__);
 
@@ -6379,8 +6347,7 @@ window {
                 free(char2b_str);
             }
             
-            void
-            draw_acc_16(const char *__str, int __text_color = WHITE, int __background_color = 0, const char *__font_name = DEFAULT_FONT)
+            void draw_acc_16(const char *__str, int __text_color = WHITE, int __background_color = 0, const char *__font_name = DEFAULT_FONT)
             {
                 AutoTimer t(__func__);
 
@@ -6409,8 +6376,7 @@ window {
             }
 
         /* Keys          */
-            void
-            grab_default_keys()
+            void grab_default_keys()
             {
                 grab_keys({
                     {   T,          ALT | CTRL              }, // for launching terminal
@@ -6438,8 +6404,7 @@ window {
                 });
             }
             
-            void
-            grab_keys(initializer_list<pair<const uint32_t, const uint16_t>> bindings)
+            void grab_keys(initializer_list<pair<const uint32_t, const uint16_t>> bindings)
             {
                 xcb_key_symbols_t * keysyms = xcb_key_symbols_alloc(conn);
                 if (!keysyms)
@@ -6473,8 +6438,7 @@ window {
                 xcb_flush(conn);
             }
             
-            void
-            grab_keys_for_typing()
+            void grab_keys_for_typing()
             {
                 grab_keys(
                 {
@@ -6544,8 +6508,7 @@ window {
             }
         
         /* Buttons       */
-            void
-            grab_button(initializer_list<pair<uint8_t, uint16_t>> __bindings)
+            void grab_button(initializer_list<pair<uint8_t, uint16_t>> __bindings)
             {
                 AutoTimer t(__func__);
 
@@ -6567,8 +6530,7 @@ window {
                 }
             }
 
-            void
-            ungrab_button(initializer_list<pair<uint8_t, uint16_t>> __bindings)
+            void ungrab_button(initializer_list<pair<uint8_t, uint16_t>> __bindings)
             {
                 AutoTimer t(__func__);
 
@@ -7714,8 +7676,7 @@ class client {
             
         
         /* Config    */
-            void
-            x_y(uint32_t __x, uint32_t __y)
+            void x_y(uint32_t __x, uint32_t __y)
             {
                 /* frame.x_y(x, y); */
                 AutoTimer t("client::x_y");
@@ -7727,8 +7688,7 @@ class client {
                 update();
             }
             
-            void
-            _x(int16_t __x)
+            void _x(int16_t __x)
             {
                 /* frame.x(x); */
                 AutoTimer t("client::_x");
@@ -7740,8 +7700,7 @@ class client {
                 update();
             }
 
-            void
-            _y(int16_t __y)
+            void _y(int16_t __y)
             {
                 AutoTimer t("client::_y");
 
@@ -7752,8 +7711,7 @@ class client {
                 update();
             }
 
-            void
-            _width(uint16_t width)
+            void _width(uint16_t width)
             {
                 win.width((width - (BORDER_SIZE * 2)));
                 xcb_flush(conn);
@@ -7770,8 +7728,7 @@ class client {
                 xcb_flush(conn);
             }
 
-            void
-            _height(uint32_t height)
+            void _height(uint32_t height)
             {
                 win.height((height - TITLE_BAR_HEIGHT - (BORDER_SIZE * 2)));
                 frame.height(height);
@@ -7782,8 +7739,7 @@ class client {
                 border[bottom_right].y((height - BORDER_SIZE));
             }
             
-            void
-            x_width(uint32_t x, uint32_t width)
+            void x_width(uint32_t x, uint32_t width)
             {
                 win.width((width - (BORDER_SIZE * 2)));
                 frame.x_width(x, width);
@@ -7798,8 +7754,7 @@ class client {
                 border[bottom_right].x((width - BORDER_SIZE));
                 xcb_flush(conn);
             }
-            
-                
+
             /* void
             y_height(const uint32_t & y, const uint32_t & height)
             {
@@ -7814,8 +7769,7 @@ class client {
                 xcb_flush(conn);
             } */
 
-            void
-            y_height(uint32_t y, uint32_t height)
+            void y_height(uint32_t y, uint32_t height)
             {
                 AutoTimer t("client::y_height");
 
@@ -7838,8 +7792,7 @@ class client {
                 border[bottom_right].update(border[bottom_right].x(), (height - BORDER_SIZE), border[bottom_right].width(), border[bottom_right].height());
             }
             
-            void
-            x_width_height(uint32_t x, uint32_t width, uint32_t height)
+            void x_width_height(uint32_t x, uint32_t width, uint32_t height)
             {
                 frame.x_width_height(x, width, height);
                 win.width_height((width - (BORDER_SIZE * 2)), (height - TITLE_BAR_HEIGHT - (BORDER_SIZE * 2)));
@@ -7856,8 +7809,7 @@ class client {
                 border[bottom_right].x_y((width - BORDER_SIZE), (height - BORDER_SIZE));
             }
             
-            void
-            y_width_height(uint32_t y, uint32_t width, uint32_t height)
+            void y_width_height(uint32_t y, uint32_t width, uint32_t height)
             {
                 frame.y_width_height(y, width, height);
                 win.width_height((width - (BORDER_SIZE * 2)), (height - TITLE_BAR_HEIGHT - (BORDER_SIZE * 2)));
@@ -7874,8 +7826,7 @@ class client {
                 border[bottom_right].x_y((width - BORDER_SIZE), (height - BORDER_SIZE));
             }
             
-            void
-            x_y_width_height(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+            void x_y_width_height(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
             {
                 win.width_height((width - (BORDER_SIZE * 2)), (height - TITLE_BAR_HEIGHT - (BORDER_SIZE * 2)));
                 xcb_flush(conn);
@@ -7894,8 +7845,7 @@ class client {
                 xcb_flush(conn);
             }
             
-            void
-            width_height(uint32_t width, uint32_t height)
+            void width_height(uint32_t width, uint32_t height)
             {
                 win.width_height((width - (BORDER_SIZE * 2)), (height - (BORDER_SIZE * 2) - TITLE_BAR_HEIGHT));
                 xcb_flush(conn);
@@ -7915,33 +7865,45 @@ class client {
             }
         
         /* Size_pos  */
-            void save_ogsize()
+            void
+            save_ogsize()
             {
                 ogsize.save(x, y, width, height);
             }
-            void save_tile_ogsize()
+            
+            void
+            save_tile_ogsize()
             {
                 tile_ogsize.save(x, y, width, height);
             }
-            void save_max_ewmh_ogsize()
+            
+            void
+            save_max_ewmh_ogsize()
             {
                 max_ewmh_ogsize.save(x, y, width, height);
             }
-            void save_max_button_ogsize()
+            
+            void
+            save_max_button_ogsize()
             {
                 max_button_ogsize.save(x, y, width, height);
             }
         
         /* Check     */
-            bool is_active_EWMH_window()
+            bool
+            is_active_EWMH_window()
             {
                 return win.is_active_EWMH_window();
             }
-            bool is_EWMH_fullscreen()
+            
+            bool
+            is_EWMH_fullscreen()
             {
                 return win.is_EWMH_fullscreen();
             }
-            bool is_button_max_win()
+            
+            bool
+            is_button_max_win()
             {
                 if (x      == -BORDER_SIZE
                 &&  y      == -BORDER_SIZE
@@ -7982,7 +7944,8 @@ class client {
             }
 
         /* Get       */
-            void get_window_parameters()
+            void
+            get_window_parameters()
             {
                 AutoTimer t("client:" + string(__func__));
 
@@ -8042,7 +8005,10 @@ class client {
                 free(reply);
 
             }
-            void get_window_parameters_and_log() {
+
+            void
+            get_window_parameters_and_log()
+            {
                 xcb_get_geometry_cookie_t cookie = xcb_get_geometry(conn, win);
                 xcb_get_geometry_reply_t *reply = xcb_get_geometry_reply(conn, cookie, nullptr);
                 if (reply == nullptr) {
@@ -8628,7 +8594,7 @@ class Key_Codes {
 /**
 *****************************************
 *****************************************
-**** @class @c 'Entry'
+**** CLASS: @c 'Entry'
 *****************************************
 ****************************************/
 class Entry
@@ -10086,23 +10052,23 @@ class __audio__ {
             return ret == 0;
         }
 
-        // // Callback for context state
-        // void context_state_cb(pa_context* c, void* userdata)
-        // {
-        //     pa_context_state_t state = pa_context_get_state(c);
-        //     switch (state)
-        //     {
-        //         // This is the state where we can start doing operations
-        //         case PA_CONTEXT_READY:
-        //         {
-        //             pa_operation* o = pa_context_get_sink_info_list(c, sink_list_cb, nullptr);
-        //             if (o) pa_operation_unref(o);
-        //             break;
-        //         }
-        //         default:
-        //             break;
-        //     }
-        // }
+        /* // Callback for context state
+        void context_state_cb(pa_context* c, void* userdata)
+        {
+            pa_context_state_t state = pa_context_get_state(c);
+            switch (state)
+            {
+                // This is the state where we can start doing operations
+                case PA_CONTEXT_READY:
+                {
+                    pa_operation* o = pa_context_get_sink_info_list(c, sink_list_cb, nullptr);
+                    if (o) pa_operation_unref(o);
+                    break;
+                }
+                default:
+                    break;
+            }
+        } */
 
         void init()
         {
@@ -14272,6 +14238,61 @@ class resize_client {
                                 c->update();
                             }
                         }
+                        Emit(c->titlebar, XCB_EXPOSE);
+                        for (int i = 0; i < expose_evVec.size(); ++i)
+                        {
+                            Emit(expose_evVec[i], XCB_EXPOSE);
+                        }
+                        usleep(2800);
+                    }
+                }
+
+                void /** NOTE: Works great  */
+                run_test_2(edge edge)
+                {
+                    xcb_generic_event_t *ev;
+                    bool shouldContinue = true;
+                    const int targetFrequency = 120; // Target frequency in Hz
+                    const auto targetFrameDuration = std::chrono::milliseconds(1000) / targetFrequency; // Duration of each frame
+
+
+                    while (shouldContinue)
+                    {
+                        AutoTimer t("resize_client::border::run full_loop");
+
+                        vector<vector<uint32_t>> vec = pollForEvents();
+                        vector<uint32_t> last_motion_ev{};
+
+                        for (int i = 0; i < vec.size(); ++i)
+                        {
+                            if (vec[i][0] & EXPOSE_BIT)
+                            {
+                                Emit(vec[i][1], XCB_EXPOSE);
+                            }
+                            if (vec[i][0] & PROPERTY_NOTIFY_BIT)
+                            {
+                                Emit(vec[i][1], XCB_PROPERTY_NOTIFY);
+                            }
+                            if (vec[i][0] & MOTION_NOTIFY_BIT)
+                            {
+                                last_motion_ev = vec[i];
+                                /* snap(vec[i][1], vec[i][2], edge, 12);
+                                xcb_flush(conn); */
+                            }
+                            if (vec[i][0] & BUTTON_RELEASE_BIT)
+                            {
+                                shouldContinue = false;                        
+                                c->update();
+                            }
+                        }
+                        if (!last_motion_ev.empty())
+                        {
+                            AutoTimer t("resize_client::border::run_test final size exec");
+                            snap(last_motion_ev[1], last_motion_ev[2], edge, 12);
+                            xcb_flush(conn);
+                            c->update();
+                        }
+
                         Emit(c->titlebar, XCB_EXPOSE);
                         for (int i = 0; i < expose_evVec.size(); ++i)
                         {

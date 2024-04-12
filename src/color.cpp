@@ -2,8 +2,7 @@
 #include "globals.h"
 #include "prof.hpp"
 
-rgb_color_code
-__color__::rgb_code__(int __color)
+rgb_color_code __color__::rgb_code__(int __color)
 {
     AutoTimer timer("__color__:rgb_code");
 
@@ -159,8 +158,7 @@ __color__::rgb_code__(int __color)
     return color;
 }
 
-uint32_t
-__color__::get_color__(int __color)
+uint32_t __color__::get_color__(int __color)
 {
     AutoTimer timer("__color__:get_color__");
 
@@ -183,8 +181,7 @@ __color__::get_color__(int __color)
     return pi;
 }
 
-void
-__color__::init_colors__(const vector<int> &__vec)
+void __color__::init_colors__(const vector<int> &__vec)
 {
     for (const int &i : __vec)
     {
@@ -197,8 +194,7 @@ __color__::__color__(const vector<int> &__vec)
     init_colors__(__vec);
 }
 
-uint32_t 
-__color__::get(int __color)
+uint32_t __color__::get(int __color)
 {
     AutoTimer t("__color__:get");
 
