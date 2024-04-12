@@ -643,3 +643,37 @@
             });
         }
 }; static Mwm_Runner * mwm_runner(nullptr); */
+
+
+/** FROM: @class @c DropDownTerm -> */
+
+/* for (int i = 0; i < ((screen->height_in_pixels / 2) / 20); ++i)
+{
+    window window;
+    window.create_window(
+        w,
+        0,
+        ((( screen->height_in_pixels / 2 ) - 20 ) - ( i * 20 )),
+        screen->width_in_pixels,
+        20,
+        BLACK,
+        NONE,
+        MAP
+    );
+    xcb_flush(conn);
+    w_vec.push_back( window );
+} */
+
+/* event_handler->setEventCallback(
+XCB_KEY_PRESS,
+[ this ]( Ev ev ) -> void
+{
+    RE_CAST_EV( xcb_key_press_event_t );
+    if ( e->detail == wm->key_codes.f12 )
+    {
+        toggle__();
+    }
+}); */
+
+
+/** <- END: */
