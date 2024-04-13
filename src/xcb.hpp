@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
 #include <xcb/xproto.h>
@@ -109,39 +110,21 @@ inline void init_256_bit_data(_256__bit__data__t *obj) {
     } \
 } while (0)
 
-class void_err_t {
-    private:
-        xcb_generic_error_t *err;
-        /* xcb_connection_t *conn; */
+typedef struct
+{
+    uint8_t error_code;
+}
+_error_data_t;
 
+class VoidError
+{
     public:
-        // Constructor takes the connection and the cookie
-        void_err_t(xcb_connection_t* __conn, xcb_void_cookie_t cookie)
-        : /* conn(__conn), */ err(nullptr) {
-            checkErr(cookie);
 
-        }
-        ~void_err_t() {
-            if (err) {
-                free(err);/* Free the error pointer if it's not NULL */
-
-            }
-
-        }
-
-        void checkErr(xcb_void_cookie_t cookie) {
-            err = xcb_request_check(conn, cookie);
-            if (err) {
-                loutE << "XCB Error occurred. Error code: " << err->error_code << loutEND;
-
-            }
-
-        }
-        bool hasErr() const {
-            return err != nullptr;
-
-        }
-
+        xcb_generic_error_t *err;
+        VoidError(xcb_void_cookie_t cookie);
+        ~VoidError();
+        void checkErr(xcb_void_cookie_t cookie);
+        bool hasErr() const;
 };
 
 #define V_COKE( ...) do { \

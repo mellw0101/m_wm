@@ -1095,6 +1095,44 @@ namespace XCB
 /**
 *****************************************
 *****************************************
+**** @class @c __ev_sigs
+*****************************************
+****************************************/
+class __ev_sigs
+{
+    public:
+        umap<uint32_t, umap<int, function<void(vector<uint32_t>)>>> _data;
+
+        template<typename Callback>
+        void connect(uint32_t __w, uint8_t __sig, Callback &&__cb)
+        {
+            _data[__w][__sig] = std::forward<Callback>(__cb);
+        }
+
+        void emit(uint32_t __w, uint8_t __sig, const vector<uint32_t> &__w2)
+        {
+            AutoTimer t("__window_signals__:" + string(__func__) + ":2");
+
+            auto it = _data[__w].find(__sig);
+            if (it != _data[__w].end())
+            {
+                it->second(__w2);
+                xcb_flush(conn);
+            }
+        }
+
+        void remove(uint32_t __w)
+        {
+            auto it = _data.find(__w);
+            if (it == _data.end()) return;
+            _data.erase(it);
+        }
+};
+static __ev_sigs *ev_sigs(nullptr);
+
+/**
+*****************************************
+*****************************************
 **** @class @c __signal_manager__
 *****************************************
 ****************************************/
@@ -2991,8 +3029,7 @@ class __key_codes__ {
 
 // queue<xcb_expose_event_t *> expose_events;
 
-void
-handle_configure_request(xcb_configure_request_event_t* event)
+void handle_configure_request(xcb_configure_request_event_t* event)
 {
     uint32_t values[7];
     int i = 0;
@@ -3078,184 +3115,189 @@ getMappedEv(uint8_t __ev)
     return it->second;
 }
 
+/**
+*****************************************
+*****************************************
+**** @class @c evH
+*****************************************
+****************************************/
 class evH
 {
-private:
-    xcb_generic_event_t *ev;
-    __key_codes__ key_codes;
+    private:
+        xcb_generic_event_t *ev;
+        __key_codes__ key_codes;
 
-public:
-    evH() {}
+    public:
+        evH() {}
 
-    ~evH() {}
+        ~evH() {}
 
-    void
-    main_loop()
-    {
-        key_codes.init();
-
-        while (true)
+        void main_loop()
         {
-            AutoTimer t("main_loop");
+            key_codes.init();
 
-            ev = xcb_wait_for_event(conn);
-            if ( !ev )
+            while (true)
             {
-                loutE << "ev = nullptr";
-                continue;
-            }
-            uint8_t res = (ev->response_type & ~0x80);
-            AutoTimer t2("inner loop");
+                AutoTimer t("main_loop");
 
-            switch (res)
-            {
-                case XCB_EXPOSE:
+                ev = xcb_wait_for_event(conn);
+                if ( !ev )
                 {
-                    AutoTimer t("XCB_EXPOSE");
-
-                    RE_CAST_EV(xcb_expose_event_t);
-                    signal_manager->_window_signals.emit(e->window, XCB_EXPOSE);
-                    break;
+                    loutE << "ev = nullptr";
+                    continue;
                 }
-                case XCB_BUTTON_PRESS:
-                {
-                    AutoTimer t("XCB_BUTTON_PRESS");
+                uint8_t res = (ev->response_type & ~0x80);
+                AutoTimer t2("inner loop");
 
-                    RE_CAST_EV(xcb_button_press_event_t);
-                    if (e->detail == L_MOUSE_BUTTON)
+                switch (res)
+                {
+                    case XCB_EXPOSE:
                     {
-                        if ((e->state & ALT) != 0)
-                        {
-                            signal_manager->_window_signals.emit(e->event, L_MOUSE_BUTTON_EVENT__ALT);
-                        }
-                        else
-                        {
-                            signal_manager->_window_signals.emit(e->event, L_MOUSE_BUTTON_EVENT);
-                        }
+                        AutoTimer t("XCB_EXPOSE");
+
+                        RE_CAST_EV(xcb_expose_event_t);
+                        signal_manager->_window_signals.emit(e->window, XCB_EXPOSE);
+                        break;
                     }
-                    else if (e->detail == R_MOUSE_BUTTON)
+                    case XCB_BUTTON_PRESS:
                     {
-                        if ((e->state & ALT) != 0)
+                        AutoTimer t("XCB_BUTTON_PRESS");
+
+                        RE_CAST_EV(xcb_button_press_event_t);
+                        if (e->detail == L_MOUSE_BUTTON)
                         {
-                            signal_manager->_window_signals.emit(e->event, R_MOUSE_BUTTON_EVENT__ALT);
+                            if ((e->state & ALT) != 0)
+                            {
+                                signal_manager->_window_signals.emit(e->event, L_MOUSE_BUTTON_EVENT__ALT);
+                            }
+                            else
+                            {
+                                signal_manager->_window_signals.emit(e->event, L_MOUSE_BUTTON_EVENT);
+                            }
                         }
-                        else
+                        else if (e->detail == R_MOUSE_BUTTON)
                         {
-                            signal_manager->_window_signals.emit(e->event, R_MOUSE_BUTTON_EVENT);
+                            if ((e->state & ALT) != 0)
+                            {
+                                signal_manager->_window_signals.emit(e->event, R_MOUSE_BUTTON_EVENT__ALT);
+                            }
+                            else
+                            {
+                                signal_manager->_window_signals.emit(e->event, R_MOUSE_BUTTON_EVENT);
+                            }
                         }
+                        buttonPressH(ev);
+                        break;
                     }
-                    buttonPressH(ev);
-                    break;
-                }
-                case XCB_KEY_PRESS:
-                {
-                    AutoTimer t("XCB_KEY_PRESS");
-
-                    RE_CAST_EV(xcb_key_press_event_t);
-                    client *c = nullptr;
-                    if (e->detail == key_codes.f11)
+                    case XCB_KEY_PRESS:
                     {
-                        if ((c = C_RETRIVE(e->event)) != nullptr) C_EMIT(c, EWMH_MAXWIN_SIGNAL);
+                        AutoTimer t("XCB_KEY_PRESS");
+
+                        RE_CAST_EV(xcb_key_press_event_t);
+                        client *c = nullptr;
+                        if (e->detail == key_codes.f11)
+                        {
+                            if ((c = C_RETRIVE(e->event)) != nullptr) C_EMIT(c, EWMH_MAXWIN_SIGNAL);
+                        }
+                        keyPressH(ev);
+                        break;
                     }
-                    keyPressH(ev);
-                    break;
-                }
-                case XCB_ENTER_NOTIFY:
-                {
-                    AutoTimer t("XCB_ENTER_NOTIFY");
-
-                    RE_CAST_EV(xcb_enter_notify_event_t);
-                    signal_manager->_window_signals.emit(e->event, XCB_ENTER_NOTIFY);
-                    break;
-                }
-                case XCB_LEAVE_NOTIFY:
-                {
-                    AutoTimer t("XCB_LEAVE_NOTIFY");
-
-                    RE_CAST_EV(xcb_leave_notify_event_t);
-                    signal_manager->_window_signals.emit(e->event, XCB_LEAVE_NOTIFY);
-                    break;
-                }
-                case XCB_FOCUS_IN:
-                {
-                    AutoTimer t("XCB_FOCUS_IN");
-
-                    RE_CAST_EV(xcb_focus_in_event_t);
-                    signal_manager->_window_signals.emit(e->event, XCB_FOCUS_IN);
-                    signal_manager->_window_signals.emit(screen->root, SET_FOCUSED_CLIENT, e->event);
-                    break;
-                }
-                case XCB_FOCUS_OUT:
-                {
-                    AutoTimer t("XCB_FOCUS_OUT");
-                    
-                    RE_CAST_EV(xcb_focus_out_event_t);
-                    signal_manager->_window_signals.emit(e->event, XCB_FOCUS_OUT);
-                    break;
-                }
-                case XCB_MAP_REQUEST:
-                {
-                    AutoTimer t("XCB_MAP_REQUEST");
-                    RE_CAST_EV(xcb_map_request_event_t);
-                    signal_manager->_window_signals.emit(screen->root, XCB_MAP_REQUEST, e->window);
-                    break;
-                }
-                case XCB_MAP_NOTIFY:
-                {
-                    AutoTimer t("XCB_MAP_NOTIFY");
-
-                    RE_CAST_EV(xcb_map_notify_event_t);
-                    signal_manager->_window_signals.emit(screen->root, XCB_MAP_NOTIFY, e->event);
-                    break;
-                }
-                /* case XCB_CLIENT_MESSAGE:
-                {
-                    AutoTimer t("XCB_CLIENT_MESSAGE");
-                    loutI << "XCB_CLIENT_MESSAGE was detected" << '\n';
-
-                    RE_CAST_EV(xcb_client_message_event_t);
-                    if (e->format == 32)
+                    case XCB_ENTER_NOTIFY:
                     {
-                        // xcb_atom_t atom = xcb->get_atom(0, "WM_DELETE_WINDOW");
-                        iAtomR p_reply(1, "WM_PROTOCOLS");
-                        iAtomR d_reply(0, "WM_DELETE_WINDOW");
+                        AutoTimer t("XCB_ENTER_NOTIFY");
+
+                        RE_CAST_EV(xcb_enter_notify_event_t);
+                        signal_manager->_window_signals.emit(e->event, XCB_ENTER_NOTIFY);
+                        break;
+                    }
+                    case XCB_LEAVE_NOTIFY:
+                    {
+                        AutoTimer t("XCB_LEAVE_NOTIFY");
+
+                        RE_CAST_EV(xcb_leave_notify_event_t);
+                        signal_manager->_window_signals.emit(e->event, XCB_LEAVE_NOTIFY);
+                        break;
+                    }
+                    case XCB_FOCUS_IN:
+                    {
+                        AutoTimer t("XCB_FOCUS_IN");
+
+                        RE_CAST_EV(xcb_focus_in_event_t);
+                        signal_manager->_window_signals.emit(e->event, XCB_FOCUS_IN);
+                        signal_manager->_window_signals.emit(screen->root, SET_FOCUSED_CLIENT, e->event);
+                        break;
+                    }
+                    case XCB_FOCUS_OUT:
+                    {
+                        AutoTimer t("XCB_FOCUS_OUT");
                         
-                        if (e->data.data32[0] == d_reply.Atom() && e->type == p_reply.Atom())
+                        RE_CAST_EV(xcb_focus_out_event_t);
+                        signal_manager->_window_signals.emit(e->event, XCB_FOCUS_OUT);
+                        break;
+                    }
+                    case XCB_MAP_REQUEST:
+                    {
+                        AutoTimer t("XCB_MAP_REQUEST");
+                        RE_CAST_EV(xcb_map_request_event_t);
+                        signal_manager->_window_signals.emit(screen->root, XCB_MAP_REQUEST, e->window);
+                        break;
+                    }
+                    case XCB_MAP_NOTIFY:
+                    {
+                        AutoTimer t("XCB_MAP_NOTIFY");
+
+                        RE_CAST_EV(xcb_map_notify_event_t);
+                        signal_manager->_window_signals.emit(screen->root, XCB_MAP_NOTIFY, e->event);
+                        break;
+                    }
+                    /* case XCB_CLIENT_MESSAGE:
+                    {
+                        AutoTimer t("XCB_CLIENT_MESSAGE");
+                        loutI << "XCB_CLIENT_MESSAGE was detected" << '\n';
+
+                        RE_CAST_EV(xcb_client_message_event_t);
+                        if (e->format == 32)
                         {
-                            loutI << "emmiting sig" << '\n';
-                            signal_manager->_window_signals.emit(e->window, KILL_SIGNAL);
+                            // xcb_atom_t atom = xcb->get_atom(0, "WM_DELETE_WINDOW");
+                            iAtomR p_reply(1, "WM_PROTOCOLS");
+                            iAtomR d_reply(0, "WM_DELETE_WINDOW");
+                            
+                            if (e->data.data32[0] == d_reply.Atom() && e->type == p_reply.Atom())
+                            {
+                                loutI << "emmiting sig" << '\n';
+                                signal_manager->_window_signals.emit(e->window, KILL_SIGNAL);
+                            }
                         }
-                    }
-                    break;
-                } */
-                case XCB_DESTROY_NOTIFY:
-                {
-                    AutoTimer t("XCB_DESTROY_NOTIFY");
-
-                    RE_CAST_EV(xcb_destroy_notify_event_t); 
-                    if (e->window == e->event)
+                        break;
+                    } */
+                    case XCB_DESTROY_NOTIFY:
                     {
-                        signal_manager->_window_signals.emit(screen->root, XCB_DESTROY_NOTIFY, e->event);
-                        xcb_flush(conn);
-                    }
-                    break;
-                }
-                case XCB_PROPERTY_NOTIFY:
-                {
-                    AutoTimer t("XCB_PROPERTY_NOTIFY");
+                        AutoTimer t("XCB_DESTROY_NOTIFY");
 
-                    RE_CAST_EV(xcb_property_notify_event_t);
-                    if (e->atom == ewmh->_NET_WM_NAME)
-                    {
-                        signal_manager->_window_signals.emit(e->window, XCB_PROPERTY_NOTIFY);
-                        xcb_flush(conn);
+                        RE_CAST_EV(xcb_destroy_notify_event_t); 
+                        if (e->window == e->event)
+                        {
+                            signal_manager->_window_signals.emit(screen->root, XCB_DESTROY_NOTIFY, e->event);
+                            xcb_flush(conn);
+                        }
+                        break;
                     }
-                    break;
+                    case XCB_PROPERTY_NOTIFY:
+                    {
+                        AutoTimer t("XCB_PROPERTY_NOTIFY");
+
+                        RE_CAST_EV(xcb_property_notify_event_t);
+                        if (e->atom == ewmh->_NET_WM_NAME)
+                        {
+                            signal_manager->_window_signals.emit(e->window, XCB_PROPERTY_NOTIFY);
+                            xcb_flush(conn);
+                        }
+                        break;
+                    }
                 }
+                free(ev);
             }
-            free(ev);
         }
-    }
 };
 static evH *ev_hand(nullptr);
 
@@ -4202,50 +4244,52 @@ class window
                         const uint32_t &value_mask,
                         const void     *value_list)
             {
-                _depth = depth;
+                /* _depth = depth; */
                 _parent = parent;
                 _x = x;
                 _y = y;
                 _width = width;
                 _height = height;
-                _border_width = border_width;
+                /* _border_width = border_width;
                 __class = _class;
                 _visual = visual;
                 _value_mask = value_mask;
-                _value_list = value_list;
+                _value_list = value_list; */
 
                 make_window();
 
             }
 
-            void create_default(const uint32_t &parent, const int16_t &x, const int16_t &y, const uint16_t &width, const uint16_t &height) {
-                _depth = 0L;
+            void create_default(const uint32_t &parent, const int16_t &x, const int16_t &y, const uint16_t &width, const uint16_t &height)
+            {
+                /* _depth = 0L; */
                 _parent = parent;
                 _x = x;
                 _y = y;
                 _width = width;
                 _height = height;
-                _border_width = 0;
+                /* _border_width = 0;
                 __class = XCB_WINDOW_CLASS_INPUT_OUTPUT;
                 _visual = screen->root_visual;
                 _value_mask = 0;
-                _value_list = nullptr;
+                _value_list = nullptr; */
 
                 make_window();
-
             }
-            void create_def(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask) {
-                _depth        = 0L;
+
+            void create_def(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask)
+            {
+                /* _depth        = 0L; */
                 _parent       = __parent;
                 _x            = __x;
                 _y            = __y;
                 _width        = __width;
                 _height       = __height;
-                _border_width = 0;
+                /* _border_width = 0;
                 __class       = XCB_WINDOW_CLASS_INPUT_OUTPUT;
                 _visual       = screen->root_visual;
                 _value_mask   = 0;
-                _value_list   = nullptr;
+                _value_list   = nullptr; */
 
                 make_window();
                 set_backround_color(__color);
@@ -4254,38 +4298,40 @@ class window
                 if (__mask > 0) {
                     apply_event_mask(&__mask);
                 }
-
             }
-            void create_def_no_keys(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask) {
-                _depth        = 0L;
+
+            void create_def_no_keys(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask)
+            {
+                /* _depth        = 0L; */
                 _parent       = __parent;
                 _x            = __x;
                 _y            = __y;
                 _width        = __width;
                 _height       = __height;
-                _border_width = 0;
+                /* _border_width = 0;
                 __class       = XCB_WINDOW_CLASS_INPUT_OUTPUT;
                 _visual       = screen->root_visual;
                 _value_mask   = 0;
-                _value_list   = nullptr;
+                _value_list   = nullptr; */
 
                 make_window();
                 set_backround_color(__color);
                 if (__mask > 0) apply_event_mask(&__mask);
-
             }
-            void create_def_and_map(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask) {
-                _depth        = 0L;
+
+            void create_def_and_map(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask)
+            {
+                /* _depth        = 0L; */
                 _parent       = __parent;
                 _x            = __x;
                 _y            = __y;
                 _width        = __width;
                 _height       = __height;
-                _border_width = 0;
+                /* _border_width = 0;
                 __class       = XCB_WINDOW_CLASS_INPUT_OUTPUT;
                 _visual       = screen->root_visual;
                 _value_mask   = 0;
-                _value_list   = nullptr;
+                _value_list   = nullptr; */
 
                 make_window();
                 set_backround_color(__color);
@@ -4293,40 +4339,42 @@ class window
                 if (__mask > 0) apply_event_mask(&__mask);
                 map();
                 raise();
-
             }
-            void create_def_and_map_no_keys(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask) {
-                _depth        = 0L;
+
+            void create_def_and_map_no_keys(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask)
+            {
+                /* _depth        = 0L; */
                 _parent       = __parent;
                 _x            = __x;
                 _y            = __y;
                 _width        = __width;
                 _height       = __height;
-                _border_width = 0;
+                /* _border_width = 0;
                 __class       = XCB_WINDOW_CLASS_INPUT_OUTPUT;
                 _visual       = screen->root_visual;
                 _value_mask   = 0;
-                _value_list   = nullptr;
+                _value_list   = nullptr; */
 
                 make_window();
                 set_backround_color(__color);
                 if (__mask > 0) apply_event_mask(&__mask);
                 map();
                 raise();
-
             }
-            void create_def_and_map_no_keys_with_borders(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask, int __border_info[3]) {
-                _depth        = 0L;
+
+            void create_def_and_map_no_keys_with_borders(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask, int __border_info[3])
+            {
+                /* _depth        = 0L; */
                 _parent       = __parent;
                 _x            = __x;
                 _y            = __y;
                 _width        = __width;
                 _height       = __height;
-                _border_width = 0;
+                /* _border_width = 0;
                 __class       = XCB_WINDOW_CLASS_INPUT_OUTPUT;
                 _visual       = screen->root_visual;
                 _value_mask   = 0;
-                _value_list   = nullptr;
+                _value_list   = nullptr; */
 
                 make_window();
                 set_backround_color(__color);
@@ -4350,17 +4398,17 @@ class window
             {
                 AutoTimer t(__func__);
 
-                _depth        = 0L;
+                /* _depth        = 0L; */
                 _parent       = __parent;
                 _x            = __x;
                 _y            = __y;
                 _width        = __width;
                 _height       = __height;
-                _border_width = 0;
+                /* _border_width = 0;
                 __class       = XCB_WINDOW_CLASS_INPUT_OUTPUT;
                 _visual       = screen->root_visual;
                 _value_mask   = 0;
-                _value_list   = nullptr;
+                _value_list   = nullptr; */
 
                 make_window();
                 set_backround_color(__color);
@@ -4401,17 +4449,17 @@ class window
                 value_list[0] = screen->white_pixel;
                 value_list[1] = XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_STRUCTURE_NOTIFY;
 
-                _depth = 0L;
+                /* _depth = 0L; */
                 _parent = parent;
                 _x = x;
                 _y = y;
                 _width = width;
                 _height = height;
-                _border_width = 0;
+                /* _border_width = 0;
                 __class = XCB_WINDOW_CLASS_INPUT_OUTPUT;
                 _visual = screen->root_visual;
                 _value_mask = value_mask;
-                _value_list = value_list;
+                _value_list = value_list; */
                 
                 make_window();
             }
@@ -5763,32 +5811,27 @@ class window
 
             /* Size_pos  */
                 /* Fetch */
-                    int16_t
-                    x() const
+                    int16_t x() const
                     {
                         return _x;
                     }
 
-                    int16_t 
-                    y() const
+                    int16_t y() const
                     {
                         return _y;
                     }   
                     
-                    uint16_t
-                    width() const
+                    uint16_t width() const
                     {
                         return _width;
                     }
                     
-                    uint16_t
-                    height() const
+                    uint16_t height() const
                     {
                         return _height;
                     }
 
-                    void
-                    geo(int16_t *__x = nullptr, int16_t *__y = nullptr, uint16_t *__width = nullptr, uint16_t *__height = nullptr)
+                    void geo(int16_t *__x = nullptr, int16_t *__y = nullptr, uint16_t *__width = nullptr, uint16_t *__height = nullptr)
                     {
                         AutoTimer timer(__func__);
                         xcb_get_geometry_cookie_t cookie = xcb_get_geometry_unchecked(conn, _window);
@@ -5802,49 +5845,44 @@ class window
                         if (__y      != nullptr) *__y      = reply->y;
                         if (__width  != nullptr) *__width  = reply->width;
                         if (__height != nullptr) *__height = reply->height;
+                        free(reply);
                     }
 
-                void
-                configure(uint16_t __mask, const void *__value_list)
+                void configure(uint16_t __mask, const void *__value_list)
                 {
                     xcb_configure_window(conn, _window, __mask, __value_list);
                     xcb_flush(conn);
                 } 
                 
-                void
-                x(uint32_t x)
+                void x(uint32_t x)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X, (uint32_t[]){x});
                     _x = x;
                     xcb_flush(conn);
                 }
                 
-                void
-                y(uint32_t y)
+                void y(uint32_t y)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_Y, (uint32_t[]){y});
                     _y = y;
                     xcb_flush(conn);
                 }
                 
-                void
-                width(uint32_t width)
+                void width(uint32_t width)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_WIDTH, (uint32_t[]){width});
                     _width = width;
                     xcb_flush(conn);
                 }
                 
-                void
-                height(uint32_t height)
+                void height(uint32_t height)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_HEIGHT, (uint32_t[]){height});
                     _height = height;
                     xcb_flush(conn);
                 }
                 
-                void
-                x_y(uint32_t x, uint32_t y)
+                void x_y(uint32_t x, uint32_t y)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, (uint32_t[]){x, y});
                     _x = x;
@@ -5852,8 +5890,7 @@ class window
                     xcb_flush(conn);
                 }
 
-                void
-                width_height(uint32_t width, uint32_t height)
+                void width_height(uint32_t width, uint32_t height)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, (uint32_t[]){width, height});
                     _width = width;
@@ -5861,8 +5898,7 @@ class window
                     xcb_flush(conn);
                 }
                 
-                void
-                x_y_width_height(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+                void x_y_width_height(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, (const uint32_t[]){x, y, width, height});
                     _x      = x;
@@ -5872,8 +5908,7 @@ class window
                     xcb_flush(conn);
                 }
 
-                void
-                x_width_height(uint32_t x, uint32_t width, uint32_t height)
+                void x_width_height(uint32_t x, uint32_t width, uint32_t height)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, (uint32_t[3]){x, width, height});
                     _x      = x;
@@ -5882,8 +5917,7 @@ class window
                     xcb_flush(conn);
                 }
 
-                void
-                y_width_height(uint32_t y, uint32_t width, uint32_t height)
+                void y_width_height(uint32_t y, uint32_t width, uint32_t height)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, (const uint32_t[3]){y, width, height});
                     _y      = y;
@@ -5892,8 +5926,7 @@ class window
                     xcb_flush(conn);
                 }
 
-                void
-                x_width(uint32_t x, uint32_t width)
+                void x_width(uint32_t x, uint32_t width)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_WIDTH, (const uint32_t[2]){x, width});
                     _x      = x;
@@ -5901,8 +5934,7 @@ class window
                     xcb_flush(conn);
                 }
 
-                void
-                x_height(uint32_t x, uint32_t height)
+                void x_height(uint32_t x, uint32_t height)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_HEIGHT, (const uint32_t[2]){x, height});
                     _x      = x;
@@ -5910,8 +5942,7 @@ class window
                     xcb_flush(conn);
                 }
 
-                void
-                y_width(uint32_t y, uint32_t width)
+                void y_width(uint32_t y, uint32_t width)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH, (const uint32_t[2]){y, width});
                     _y      = y;
@@ -5919,8 +5950,7 @@ class window
                     xcb_flush(conn);
                 }
                 
-                void
-                y_height(uint32_t y, uint32_t height)
+                void y_height(uint32_t y, uint32_t height)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT, (const uint32_t[2]){y, height});
                     _y      = y;
@@ -5928,8 +5958,7 @@ class window
                     xcb_flush(conn);
                 }
 
-                void
-                x_y_width(uint32_t x, uint32_t y, uint32_t width)
+                void x_y_width(uint32_t x, uint32_t y, uint32_t width)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH, (const uint32_t[3]){x, y, width});
                     _x      = x;
@@ -5938,8 +5967,7 @@ class window
                     xcb_flush(conn);
                 }
                 
-                void
-                x_y_height(uint32_t x, uint32_t y, uint32_t height)
+                void x_y_height(uint32_t x, uint32_t y, uint32_t height)
                 {
                     xcb_configure_window(conn, _window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_HEIGHT, (const uint32_t[3]){x, y, height});
                     _x      = x;
@@ -5977,12 +6005,12 @@ class window
                 change_back_pixel(get_color(red_value, green_value, blue_value));
             }
             
-            void set_backround_png(const char * imagePath)
+            void set_backround_png(const char *imagePath)
             {
                 AutoTimer t("window:set_backround_png");
 
                 Imlib_Image image = imlib_load_image(imagePath);
-                if ( !image )
+                if (!image)
                 {
                     loutE << "Failed to load image: " << imagePath << '\n';
                     return;
@@ -6024,7 +6052,8 @@ class window
                     XCB_IMAGE_FORMAT_Z_PIXMAP, 
                     screen->root_depth, 
                     NULL, 
-                    ~0, (uint8_t*)data
+                    ~0,
+                    (uint8_t*)data
                 );
 
                 create_pixmap();
@@ -6246,9 +6275,13 @@ class window
             {
                 AutoTimer t(__func__);
 
-                get_font(__font_name);
-                if (__backround_color == 0) __backround_color = _color;
-                create_font_gc(__text_color, __backround_color, font);
+                if (_font_gc_good == false)
+                {
+                    get_font(__font_name);
+                    if (__backround_color == 0) __backround_color = _color;
+                    create_font_gc(__text_color, __backround_color, font);
+                }
+                
                 xcb_image_text_8(
                     conn,
                     slen(__str),
@@ -6550,18 +6583,18 @@ class window
     private:
     /* Variables   */
         /* Main */
-            uint8_t        _depth;
+            /* uint8_t        _depth; */
             uint32_t       _window;
             uint32_t       _parent;
             int16_t        _x;
             int16_t        _y;
             uint16_t       _width;
             uint16_t       _height;
-            uint16_t       _border_width;
+            /* uint16_t       _border_width;
             uint16_t       __class;
             uint32_t       _visual;
             uint32_t       _value_mask;
-            const void    *_value_list;
+            const void    *_value_list; */
         
         uint32_t _gc;
         xcb_gcontext_t font_gc;
@@ -6596,8 +6629,7 @@ class window
                  * @p XCB_INPUT_FOCUS_FOLLOW_KEYBOARD NOTE: This is experemental
                  * 
                  */
-                void
-                focus_input()
+                void focus_input()
                 {
                     AutoTimer timer("window::focus_input");
                     
@@ -6610,8 +6642,7 @@ class window
                     xcb_flush(conn);
                 }
 
-            void
-            make_window()
+            void make_window()
             {
                 AutoTimer t("window::make_window");
 
@@ -6625,18 +6656,23 @@ class window
 
                 xcb_create_window(
                     conn,
-                    _depth,
+                    /* _depth, */ 0L,
                     _window,
                     _parent,
                     _x,
                     _y,
                     _width,
                     _height,
-                    _border_width,
+                    0,
+                    XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                    screen->root_visual,
+                    0,
+                    nullptr
+                    /* _border_width,
                     __class,
                     _visual,
                     _value_mask,
-                    _value_list
+                    _value_list */
                 );
                 xcb_flush(conn);
 
@@ -6644,8 +6680,7 @@ class window
                 _bit_state |= (1 << Xid_gen_success);
             }
 
-            void
-            clear_window(uint32_t __window)
+            void clear_window(uint32_t __window)
             {
                 xcb_clear_area(
                     conn, 
@@ -6661,8 +6696,7 @@ class window
 
         /* Create     */
             /* Gc     */
-                void
-                create_graphics_exposure_gc()
+                void create_graphics_exposure_gc()
                 {
                     AutoTimer t(__func__);
                     
@@ -6682,8 +6716,7 @@ class window
                     xcb_flush(conn);
                 }
 
-                void
-                create_font_gc(int text_color, int backround_color, xcb_font_t font)
+                void create_font_gc(int text_color, int backround_color, xcb_font_t font)
                 {
                     AutoTimer t(__func__);
 
@@ -6706,8 +6739,7 @@ class window
                 }
             
             /* Pixmap */
-                void
-                create_pixmap()
+                void create_pixmap()
                 {
                     AutoTimer t(__func__);
 
@@ -6725,8 +6757,7 @@ class window
                 }
             
             /* Png    */
-                void
-                create_png_from_vector_bitmap(const char *file_name, const vector<vector<bool>> &bitmap)
+                void create_png_from_vector_bitmap(const char *file_name, const vector<vector<bool>> &bitmap)
                 {
                     AutoTimer t(__func__);
 
@@ -6786,8 +6817,7 @@ class window
                     png_destroy_write_struct(&png_ptr, &info_ptr);
                 }
 
-                void
-                create_png_from_vector_bitmap(const char *file_name, bool bitmap[20][20])
+                void create_png_from_vector_bitmap(const char *file_name, bool bitmap[20][20])
                 {
                     int width  = 20, height = 20;
 
@@ -6846,8 +6876,7 @@ class window
                 }
 
         /* Get        */
-            void
-            get_font(const char *font_name)
+            void get_font(const char *font_name)
             {
                 AutoTimer timer(__func__);
 
@@ -7118,8 +7147,7 @@ class window
             }
         
         /* Borders    */
-            void
-            create_border_window(BORDER __border, int __color, uint32_t __x, uint32_t __y, uint32_t __width, uint32_t __height)
+            void create_border_window(BORDER __border, int __color, uint32_t __x, uint32_t __y, uint32_t __width, uint32_t __height)
             {
                 AutoTimer timer(__func__);
 
@@ -7158,8 +7186,7 @@ class window
                 \
             } while(0)
             
-            void
-            make_border_window(int __border, uint32_t __size, int __color)
+            void make_border_window(int __border, uint32_t __size, int __color)
             {
                 AutoTimer t(__func__);
 
@@ -7178,8 +7205,7 @@ class window
              * @param input Pointer to the UTF-8 encoded string.
              * @return The total number of Unicode characters in the input string.
              */
-            size_t
-            calculate_utf8_size(const char *input)
+            size_t calculate_utf8_size(const char *input)
             {
                 size_t count = 0;
                 while (*input != '\0')
@@ -7212,8 +7238,7 @@ class window
                 return count;
             }
 
-            xcb_char2b_t *
-            to_char2b(const char *input, int *len)
+            xcb_char2b_t *to_char2b(const char *input, int *len)
             {
                 size_t max_chars = calculate_utf8_size(input);
 
@@ -7244,8 +7269,7 @@ class window
              *        Also advances the input string by the number of bytes used for
              *        the decoded character. 
              */
-            uint32_t
-            decode_utf8_char(const char **input)
+            uint32_t decode_utf8_char(const char **input)
             {
                 const unsigned char *str = (const unsigned char *)*input;
                 uint32_t codepoint = 0;
@@ -7279,8 +7303,7 @@ class window
             }
             
             /* Converts a UTF-8 string to an array of xcb_char2b_t for xcb_image_text_16 */
-            xcb_char2b_t *
-            convert_to_char2b(const char *input, int *len)
+            xcb_char2b_t *convert_to_char2b(const char *input, int *len)
             {
                 size_t utf8_len = slen(input);
                 size_t max_chars = utf8_len; // Maximum possible number of characters (all 1-byte)
@@ -7302,7 +7325,8 @@ class window
 
 #define CLI_TITLE_BAR_EXPOSE_BIT 1
 #define CLI_TITLE_REQ_BIT 2
-class client {
+class client
+{
     public:
     /* Sub Classes */
         class client_border_decor {
@@ -7890,20 +7914,17 @@ class client {
             }
         
         /* Check     */
-            bool
-            is_active_EWMH_window()
+            bool is_active_EWMH_window()
             {
                 return win.is_active_EWMH_window();
             }
             
-            bool
-            is_EWMH_fullscreen()
+            bool is_EWMH_fullscreen()
             {
                 return win.is_EWMH_fullscreen();
             }
             
-            bool
-            is_button_max_win()
+            bool is_button_max_win()
             {
                 if (x      == -BORDER_SIZE
                 &&  y      == -BORDER_SIZE
@@ -7916,20 +7937,17 @@ class client {
             }
         
         /* Set       */
-            void
-            set_active_EWMH_window()
+            void set_active_EWMH_window()
             {
                 win.set_active_EWMH_window();
             }
             
-            void
-            set_EWMH_fullscreen_state()
+            void set_EWMH_fullscreen_state()
             {
                 win.set_EWMH_fullscreen_state();
             }
             
-            void
-            set_client_params()
+            void set_client_params()
             {
                 AutoTimer t(__func__);
 
@@ -8852,7 +8870,7 @@ class Window_Manager
                 setup_events(); 
             }
 
-            void quit( int __status )
+            void quit(int __status)
             {
                 pid_manager->kill_all_pids();
                 xcb_flush( conn );
@@ -12796,7 +12814,8 @@ class __dock_search__ {
         }
 };
 
-class __dock__ {
+class __dock__
+{
     private:
     /* Variabels   */
         window dock_menu;
@@ -12909,7 +12928,7 @@ class __dock__ {
         {
             create_window__();
 
-            event_handler->setEventCallback(EV_CALL(XCB_KEY_PRESS)
+            /* event_handler->setEventCallback(EV_CALL(XCB_KEY_PRESS)
             {
                 RE_CAST_EV(xcb_key_press_event_t);
                 if (e->detail == wm->key_codes.super_l)
@@ -12926,7 +12945,7 @@ class __dock__ {
                         }
                     }
                 }
-            });
+            }); */
 
             signal_manager->connect("HIDE_DOCK",
             [this]() -> void
@@ -12934,11 +12953,24 @@ class __dock__ {
                 hide__(dock_menu);
             });
         }
+
+        void toggle()
+        {
+            if (dock_menu.is_mapped())
+            {
+                hide__(dock_menu);
+            }
+            else
+            {
+                show__(dock_menu);
+            }
+        }
     
     /* Constructor */
         __dock__() {}
 
-}; static __dock__ *dock( nullptr );
+};
+static __dock__ *dock(nullptr);
 
 /**
 *****************************************
@@ -12948,10 +12980,64 @@ class __dock__ {
 ****************************************/
 class DropDownTerm
 {
-    public:
+    #define DropDownTermSignal 112
+
+    vector<int8_t> _char_vec = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-', ' '};
+
+    constexpr uint8_t char_to_keycode__(int8_t c)
+    {
+        switch (c)
+        {
+            case 'a': return wm->key_codes.a;
+            case 'b': return wm->key_codes.b;
+            case 'c': return wm->key_codes.c;
+            case 'd': return wm->key_codes.d;
+            case 'e': return wm->key_codes.e;
+            case 'f': return wm->key_codes.f;
+            case 'g': return wm->key_codes.g;
+            case 'h': return wm->key_codes.h;
+            case 'i': return wm->key_codes.i;
+            case 'j': return wm->key_codes.j;
+            case 'k': return wm->key_codes.k;
+            case 'l': return wm->key_codes.l;
+            case 'm': return wm->key_codes.m;
+            case 'n': return wm->key_codes.n;
+            case 'o': return wm->key_codes.o;
+            case 'p': return wm->key_codes.p;
+            case 'q': return wm->key_codes.q;
+            case 'r': return wm->key_codes.r;
+            case 's': return wm->key_codes.s;
+            case 't': return wm->key_codes.t;
+            case 'u': return wm->key_codes.u;
+            case 'v': return wm->key_codes.v;
+            case 'w': return wm->key_codes.w;
+            case 'x': return wm->key_codes.x;
+            case 'y': return wm->key_codes.y;
+            case 'z': return wm->key_codes.z;
+            case '-': return wm->key_codes.minus;
+            case ' ': return wm->key_codes.space_bar;
+        }
+
+        return (uint8_t)0;
+    }
+
+    constexpr int8_t lower_to_upper_case__(int8_t c)
+    {
+        if (c == '-') return '_';
+        if (c == ' ') return ' ';
+        return (c - 32);
+    }
+
+    #define prosses_char(__char) \
+        if (ev[0] == char_to_keycode__(__char)) \
+        { \
+            ss << __char; \
+        }
+
+public:
     
     window w;
-    vector<window> w_vec;
+    stringstream ss;
 
     void toggle__()
     {
@@ -12977,12 +13063,25 @@ class DropDownTerm
             screen->width_in_pixels,
             ( screen->height_in_pixels / 2 ),
             BLACK,
-            NONE,
+            XCB_EVENT_MASK_KEY_PRESS,
             MAP
         );
         xcb_flush(conn);
 
         wm->context_menu->add_entry("DropDownTerm", [this]()-> void { this->toggle__(); });
+        
+        ev_sigs->connect(w, DropDownTermSignal, [this](const vector<uint32_t> ev)
+        {
+            AutoTimer t("DropDownTerm SIG");
+
+            for (int i = 0; i < _char_vec.size(); ++i)
+            {
+                prosses_char(_char_vec[i]);
+            }
+
+            w.draw_text_auto_color(ss.str().c_str(), 4, (w.height() - 20));
+            xcb_flush(conn);
+        });
     }
 };
 static DropDownTerm *ddTerm( nullptr );
@@ -14161,9 +14260,6 @@ class resize_client
                 {
                     xcb_generic_event_t *ev;
                     bool shouldContinue = true;
-                    /* const int targetFrequency = 120; // Target frequency in Hz
-                    const auto targetFrameDuration = std::chrono::milliseconds(1000) / targetFrequency; // Duration of each frame */
-
 
                     while (shouldContinue)
                     {
@@ -14195,6 +14291,7 @@ class resize_client
                                     c->update();
                                 }
                             }
+
                             if (!last_motion_ev.empty())
                             {
                                 AutoTimer t("resize_client::border::run_test final size exec");
@@ -14538,7 +14635,8 @@ class max_win {
  * The class also includes helper methods to check the current tile position of a window and set the size and position of a window.
  *
  */
-class tile {
+class tile
+{
     private:
     /* Variabels   */
         client(*c);
@@ -15428,8 +15526,7 @@ class Events
         } */
 };
 
-void
-keyPressH(const xcb_generic_event_t *ev)
+void keyPressH(const xcb_generic_event_t *ev)
 {
     RE_CAST_EV(xcb_key_press_event_t);
     if (e->detail == wm->key_codes.r_arrow)
@@ -15539,6 +15636,15 @@ keyPressH(const xcb_generic_event_t *ev)
         ddTerm->toggle__();
     }
 
+    if (e->detail == wm->key_codes.super_l && (e->state & SHIFT) != 0)
+    {
+        dock->toggle();
+    }
+    if (e->event == ddTerm->w)
+    {
+        ev_sigs->emit(ddTerm->w, DropDownTermSignal, {e->detail, e->state});
+    }
+
     /* if (e->detail == wm->key_codes.tab)
     {
         switch (e->state)
@@ -15572,8 +15678,7 @@ keyPressH(const xcb_generic_event_t *ev)
     } */
 }
 
-void
-buttonPressH(const xcb_generic_event_t *ev)
+void buttonPressH(const xcb_generic_event_t *ev)
 {
     RE_CAST_EV(xcb_button_press_event_t);
     client *c = wm->client_from_any_window(&e->event);
@@ -15774,8 +15879,7 @@ class test {
         test() {}
 };
 
-void
-setup_wm()
+void setup_wm()
 {
     user = get_user_name();
     loutCUser(USER);
@@ -15806,12 +15910,13 @@ setup_wm()
     NEW_CLASS(screen_settings, __screen_settings__) { screen_settings->init(); }
     NEW_CLASS(dock,            __dock__           ) { dock->init(); }
     NEW_CLASS(pid_manager,     __pid_manager__    ) {}
+    
+    ev_sigs = new __ev_sigs;
     NEW_CLASS(ddTerm,          DropDownTerm       ) { ddTerm->init(); }
     NEW_CLASS(pty,             Pty                ) { pty->start(); }
 }
 
-int
-main()
+int main()
 {
     loutI << "\n\n          -- mwm starting --\n" << '\n';
 

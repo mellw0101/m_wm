@@ -8,42 +8,91 @@
 #include <xcb/xproto.h>
 #include "prof.hpp"
 
-xcb_intern_atom_cookie_t xcb::intern_atom_cookie(const char *__name) {
+
+/**
+*****************************************
+*****************************************
+**** @class @c VoidError
+*****************************************
+****************************************/
+
+VoidError::VoidError(xcb_void_cookie_t cookie)
+: err(nullptr)
+{
+    checkErr(cookie);
+
+}
+
+VoidError::~VoidError()
+{
+    if (err)
+    {
+        free(err);/* Free the error pointer if it's not NULL */
+    }
+}
+
+void VoidError::checkErr(xcb_void_cookie_t cookie)
+{
+    err = xcb_request_check(conn, cookie);
+    if (err)
+    {
+        loutE << "XCB Error occurred. Error code: " << err->error_code << loutEND;
+    }
+}
+
+bool VoidError::hasErr() const
+{
+    return err != nullptr;
+}
+
+/**
+*****************************************
+*****************************************
+**** @class @c xcb
+*****************************************
+****************************************/
+xcb_intern_atom_cookie_t xcb::intern_atom_cookie(const char *__name)
+{
     return xcb_intern_atom(
         conn,
         0,
         slen(__name),
         __name
-        
     );
-
 }
-xcb_intern_atom_reply_t *xcb::intern_atom_reply(xcb_intern_atom_cookie_t __cookie) {
+
+xcb_intern_atom_reply_t *xcb::intern_atom_reply(xcb_intern_atom_cookie_t __cookie)
+{
     return xcb_intern_atom_reply(conn, __cookie, nullptr);
-
 }
-xcb_atom_t xcb::intern_atom(const char *__name) {
+
+xcb_atom_t xcb::intern_atom(const char *__name)
+{
     xcb_intern_atom_reply_t *rep = intern_atom_reply(intern_atom_cookie(__name));
-    if (!rep) {
+    if (!rep)
+    {
         loutE << "rep = nullptr could not get intern_atom_reply" << loutEND;
         free(rep);
         return XCB_ATOM_NONE;
-    
-    } xcb_atom_t atom(rep->atom);
+    }
+    xcb_atom_t atom(rep->atom);
     free(rep);
     return atom;
-
 }
-/* bool xcb::window_exists(uint32_t __w) {
+
+/* bool xcb::window_exists(uint32_t __w)
+{
     xcb_generic_error_t *err;
     free(xcb_query_tree_reply(_conn, xcb_query_tree(_conn, __w), &err));
-    if (err != NULL) {
+    if (err != NULL)
+    {
         free(err);
         return false;
     }
     return true;
 } */
-/* bool xcb::window_exists(uint32_t __w) {
+/* bool xcb::window_exists(uint32_t __w)
+{
     xcb_generic_error_t *err = NULL;
     auto *reply = xcb_query_tree_reply(conn, xcb_query_tree(conn, __w), &err);
     if (reply) free(reply); // Correctly free the reply if it's non-null
@@ -53,10 +102,9 @@ xcb_atom_t xcb::intern_atom(const char *__name) {
     free(err); // Free the error if it's non-null
     return false; // Return false if there was an error, assuming it indicates non-existence
 
-}
- */
-uint32_t
-xcb::gen_Xid()
+} */
+
+uint32_t xcb::gen_Xid()
 {
     if (_flags & (1ULL << X_CONN_ERROR))
     {
@@ -85,24 +133,28 @@ void xcb::window_stack(uint32_t __window1, uint32_t __window2, uint32_t __mode)
     
     xcb_configure_window(conn, __window1, mask, values);   
 }
+
 bool xcb::is_flag_set(unsigned int __f)
 {
     return ( _flags & ( 1ULL << __f )) != 0;
 }
+
 void xcb::set_flag(unsigned int __f)
 {
     _flags |= 1ULL << __f;
 }
+
 void xcb::clear_flag(unsigned int __f)
 {
     _flags &= ~(1ULL << __f);
 }
+
 void xcb::toggle_flag(unsigned int __f)
 {
     _flags ^= 1ULL << __f;
 }
 
-xcb::xcb(/* xcb_connection_t *__conn,  */xcb_screen_t *__s) : /* _conn(__conn), */ _s(__s)
+xcb::xcb(xcb_screen_t *__s) : _s(__s)
 {
     if (xcb_connection_has_error(conn))
     {
@@ -117,17 +169,13 @@ xcb::xcb(/* xcb_connection_t *__conn,  */xcb_screen_t *__s) : /* _conn(__conn), 
     }
 
 }
-// class x *connect_to_server(xcb_connection_t *__conn) {
-//     return new class x(__conn);
-    
-// }
+
 uint64_t &xcb::check_conn()
 {
     return _flags;    
 }
 
-void
-xcb::create_w(uint32_t __pw, uint32_t __w, int16_t __x, int16_t __y,
+void xcb::create_w(uint32_t __pw, uint32_t __w, int16_t __x, int16_t __y,
                       uint16_t __width, uint16_t __height)
 {
     // Create the window
@@ -147,20 +195,9 @@ xcb::create_w(uint32_t __pw, uint32_t __w, int16_t __x, int16_t __y,
         nullptr
     );
     check_error();
-    
-    if ((_flags & 1ULL << X_REQ_ERROR) != 0)
-    {
-        loutE << "window creation failed" << loutEND;
-        _flags |= 1ULL << X_W_CREATION_ERR;
-    }      
-    else
-    {
-        _flags &= ~(1ULL << X_W_CREATION_ERR);    
-    }
 }
 
-void 
-xcb::check_error()
+void xcb::check_error()
 {
     _err = xcb_request_check(conn, _cookie);
     if (_err)
@@ -225,15 +262,13 @@ atoms_t::~atoms_t() {
     
 } */
 
-uint32_t
-xcb::get_atom(uint8_t __only_if_exists, const char *__atom_name)
+uint32_t xcb::get_atom(uint8_t __only_if_exists, const char *__atom_name)
 {
     iAtomR r(0, __atom_name);
     return (r.is_not_valid()) ? XCB_NONE : r.Atom();
 }
 
-uint32_t
-xcb::get_input_focus()
+uint32_t xcb::get_input_focus()
 {
     AutoTimer t("xcb::get_input_focus");
 
@@ -251,8 +286,7 @@ xcb::get_input_focus()
     return w;
 }
 
-uint32_t
-xcb::get_input_focus_unchecked()
+uint32_t xcb::get_input_focus_unchecked()
 {
     AutoTimer t("xcb::get_input_focus_unchecked");
 
@@ -270,8 +304,7 @@ xcb::get_input_focus_unchecked()
     return w;
 }
 
-uint32_t
-xcb::window_exists(uint32_t w)
+uint32_t xcb::window_exists(uint32_t w)
 {
     // Attempt to retrieve the WM_NAME property of the window
     xcb_get_property_cookie_t cookie = xcb_get_property_unchecked(conn, 0, w, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 0, 0);
