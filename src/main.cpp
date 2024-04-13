@@ -12980,109 +12980,110 @@ static __dock__ *dock(nullptr);
 ****************************************/
 class DropDownTerm
 {
-    #define DropDownTermSignal 112
+    private:
+        #define DropDownTermSignal 112
 
-    vector<int8_t> _char_vec = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-', ' '};
+        vector<int8_t> _char_vec = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-', ' '};
 
-    constexpr uint8_t char_to_keycode__(int8_t c)
-    {
-        switch (c)
+        constexpr uint8_t char_to_keycode__(int8_t c)
         {
-            case 'a': return wm->key_codes.a;
-            case 'b': return wm->key_codes.b;
-            case 'c': return wm->key_codes.c;
-            case 'd': return wm->key_codes.d;
-            case 'e': return wm->key_codes.e;
-            case 'f': return wm->key_codes.f;
-            case 'g': return wm->key_codes.g;
-            case 'h': return wm->key_codes.h;
-            case 'i': return wm->key_codes.i;
-            case 'j': return wm->key_codes.j;
-            case 'k': return wm->key_codes.k;
-            case 'l': return wm->key_codes.l;
-            case 'm': return wm->key_codes.m;
-            case 'n': return wm->key_codes.n;
-            case 'o': return wm->key_codes.o;
-            case 'p': return wm->key_codes.p;
-            case 'q': return wm->key_codes.q;
-            case 'r': return wm->key_codes.r;
-            case 's': return wm->key_codes.s;
-            case 't': return wm->key_codes.t;
-            case 'u': return wm->key_codes.u;
-            case 'v': return wm->key_codes.v;
-            case 'w': return wm->key_codes.w;
-            case 'x': return wm->key_codes.x;
-            case 'y': return wm->key_codes.y;
-            case 'z': return wm->key_codes.z;
-            case '-': return wm->key_codes.minus;
-            case ' ': return wm->key_codes.space_bar;
-        }
-
-        return (uint8_t)0;
-    }
-
-    constexpr int8_t lower_to_upper_case__(int8_t c)
-    {
-        if (c == '-') return '_';
-        if (c == ' ') return ' ';
-        return (c - 32);
-    }
-
-    #define prosses_char(__char) \
-        if (ev[0] == char_to_keycode__(__char)) \
-        { \
-            ss << __char; \
-        }
-
-public:
-    
-    window w;
-    stringstream ss;
-
-    void toggle__()
-    {
-        if (w.y() == - (screen->height_in_pixels / 2))
-        {
-            w.y( 0 );
-            w.focus();
-            xcb_flush(conn);
-        }
-        else
-        {
-            w.y(- (screen->height_in_pixels / 2));
-            xcb_flush(conn);
-        }
-    }
-
-    void init()
-    {
-        w.create_window(
-            screen->root,
-            0,
-            - ( screen->height_in_pixels / 2 ),
-            screen->width_in_pixels,
-            ( screen->height_in_pixels / 2 ),
-            BLACK,
-            XCB_EVENT_MASK_KEY_PRESS,
-            MAP
-        );
-        xcb_flush(conn);
-
-        wm->context_menu->add_entry("DropDownTerm", [this]()-> void { this->toggle__(); });
-        
-        ev_sigs->connect(w, DropDownTermSignal, [this](const vector<uint32_t> ev)
-        {
-            AutoTimer t("DropDownTerm SIG");
-
-            for (int i = 0; i < _char_vec.size(); ++i)
+            switch (c)
             {
-                prosses_char(_char_vec[i]);
+                case 'a': return wm->key_codes.a;
+                case 'b': return wm->key_codes.b;
+                case 'c': return wm->key_codes.c;
+                case 'd': return wm->key_codes.d;
+                case 'e': return wm->key_codes.e;
+                case 'f': return wm->key_codes.f;
+                case 'g': return wm->key_codes.g;
+                case 'h': return wm->key_codes.h;
+                case 'i': return wm->key_codes.i;
+                case 'j': return wm->key_codes.j;
+                case 'k': return wm->key_codes.k;
+                case 'l': return wm->key_codes.l;
+                case 'm': return wm->key_codes.m;
+                case 'n': return wm->key_codes.n;
+                case 'o': return wm->key_codes.o;
+                case 'p': return wm->key_codes.p;
+                case 'q': return wm->key_codes.q;
+                case 'r': return wm->key_codes.r;
+                case 's': return wm->key_codes.s;
+                case 't': return wm->key_codes.t;
+                case 'u': return wm->key_codes.u;
+                case 'v': return wm->key_codes.v;
+                case 'w': return wm->key_codes.w;
+                case 'x': return wm->key_codes.x;
+                case 'y': return wm->key_codes.y;
+                case 'z': return wm->key_codes.z;
+                case '-': return wm->key_codes.minus;
+                case ' ': return wm->key_codes.space_bar;
             }
 
-            w.draw_text_auto_color(ss.str().c_str(), 4, (w.height() - 20));
+            return (uint8_t)0;
+        }
+
+        constexpr int8_t lower_to_upper_case__(int8_t c)
+        {
+            if (c == '-') return '_';
+            if (c == ' ') return ' ';
+            return (c - 32);
+        }
+
+        #define prosses_char(__char) \
+            if (ev[0] == char_to_keycode__(__char)) \
+            { \
+                ss << __char; \
+            }
+
+    public:
+        
+        window w;
+        stringstream ss;
+
+        void toggle__()
+        {
+            if (w.y() == - (screen->height_in_pixels / 2))
+            {
+                w.y( 0 );
+                w.focus();
+                xcb_flush(conn);
+            }
+            else
+            {
+                w.y(- (screen->height_in_pixels / 2));
+                xcb_flush(conn);
+            }
+        }
+
+        void init()
+        {
+            w.create_window(
+                screen->root,
+                0,
+                - ( screen->height_in_pixels / 2 ),
+                screen->width_in_pixels,
+                ( screen->height_in_pixels / 2 ),
+                BLACK,
+                XCB_EVENT_MASK_KEY_PRESS,
+                MAP
+            );
             xcb_flush(conn);
-        });
-    }
+
+            wm->context_menu->add_entry("DropDownTerm", [this]()-> void { this->toggle__(); });
+            
+            ev_sigs->connect(w, DropDownTermSignal, [this](const vector<uint32_t> ev)
+            {
+                AutoTimer t("DropDownTerm SIG");
+
+                for (int i = 0; i < _char_vec.size(); ++i)
+                {
+                    prosses_char(_char_vec[i]);
+                }
+
+                w.draw_text_auto_color(ss.str().c_str(), 4, (w.height() - 20));
+                xcb_flush(conn);
+            });
+        }
 };
 static DropDownTerm *ddTerm( nullptr );
 
@@ -13853,7 +13854,7 @@ class resize_client
                     }
                     pointer.grab();
                     teleport_mouse(_edge);
-                    run_test(_edge);
+                    run(_edge);
                     pointer.ungrab();
                 }
 

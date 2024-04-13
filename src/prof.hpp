@@ -51,4 +51,6 @@ private:
 // Register at-exit handler to generate the report
 void setupReportGeneration();
 
+void setupVulkanReportGen();
+
 #endif/* PROF_HPP */

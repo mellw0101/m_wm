@@ -204,6 +204,15 @@ setupReportGeneration()
     });
 }
 
+void /* Register at-exit handler to generate the report */
+setupVulkanReportGen()
+{
+    std::atexit([]
+    {
+        gProf->report("/home/mellw/vulkan_profiling_data_report.txt");
+    });
+}
+
 /* int
 main()
 {
