@@ -693,16 +693,15 @@ class lout {
 			} return *this;
 
 		}
-        lout& operator<<(char c) {
-            if (c == '\n') {
+        lout& operator<<(char c)
+		{
+        	if (c == '\n') {
                 logMessage();
 				buffer = std::ostringstream(); // Reset the buffer for new messages
-
-            } else {
+			} else {
                 buffer << c;
-
-            } return *this;
-
+            }
+			return *this;
         }
 		lout& operator<<(const errno_msg_t &__errno) {
 			buffer << __errno.value;

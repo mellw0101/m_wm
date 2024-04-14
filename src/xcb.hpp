@@ -469,6 +469,65 @@ class atoms_t {
     \
 } while(0)
 
+namespace XCB
+{
+    inline void change_window_attributes(uint32_t __window, uint32_t __mask, const void *__data)
+    {
+        xcb_change_window_attributes
+        (
+            conn,
+            __window,
+            __mask,
+            __data
+        );
+        xcb_flush(conn);
+    }
+
+    inline void change_window_attributes_checked(uint32_t __window, uint32_t __mask, const void *__data)
+    {
+        xcb_void_cookie_t cookie = xcb_change_window_attributes
+        (
+            conn,
+            __window,
+            __mask,
+            __data
+        );
+        xcb_generic_error_t *error = xcb_request_check(conn, cookie);
+        if (error != nullptr)
+        {
+            loutE << WINDOW_ID_BY_INPUT(__window) << "error_code" << error->error_code << loutEND;
+        }
+        xcb_flush(conn);
+    }
+
+    inline void configure_window(uint32_t __window, uint32_t __mask, const void *__data)
+    {
+        xcb_configure_window
+        (
+            conn,
+            __window,
+            __mask,
+            __data
+        );
+    }
+
+    inline void configure_window_checked(uint32_t __window, uint32_t __mask, const void *__data)
+    {
+        xcb_void_cookie_t cookie = xcb_configure_window_checked
+        (
+            conn,
+            __window,
+            __mask,
+            __data
+        );
+        xcb_generic_error_t *error = xcb_request_check(conn, cookie);
+        if (error != nullptr)
+        {
+            loutE << WINDOW_ID_BY_INPUT(__window) << "error_code" << error->error_code << loutEND;
+        }
+    }
+}
+
 class xcb {
     /* xcb_connection_t *_conn; */
     xcb_screen_t * _s;

@@ -3,35 +3,35 @@
 #include <xcb/xproto.h>
 
 #include "globals.h"
+#include "xcb.hpp"
 
 /*
     #include "xcb.hpp"
     #include "structs.hpp"
 */
 
-class client;
-
-typedef enum : uint32_t
-{
-    FONT_STATE = (1 << 0)
-}
-window_bitstate_t;
-
 class window_t
 {
     private:
-        uint32_t _state;
-        uint32_t _w = 0;
-        client *c = nullptr;
+        uint32_t _window = 0;
 
     public:
-        operator uint32_t() { return _w; }
-        operator const uint32_t&() const { return _w; }
+        operator uint32_t() { return _window; }
+        operator const uint32_t&() const { return _window; }
 
         void map()
         {
-            xcb_map_window(conn, _w);
+            xcb_map_window(conn, _window);
             xcb_flush(conn);
         }
 
+        void change_attribute(uint32_t __mask, const void *__data)
+        {
+            XCB::change_window_attributes(_window, __mask, __data);
+        }
+
+        void change_attribute_checked(uint32_t __mask, const void *__data)
+        {
+            XCB::change_window_attributes_checked(_window, __mask, __data);
+        }
 };
