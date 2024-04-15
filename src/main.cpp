@@ -13533,7 +13533,7 @@ class DropDownTerm
             );
         }
 };
-static DropDownTerm *ddTerm( nullptr );
+static DropDownTerm *ddTerm(nullptr);
 
 class mv_client {
     /* Defines     */
