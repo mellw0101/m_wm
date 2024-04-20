@@ -13,9 +13,9 @@
 
 using namespace std;
 
-constexpr uint8_t transformValue(uint8_t input) {
+constexpr uint8_t transformValue(uint8_t input)
+{
     return (input % 2 == 0) ? input / 2 : input * 3 + 1;
-
 }
 
 constexpr size_t NUM_EVENTS = 100;
@@ -34,7 +34,8 @@ static array<function<void(uint32_t)>, NUM_EVENTS> eventHandlers{};
 #define Ev11 19
 #define Ev12 28 /* <- XCB_PROPERTY_NOTIFY */
 
-enum class MWM_Ev : const uint8_t {
+enum class MWM_Ev : const uint8_t
+{
     NO_Ev          = 0,
     EXPOSE         = 1,
     ENTER_NOTIFY   = 2,
@@ -48,7 +49,6 @@ enum class MWM_Ev : const uint8_t {
     BUTTON_PRESS   = 10,
     MAP_NOTIF      = 11,
     PROPERTY_NOTIF = 12
-
 };
 
 #define MWM_EXPOSE 1
@@ -66,20 +66,21 @@ enum class MWM_Ev : const uint8_t {
 #define MWM_DESTROY_NOTIFY
 
 static constexpr uint8_t uint8_t_MAX = 255; 
-constexpr uint8_t MapEventToCode(uint8_t eventCode) {
-    switch (eventCode) {
+constexpr uint8_t MapEventToCode(uint8_t eventCode)
+{
+    switch (eventCode)
+    {
         case Ev1: return MWM_EXPOSE;
         case Ev2: return MWM_ENTER_NOTIFY;
         case Ev3: return MWM_LEAVE_NOTIFY;
         
-        default: {
+        default:
+        {
             return uint8_t_MAX;
-
         }
-
     }
-
 }
+
 #define MWM_Ev_NO_Ev          0
 #define MWM_Ev_EXPOSE         1
 #define MWM_Ev_ENTER_NOTIFY   2
@@ -93,8 +94,11 @@ constexpr uint8_t MapEventToCode(uint8_t eventCode) {
 #define MWM_Ev_BUTTON_PRESS   10
 #define MWM_Ev_MAP_NOTIF      11
 #define MWM_Ev_PROPERTY_NOTIF 12
-constexpr uint8_t get_ev(uint8_t eventCode) {
-    switch (eventCode) {
+
+constexpr uint8_t get_ev(uint8_t eventCode)
+{
+    switch (eventCode)
+    {
         case Ev1:  return MWM_Ev_EXPOSE;
         case Ev2:  return MWM_Ev_ENTER_NOTIFY;
         case Ev3:  return MWM_Ev_LEAVE_NOTIFY;
@@ -108,16 +112,17 @@ constexpr uint8_t get_ev(uint8_t eventCode) {
         case Ev11: return MWM_Ev_MAP_NOTIF;
         case Ev12: return MWM_Ev_PROPERTY_NOTIF;
         
-        default: {
+        default:
+        {
             return MWM_Ev_NO_Ev;
-
         }
-
     }
-
 }
-constexpr MWM_Ev map_ev_to_enum(uint8_t eventCode) {
-    switch (eventCode) {
+
+constexpr MWM_Ev map_ev_to_enum(uint8_t eventCode)
+{
+    switch (eventCode)
+    {
         case Ev1:  return MWM_Ev::EXPOSE;
         case Ev2:  return MWM_Ev::ENTER_NOTIFY;
         case Ev3:  return MWM_Ev::LEAVE_NOTIFY;
@@ -131,31 +136,32 @@ constexpr MWM_Ev map_ev_to_enum(uint8_t eventCode) {
         case Ev11: return MWM_Ev::MAP_NOTIF;
         case Ev12: return MWM_Ev::PROPERTY_NOTIF;
 
-        default: {
+        default:
+        {
             return MWM_Ev::NO_Ev;
-
         }
-
     }
-
 }
+
 template<uint8_t eventCode> struct EvI;
-template<> struct EvI<12> {
+template<> struct EvI<12>
+{
     static constexpr size_t index = 1; // Corresponding index in the eventHandlers array
+};
     
-};
-template<> struct EvI<7> {
+template<> struct EvI<7>
+{
     static constexpr size_t index = 2;
-
 };
-template<uint8_t eventCode>
-void emitEvent(uint32_t windowId) {
-    constexpr size_t index = EvI<eventCode>::index;
-    if (index < NUM_EVENTS && eventHandlers[index]) {
-        eventHandlers[index](windowId);
-        
-    }
 
+template<uint8_t eventCode>
+void emitEvent(uint32_t windowId)
+{
+    constexpr size_t index = EvI<eventCode>::index;
+    if (index < NUM_EVENTS && eventHandlers[index])
+    {
+        eventHandlers[index](windowId);
+    }
 }
 
 #include <unordered_map>
@@ -163,17 +169,21 @@ void emitEvent(uint32_t windowId) {
 #include <functional>
 #include <cstdint>
 
-class AnyFunction {
+class AnyFunction
+{
     public:
         virtual ~AnyFunction() = default;
         virtual void call() = 0; // A common interface for invocation
 };
 
 template<typename Func>
-class TypedFunction : public AnyFunction {
+class TypedFunction
+: public AnyFunction
+{
     public:
         TypedFunction(Func f) : func(std::move(f)) {}
-        void call() override {
+        void call() override
+        {
             func(); // Assumes a no-argument call for simplicity
         }
 
@@ -181,38 +191,43 @@ class TypedFunction : public AnyFunction {
         Func func;
 };
 
-class FunctionMap {
+class FunctionMap
+{
     public:
         template<typename Fu>
-        void add(uint8_t outerKey, uint32_t innerKey, Fu f) {
+        void add(uint8_t outerKey, uint32_t innerKey, Fu f)
+        {
             auto& innerMap = functions[outerKey];
             innerMap[innerKey] = std::make_unique<TypedFunction<Fu>>(std::move(f));
         }
 
-        void invoke(uint8_t outerKey, uint32_t innerKey) {
+        void invoke(uint8_t outerKey, uint32_t innerKey)
+        {
             auto outerIt = functions.find(outerKey);
-            if (outerIt != functions.end()) {
+            if (outerIt != functions.end())
+            {
                 auto& innerMap = outerIt->second;
                 auto innerIt = innerMap.find(innerKey);
-                if (innerIt != innerMap.end()) {
+                if (innerIt != innerMap.end())
+                {
                     innerIt->second->call(); // Invoke the function
                 }
             }
         }
 
     private:
-        std::unordered_map<uint8_t, std::unordered_map<uint32_t, std::unique_ptr<AnyFunction>>> functions;
-
+        unordered_map<uint8_t, unordered_map<uint32_t, unique_ptr<AnyFunction>>> functions;
 };
 
 template<typename T>
 using Callback = std::function<void(T)>;
 
 template<typename... Args>
-auto makeCallback(Args&&... args) -> std::function<void(Args...)> {
+auto makeCallback(Args&&... args) -> std::function<void(Args...)>
+{
     return [...args = std::forward<Args>(args)]() {};
-
 } /* Usage -> ' auto myCallback = makeCallback(1, 2.0, "test"); ' */
+
 #define DEFINE_CALLBACK(name, ...) \
     auto name = [__VA_ARGS__](auto&&... args) -> void /* { \
         // Implementation using args and __VA_ARGS__ \
@@ -221,26 +236,27 @@ auto makeCallback(Args&&... args) -> std::function<void(Args...)> {
 /* Usage -> ' DEFINE_CALLBACK(myCallback, int a, float b) ' */
 
 template<typename Func, typename... Args>
-void registerCallback(Func&& func, Args&&... args) {
+void registerCallback(Func&& func, Args&&... args)
+{
     // Assuming a hypothetical register function that takes a std::function
     auto callback = std::bind(std::forward<Func>(func), std::forward<Args>(args)...);
     // register callback
-
 } /* Usage -> */// registerCallback([](int x){ /* do something with x */ }, 42);
 
 template<typename Func, typename... Args>
-auto reg_static_callB(Func&& func, Args&&... args) {
+auto reg_static_callB(Func&& func, Args&&... args)
+{
     // Assuming a hypothetical register function that takes a std::function
     return std::bind(std::forward<Func>(func), std::forward<Args>(args)...);
     // register callback
-
 } /* Usage -> */// registerCallback([](int x){ /* do something with x */ }, 42);
 
 template<typename Func, typename... BoundArgs>
-auto reg_callB(Func&& func, BoundArgs&&... boundArgs) {
+auto reg_callB(Func&& func, BoundArgs&&... boundArgs)
+{
     // Return a lambda that captures bound arguments and accepts additional arguments at call time.
-    return [func = std::forward<Func>(func), ...boundArgs = std::forward<BoundArgs>(boundArgs)]
-           (auto&&... callArgs) mutable -> decltype(auto) {
+    return [func = std::forward<Func>(func), ...boundArgs = std::forward<BoundArgs>(boundArgs)] (auto&&... callArgs) mutable -> decltype(auto)
+    {
         return func(std::forward<BoundArgs>(boundArgs)..., std::forward<decltype(callArgs)>(callArgs)...);
     };
 }
@@ -249,17 +265,20 @@ auto reg_callB(Func&& func, BoundArgs&&... boundArgs) {
 #include <new>     // For placement new
 
 template<typename T>
-class Malloc {
+class Malloc
+{
     public:
         // Allocates memory for one object of type T using malloc
-        static T* allocate() {
+        static T* allocate()
+        {
             void* ptr = std::malloc(sizeof(T)); // Allocate raw memory
             if (!ptr) throw std::bad_alloc();   // Check for allocation failure
             return new(ptr) T();                // Use placement new to construct the object
         }
 
         // Deallocates memory for one object of type T
-        static void deallocate(T* ptr) {
+        static void deallocate(T* ptr)
+        {
             if (!ptr) return;
             ptr->~T();    // Call the destructor explicitly
             std::free(ptr); // Free the memory
@@ -340,17 +359,24 @@ class Malloc
 #include <memory>
 #include <functional>
 
-class AnyCallable {
+class AnyCallable
+{
     public:
         virtual ~AnyCallable() = default;
         virtual void call() = 0; // Define a common interface
 };
 
 template<typename Func>
-class TypedCallable : public AnyCallable {
+class TypedCallable
+: public AnyCallable
+{
     public:
-        TypedCallable(Func f) : func(std::move(f)) {}
-        void call() override {
+        TypedCallable(Func f)
+        : func(std::move(f))
+        {}
+
+        void call() override
+        {
             func(); // Invoke the stored callable
         }
 
@@ -358,27 +384,31 @@ class TypedCallable : public AnyCallable {
         Func func;
 };
 
-class CallableVector {
+class CallableVector
+{
+    private:
+        vector<unique_ptr<AnyCallable>> callables;
+
     public:
         template<typename Fu>
-        void add(Fu f) {
+        void add(Fu f)
+        {
             callables.push_back(std::make_unique<TypedCallable<Fu>>(std::move(f)));
         }
 
-        void invokeAll() {
-            for (auto& callable : callables) {
+        void invokeAll()
+        {
+            for (auto &callable : callables)
+            {
                 callable->call(); // Call through the common interface
             }
         }
-
-    private:
-        std::vector<std::unique_ptr<AnyCallable>> callables;
-        
 };
 
 // A simple Signal class that accepts callbacks with varying parameters
 template<typename... Args>
-class Signal {
+class Signal
+{
     private:
         function<void(Args...)> cb;
 
@@ -390,66 +420,75 @@ class Signal {
 
         /* Register a callback */
         template<typename Fu>
-        void connect(Fu&& f){
+        void connect(Fu&& f)
+        {
             cb = std::forward<Fu>(f);
         }
 
         /**
-         *
-         * Emit the signal, invoking the callback with perfect forwarding
-         *
+         
+          Emit the signal, invoking the callback with perfect forwarding
+         
          */
         template<typename... CbArgs>
-        void emit(CbArgs&&... args) {
+        void emit(CbArgs&&... args)
+        {
             cb(std::forward<CbArgs>(args)...);
         }
 
         template<typename ...A>
-        void operator()(A &&...a) {
+        void operator()(A &&...a)
+        {
             cb(std::forward<A>(a)...);
         }
-        
 };
 
 template<typename ReturnType, typename... Args>
-class Sig {    
+class Sig
+{
     private:
         function<ReturnType(Args...)> cb;
 
     public:
         template<typename Cb>
-        Sig(Cb &&__cb) : cb(std::forward<Cb>(__cb)) {}
-        Sig() {}
+        Sig(Cb &&__cb)
+        : cb(std::forward<Cb>(__cb))
+        {}
+        
+        Sig()
+        {}
 
+        /* Register a callback */
         template<typename Fu>
-        void connect(Fu&& f) {
+        void connect(Fu&& f)
+        {
             cb = std::forward<Fu>(f);
+        }
 
-        }/* Register a callback */
-
-        template<typename... CbArgs>/**
-         *
-         * Emit the signal, invoking the callback with perfect forwarding
-         *
+        /**
+         
+          Emit the signal, invoking the callback with perfect forwarding
+         
          */
-        void emit(CbArgs&&... args) {
+        template<typename... CbArgs>
+        void emit(CbArgs&&... args)
+        {
             cb(std::forward<CbArgs>(args)...);
-
         }
 
         template<typename ...A>
-        void operator()(A &&...a) {
-            cb(std::forward<A>(a)...);
-            
+        void operator()(A &&...a)
+        {
+            cb(std::forward<A>(a)...);    
         }
-        
 };
 
 #define FUNC_TIMER_SIGNAL 145
 #include <chrono>
 #include "Log.hpp"
 
-class ScopeTimer {
+class ScopeTimer
+{
     private:
         uint8_t ev_type;
         string scopeName;
@@ -458,49 +497,58 @@ class ScopeTimer {
 
     public:
         ScopeTimer(const string& name, chrono::microseconds &executionTimeRef, uint8_t ev_type)
-            : scopeName(name), executionTime(executionTimeRef), ev_type(ev_type) {
+        : scopeName(name), executionTime(executionTimeRef), ev_type(ev_type)
+        {
             startTime = chrono::high_resolution_clock::now();
         }
+        
         ScopeTimer(const string& name, chrono::microseconds &executionTimeRef)
-            : scopeName(name), executionTime(executionTimeRef) {
+        : scopeName(name), executionTime(executionTimeRef)
+        {
             startTime = chrono::high_resolution_clock::now();
         }
 
-        ~ScopeTimer() {
+        ~ScopeTimer()
+        {
             auto endTime = chrono::high_resolution_clock::now();
             executionTime = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
             loutI << scopeName << " executed in " << executionTime.count() << " microseconds" << loutEND;
         }
-
 };
 
 template<typename DurationType = std::chrono::microseconds>
-class ScopeTimer_t {
+class ScopeTimer_t
+{
     private:
-        std::string scopeName;
-        std::chrono::high_resolution_clock::time_point startTime;
+        string scopeName;
+        chrono::high_resolution_clock::time_point startTime;
         DurationType& executionTime;
 
     public:
-        ScopeTimer_t(const std::string& name, DurationType& executionTimeRef)
-            : scopeName(name), executionTime(executionTimeRef) {
-            startTime = std::chrono::high_resolution_clock::now();
+        ScopeTimer_t(const string& name, DurationType& executionTimeRef)
+        : scopeName(name), executionTime(executionTimeRef)
+        {
+            startTime = chrono::high_resolution_clock::now();
         }
 
-        ~ScopeTimer_t() {
-            auto endTime = std::chrono::high_resolution_clock::now();
-            executionTime = std::chrono::duration_cast<DurationType>(endTime - startTime);
-            std::cout << scopeName << " executed in " << executionTime.count() << " " << typeid(DurationType).name() << std::endl;
+        ~ScopeTimer_t()
+        {
+            auto endTime = chrono::high_resolution_clock::now();
+            executionTime = chrono::duration_cast<DurationType>(endTime - startTime);
+            cout << scopeName << " executed in " << executionTime.count() << " " << typeid(DurationType).name() << std::endl;
         }
 };
-/* 
-class AtomicSignal {
+
+/* class AtomicSignal
+{
     public:
-        static void encodeInstruction(std::atomic<uint64_t>& var, uint64_t instruction) {
+        static void encodeInstruction(std::atomic<uint64_t>& var, uint64_t instruction)
+        {
             var.store(instruction);
         }
 
-        static uint64_t decodeInstruction(const std::atomic<uint64_t>& var) {
+        static uint64_t decodeInstruction(const std::atomic<uint64_t>& var)
+        {
             return var.load();
         }
 
@@ -520,8 +568,7 @@ class AtomicSignal {
                 // Perform action based on the instruction
             }
         }
-};
- */
+}; */
 
 #include <thread>
 #include <atomic>
@@ -530,17 +577,21 @@ class AtomicSignal {
 #include <mutex>
 #include <condition_variable>
 
-class SignalHandler {
+class SignalHandler
+{
     public:
         SignalHandler(std::function<void(int)> task)
-        : task_(std::move(task)), active_(true) {
+        : task_(std::move(task)), active_(true)
+        {
             worker_ = std::thread([this]() { this->loop(); });
         }
 
-        ~SignalHandler() {
+        ~SignalHandler()
+        {
             active_.store(false);
             cv_.notify_one();
-            if (worker_.joinable()) {
+            if (worker_.joinable())
+            {
                 worker_.join();
             }
         }
@@ -552,93 +603,119 @@ class SignalHandler {
         SignalHandler& operator=(SignalHandler&&) = delete;
 
         // Function to receive a signal and enqueue it for processing
-        void receiveSignal(int signal) {
+        void receiveSignal(int signal)
+        {
             {
-                std::lock_guard<std::mutex> lock(queue_mutex_);
+                lock_guard<mutex> lock(queue_mutex_);
                 signals_.push(signal);
             }
             cv_.notify_one(); // Notify the loop that a new signal is available
         }
 
     private:
-        void loop() {
-            while (active_.load()) {
+        void loop()
+        {
+            while (active_.load())
+            {
                 int signal = 0;
                 {
-                    std::unique_lock<std::mutex> lock(queue_mutex_);
-                    cv_.wait(lock, [this] { return !active_.load() || !signals_.empty(); });
+                    unique_lock<mutex> lock(queue_mutex_);
+                    cv_.wait
+                    (
+                        lock,
+                        [this]
+                        {
+                            return !active_.load() || !signals_.empty();
+                        }
+                    );
 
                     if (!active_ && signals_.empty())
+                    {
                         return;
+                    }
 
                     signal = signals_.front();
                     signals_.pop();
                 }
 
                 // Handle the signal in a new thread
-                std::thread([this, signal]() { task_(signal); }).detach();
+                thread([this, signal]() {
+                    task_(signal);
+                }).detach();
             }
         }
 
-        std::thread worker_;
-        std::atomic<bool> active_;
-        std::function<void(int)> task_; // The task to be performed for each signal
-        std::queue<int> signals_; // Queue to hold incoming signals
-        std::mutex queue_mutex_; // Mutex to protect access to the queue
-        std::condition_variable cv_; // Condition variable for signal arrival
+        thread worker_;
+        atomic<bool> active_;
+        function<void(int)> task_; // The task to be performed for each signal
+        queue<int> signals_; // Queue to hold incoming signals
+        mutex queue_mutex_; // Mutex to protect access to the queue
+        condition_variable cv_; // Condition variable for signal arrival
 };
 
-class Atomic_u64 {
-    uint64_t data = 0xffffffffffffffff;
-    mutex mutex;
-public:
-};
+class Atomic_u64
+{
+    private:
+        uint64_t data = 0xffffffffffffffff;
+        mutex mutex;
 
-class fileAsCout {    
     public:
-        fileAsCout(const std::filesystem::path &__path) {
-            std::ofstream logFile(__path);
-            if (!logFile) {
-                std::cerr << "Error opening log file." << std::endl;
+};
+
+class fileAsCout
+{    
+    public:
+        fileAsCout(const std::filesystem::path &__path)
+        {
+            ofstream logFile(__path);
+            if (!logFile)
+            {
+                cerr << "Error opening log file." << endl;
             }
-            /* Redirect std::cout */
-            auto prevBuf = std::cout.rdbuf(logFile.rdbuf());
+
+            /* Redirect cout */
+            auto prevBuf = cout.rdbuf(logFile.rdbuf());
         };
 };
 
-class PeriodicExecutor {
-public:
-    PeriodicExecutor(unsigned int intervalMilliseconds, std::function<void()> task)
-    : interval_(intervalMilliseconds), task_(std::move(task)), active_(false) {}
+class PeriodicExecutor
+{
+    private:
+        thread worker_;
+        atomic<bool> active_;
+        unsigned int interval_;
+        function<void()> task_;
 
-    void start() {
-        active_ = true;
-        worker_ = std::thread([this]() {
-            while (active_) {
-                task_();
-                std::this_thread::sleep_for(std::chrono::milliseconds(interval_));
-            }
-        });
-    }
+    public:
+        PeriodicExecutor(unsigned int intervalMilliseconds, std::function<void()> task)
+        : interval_(intervalMilliseconds), task_(std::move(task)), active_(false)
+        {}
 
-    void stop() {
-        active_ = false;
-        if (worker_.joinable()) {
-            worker_.join();
+        void start()
+        {
+            active_ = true;
+            worker_ = thread([this]() {
+                while (active_)
+                {
+                    task_();
+                    this_thread::sleep_for(chrono::milliseconds(interval_));
+                }
+            });
         }
-    }
 
-    ~PeriodicExecutor() {
-        stop();
-    }
+        void stop()
+        {
+            active_ = false;
+            if (worker_.joinable())
+            {
+                worker_.join();
+            }
+        }
 
-private:
-    std::thread worker_;
-    std::atomic<bool> active_;
-    unsigned int interval_;
-    std::function<void()> task_;
+        ~PeriodicExecutor()
+        {
+            stop();
+        }
 };
 
 #endif/*__DATA_HPP__*/
-
-
