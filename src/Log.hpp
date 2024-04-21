@@ -26,90 +26,93 @@
 
 using namespace std;
 
-class FileHandler {
+class FileHandler
+{
 	private:
-	// Variabels.
+	/* Variabels   */
 		string m_filename;
 		
 	public:
-	// Methods.
-		bool append(const std::string &text) 
+	/* Methods 	   */
+		bool append(const string &text) 
 		{
-			std::ofstream file(m_filename, std::ios::app);// Open in append mode
+			ofstream file(m_filename, ios::app);// Open in append mode
 
 			if (!file.is_open()) 
 			{
 				return false;// Return false if file couldn't be opened
 			}
 			file << text;// Append text
-			file.close ();
+			file.close();
 			return true;
 		}
 
-		bool open() 
+		bool open()
 		{
-			std::ofstream file(m_filename, std::ios::app);// Open in append mode
+			ofstream file(m_filename, ios::app);// Open in append mode
 			bool isOpen = file.is_open();
 			file.close();
 			return isOpen;
 		}
 
-	// Constructor.
+	/* Constructor */
 		explicit FileHandler(std::string filename)
 		: m_filename(std::move(filename)) {}
 
 };
 
-class TIME {
+class TIME
+{
 	public:
 		static const string get()
 		{
 			// Get the current time
-			const auto & now = std::chrono::system_clock::now();
-			const auto & in_time_t = std::chrono::system_clock::to_time_t(now);
+			const auto & now = chrono::system_clock::now();
+			const auto & in_time_t = chrono::system_clock::to_time_t(now);
 
 			// Convert time_t to tm as local time
-			std::tm buf{};
+			tm buf{};
 			localtime_r(&in_time_t, &buf);
 
 			// Use stringstream to format the time
-			std::ostringstream ss;
-			ss << "[" << std::put_time(&buf, "%Y-%m-%d %H:%M:%S") << "]";
+			ostringstream ss;
+			ss << "[" << put_time(&buf, "%Y-%m-%d %H:%M:%S") << "]";
 			return ss.str();
 		}
 
         static string mili()
         {
             // Get the current time point
-            auto now = std::chrono::system_clock::now();
+            auto now = chrono::system_clock::now();
 
             // Convert to time_t for seconds and tm for local time
-            auto in_time_t = std::chrono::system_clock::to_time_t(now);
-            std::tm buf{};
+            auto in_time_t = chrono::system_clock::to_time_t(now);
+            tm buf{};
             localtime_r(&in_time_t, &buf);
 
             // Use stringstream to format the time
             std::ostringstream ss;
-            ss << "[" << std::put_time(&buf, "%Y-%m-%d %H:%M:%S");
+            ss << "[" << put_time(&buf, "%Y-%m-%d %H:%M:%S");
 
             // Calculate milliseconds (now time since epoch minus time_t converted back to time since epoch)
             auto since_epoch = now.time_since_epoch();
-            auto s = std::chrono::duration_cast<std::chrono::seconds>(since_epoch);
+            auto s = chrono::duration_cast<chrono::seconds>(since_epoch);
             since_epoch -= s;
-            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(since_epoch);
+            auto ms = chrono::duration_cast<chrono::milliseconds>(since_epoch);
 
             // Append milliseconds to the formatted string, correctly placing the closing square bracket
-            ss << "." << std::setfill('0') << std::setw(3) << ms.count() << "]";
+            ss << "." << setfill('0') << setw(3) << ms.count() << "]";
 
             return ss.str();
         }
 };
 
-class Converter {
+class Converter
+{
 	public:
-		static const char *xcb_event_response_type_to_str(const uint8_t &response_type) 
+		static const char *xcb_event_response_type_to_str(uint8_t __response_type) 
 		{
-			switch (response_type) 
+			switch (__response_type) 
 			{
 				case XCB_KEY_PRESS:             return "KeyPress";
 				case XCB_KEY_RELEASE:           return "KeyRelease";
@@ -149,9 +152,9 @@ class Converter {
 			}    
 		}
 		
-		static const char *xcb_event_detail_to_str(const uint8_t &detail) 
+		static const char *xcb_event_detail_to_str(uint8_t __detail) 
 		{
-			switch (detail) 
+			switch (__detail)
 			{
 				case XCB_NOTIFY_DETAIL_ANCESTOR: 			return "Ancestor";
 				case XCB_NOTIFY_DETAIL_VIRTUAL: 			return "Virtual";
@@ -165,9 +168,9 @@ class Converter {
 			}
 		}
 
-		static const char *xcb_event_mode_to_str(const uint8_t &mode)
+		static const char *xcb_event_mode_to_str(uint8_t __mode)
 		{
-			switch (mode) 
+			switch (__mode) 
 			{
 				case XCB_NOTIFY_MODE_NORMAL: 		return "Normal";
 				case XCB_NOTIFY_MODE_GRAB: 			return "Grab";
@@ -176,15 +179,15 @@ class Converter {
 				default: 							return "Unknown";
 			}
 		}
-	;
 };
 
-class Log {
+class Log
+{
 	public:
 		static void xcb_event_response_type(const char* FUNC, const uint8_t &response_type) 
 		{
 			const char* ev = Converter::xcb_event_response_type_to_str(response_type);
-			logMessage 
+			logMessage
 			( 
 				toString
 				(
@@ -205,12 +208,12 @@ class Log {
 			);
 		}
 		
-		static void FUNC(const std::string &message) 
+		static void FUNC(const string &message)
 		{
 			logMessage(":[" + message + "]");
 		}
 		
-		static void Start(const std::string &message) 
+		static void Start(const string &message)
 		{
 			StartMessage( ":[Start]  :["+message+"]:[STARTED]" );
 		}
@@ -220,14 +223,14 @@ class Log {
 			EndMessage( ":[End]    :[dwm-M]:[KILLED]\n" );
 		}
 		
-		static void ENDFUNC(const std::string &message)
+		static void ENDFUNC(const string &message)
 		{
 			logMessage ( ":[ENDFUNC]:[" + message + "]" + "\n");
 		}
 
-		static void INFO(const std::string &message) 
+		static void INFO(const string &message)
 		{
-			logMessage ( ":[INFO]:[" + message + "]" );
+			logMessage(":[INFO]:[" + message + "]");
 		}
 
 		template<typename T, typename... Args>
@@ -237,53 +240,50 @@ class Log {
 		}
 
 		template<typename T, typename... Args>
-		static void FUNC_INFO(const T &message, Args... args) 
+		static void FUNC_INFO(const T &message, Args... args)
 		{
-			logMessage ( ":----[INFO]:[" + toString ( message, args... ) + "]" );
+			logMessage(":----[INFO]:[" + toString(message, args...) + "]");
 		}
 
-		static void WARNING(const std::string &message) 
+		static void WARNING(const string &message)
 		{
 			logMessage ( ":[WARNING]:[" + message + "]" );
 		}
 
 		template<typename T, typename... Args>
-		static void WARNING(const T &first, Args... args) 
+		static void WARNING(const T &first, Args... args)
 		{
 			logMessage ( ":[WARNING]:[" + toString ( first, args... ) + "]" );
 		}
 
-		static void ERROR(const std::string &message) 
+		static void ERROR(const string &message)
 		{
 			logMessage ( ":[ERROR]  :[" + message + "]" );
 		}
 
 		template<typename T, typename... Args>
-		static void ERROR(const T &message, Args... args) 
+		static void ERROR(const T &message, Args... args)
 		{
-			logMessage ( ":[ERROR]  :[" + toString ( message, args... ) + "]" );
+			logMessage(":[ERROR]  :[" + toString(message, args...) + "]");
 		}
-	;
 
 	private:
 		// Static function for conversion
 		template<typename T>
-		static std::string toString(const T &arg) 
+		static string toString(const T &arg) 
 		{
-			std::ostringstream stream;
+			ostringstream stream;
 			stream << arg;
 			return stream.str();
 		}
 
 		template<typename T, typename... Args>
-		static std::string
-		toString(const T &message, Args... args) 
+		static string toString(const T &message, Args... args) 
 		{
-			return toString ( message ) + toString ( args... );
+			return toString(message) + toString(args...);
 		}
 
-		static void
-		logMessage(const std::string &message) 
+		static void logMessage(const std::string &message) 
 		{
 			FileHandler file ( "/home/mellw/nlog" );
 
@@ -293,8 +293,7 @@ class Log {
 			}
 		}
 
-		static void
-		StartMessage(const std::string &message) 
+		static void StartMessage(const string &message) 
 		{
 			FileHandler file ("/home/mellw/nlog");
 
@@ -304,8 +303,7 @@ class Log {
 			}
 		}
 
-		static void
-		EndMessage(const std::string &message) 
+		static void EndMessage(const string &message) 
 		{
 			FileHandler file("/home/mellw/nlog");
 
@@ -314,7 +312,6 @@ class Log {
 				file.append(TIME::get() + message + "\n");
 			}
 		}
-	;
 };
 
 class toString 
@@ -326,55 +323,49 @@ class toString
 			result = convert(input);
 		}
 
-		operator std::string() const 
+		operator string() const 
 		{
 			return result;
 		}
-	;
 
 	private:
-		std::string result;
+		string result;
 
-		std::string 
-		convert(const int16_t &in)
+		string convert(const int16_t &in)
 		{
-			std::string str;
-			str = std::to_string(in);
+			string str;
+			str = to_string(in);
 			return str;
 		}
 
-		std::string
-		convert(const std::string &in)
+		string convert(const string &in)
 		{
 			return in;
 		}
 
-		std::string
-		convert(const std::vector<uint32_t> &in)
+		string convert(const vector<uint32_t> &in)
 		{
-			std::string str;
+			string str;
 			for (auto &i : in) 
 			{
-				str += std::to_string(i) + " ";
+				str += to_string(i) + " ";
 			}
 			return str;
 		}
 
-		std::string
-		convert(const std::vector<const char *> &in)
+		string convert(const vector<const char *> &in)
 		{
-			std::string str;
+			string str;
 			for (auto &i : in) 
 			{
-				str += std::string(i) + " ";
+				str += string(i) + " ";
 			}
 			return str;
 		}
 
-		std::string
-		convert(const std::vector<std::string> &in)
+		string convert(const vector<string> &in)
 		{
-			std::string str;
+			string str;
 			for (auto &i : in) 
 			{
 				str += i + " ";
@@ -382,17 +373,15 @@ class toString
 			return str;
 		}
 
-		std::string
-		convert(const std::vector<xcb_event_mask_t> &in)
+		string convert(const std::vector<xcb_event_mask_t> &in)
 		{
-			std::string str;
+			string str;
 			for (auto &i : in) 
 			{
-				str += std::to_string(i) + " ";
+				str += to_string(i) + " ";
 			}
 			return str;
 		}
-	;
 };
 
 // ANSI escape codes for colors
@@ -408,7 +397,8 @@ class toString
 #define log_RESET 		"\033[0m"
 
 
-enum LogLevel {
+enum LogLevel
+{
     INFO,
 	INFO_PRIORITY,
     WARNING,
@@ -416,7 +406,8 @@ enum LogLevel {
 	FUNC
 };
 
-class Logger {
+class Logger
+{
 	public:
 		template<typename T, typename... Args>
 		void log(LogLevel level, const std::string &function, const T& message, Args&&... args) 
@@ -434,10 +425,10 @@ class Logger {
 	;
 
 	private:
-		std::vector<std::string> list;
-		std::string str;
+		vector<string> list;
+		string str;
 
-		std::string getLogPrefix(LogLevel level) const 
+		string getLogPrefix(LogLevel level) const 
 		{
 			switch (level) 
 			{
@@ -445,32 +436,36 @@ class Logger {
 				{
 					return log_GREEN 	"[INFO]" 		  log_RESET;
 				}
+				
 				case INFO_PRIORITY:
 				{
 					return log_CYAN		"[INFO_PRIORITY]" log_RESET;
 				}
+				
 				case WARNING:
 				{
 					return log_YELLOW 	"[WARNING]" 	  log_RESET;
 				}
+				
 				case ERROR:
 				{
 					return log_RED 		"[ERROR]" 		  log_RESET;
 				}
+				
 				case FUNC:
 				{
 					return log_MEGENTA	"[FUNC]"		  log_RESET;
 				}
+				
 				default:
 				{
-					return std::to_string(level);
+					return to_string(level);
 				}
 			}
 		}
 
 		template<typename T, typename... Args>
-		void
-		log_arragnge(std::vector<std::string> list, const T &message, const Args&... args)
+		void log_arragnge(vector<string> list, const T &message, const Args&... args)
 		{
 			list.push_back(toString(message));
 			if constexpr (sizeof...(args) > 0)
@@ -483,10 +478,9 @@ class Logger {
 			}
 		}
 
-		void
-		log_append(std::vector<std::string> list)
+		void log_append(vector<string> list)
 		{
-			std::string result;
+			string result;
 			int current = 0;
 			for (auto &i : list)
 			{
@@ -502,9 +496,11 @@ class Logger {
 	;
 };
 
-typedef struct {
+typedef struct
+{
 	string value;
-} event_type_obj_t;
+}
+event_type_obj_t;
 
 inline constexpr const char *xcb_event_type_to_str(uint8_t __event_type)
 {
@@ -549,35 +545,48 @@ inline constexpr const char *xcb_event_type_to_str(uint8_t __event_type)
 	}
 }
 
-typedef struct {
+typedef struct
+{
     string value;
-} FuncNameWrapper;
+}
+FuncNameWrapper;
 
-typedef struct {
+typedef struct
+{
 	string value;
-} file_name_obj_t;
+}
+file_name_obj_t;
 
-typedef struct {
+typedef struct
+{
 	int line;
-} line_obj_t;
+}
+line_obj_t;
 
-typedef struct {
+typedef struct
+{
     LogLevel level;
     string function;
     int line;
     string message;
     // Include a timestamp if you prefer logging it to be handled by the logger rather than each log call
-} LogMessage;
+}
+LogMessage;
 
-typedef struct {
+typedef struct
+{
     uint32_t value;
-} window_obj_t;
+}
+window_obj_t;
 
-typedef struct {
+typedef struct
+{
 	string value;
-} errno_msg_t;
+}
+errno_msg_t;
 
-class LogQueue {
+class LogQueue
+{
 	public:
 		void push(const LogMessage& message)
 		{
@@ -603,7 +612,8 @@ class LogQueue {
 		queue<LogMessage> queue_;
 };
 
-class lout {
+class lout
+{
     /* Defines 	 */
         #define loutNUM(__variable) \
             "(\033[33m" << __variable << "\033[0m)"
@@ -656,17 +666,18 @@ class lout {
 			return *this;
 		}
 
-		lout& operator<<(const FuncNameWrapper& funcName) {
+		lout& operator<<(const FuncNameWrapper& funcName)
+		{
 			currentFunction = funcName.value;
 			return *this;
-
 		}
+
 		lout& operator<<(const line_obj_t &__line)
 		{
 			current_line = __line.line;
 			return *this;
-
 		}
+
 		/**
 		 *
 		 * TODO: Add this into the logMessage function to append it to the log message
@@ -676,23 +687,25 @@ class lout {
 		{
 			current_file = __name.value;
 			return *this;
-
 		}
+
         lout& operator<<(const window_obj_t &__window)
         {
             buffer << "[" << log_BLUE << "WINDOW_ID" << log_RESET << ":" << loutNUM(__window.value) << "] ";
             return *this;
-
         }
-		lout& operator<<(ostream& (*pf)(ostream&)) {
-			if (pf == static_cast<std::ostream& (*)(std::ostream&)>(std::endl)) {
+
+		lout& operator<<(ostream& (*pf)(ostream&))
+		{
+			if (pf == static_cast<std::ostream& (*)(std::ostream&)>(std::endl))
+			{
 				logMessage();
 				buffer = std::ostringstream(); // Reset the buffer for new messages
 				// Reset log level and function as well if desired
-
-			} return *this;
-
+			}
+			return *this;
 		}
+
         lout& operator<<(char c)
 		{
         	if (c == '\n') {
@@ -703,38 +716,41 @@ class lout {
             }
 			return *this;
         }
-		lout& operator<<(const errno_msg_t &__errno) {
+
+		lout& operator<<(const errno_msg_t &__errno)
+		{
 			buffer << __errno.value;
 			return *this;
-		
 		}
+		
         template<typename T>
         typename enable_if<is_arithmetic<T>::value, lout&>::type
-        operator<<(T value) {
+        operator<<(T value)
+		{
             buffer << loutNUM(value);
             return *this;
-
         }
+
         template<typename T>
         typename enable_if<!is_arithmetic<T>::value, lout&>::type
-        operator<<(const T& message) {
+        operator<<(const T& message)
+		{
             buffer << message;
             return *this;
-
         }
 
-		// lout& err(const string &__err_msg)
-		// {
-		// 	buffer << __err_msg << ": " << strerror(errno) << " (errno: " << errno << ")";
-		// 	return *this;
-		// }
+		/* lout& err(const string &__err_msg)
+		{
+			buffer << __err_msg << ": " << strerror(errno) << " (errno: " << errno << ")";
+			return *this;
+		} */
 
-		// template<typename T>
-		// lout& operator<<(const T& message)
-		// {
-		// 	buffer << message;
-		// 	return *this;
-		// }
+		/* template<typename T>
+		lout& operator<<(const T& message)
+		{
+			buffer << message;
+			return *this;
+		} */
 
 	private:
 	/* Variabels */
@@ -787,8 +803,8 @@ class lout {
 				}
 			}
 		}
-
-}; static class lout lout;
+};
+static class lout lout;
 
 // Utility function for wrapping function names
 inline FuncNameWrapper func(const char* name)

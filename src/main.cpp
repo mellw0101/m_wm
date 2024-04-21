@@ -267,17 +267,8 @@ constexpr Type make_constexpr(Type value) { return value; }
 #define STATIC_CONSTEXPR_TYPE(__type, __name, __value) \
     static constexpr __type __name = make_constexpr<__type>((__type)__value)
 
-#define TEMP(__T1) \
-    template<__T1>
-
-#define TEMP_CB \
-    TEMP(typename Callback)
-
-#define CB \
-    Callback &&callback
-
-namespace { // Tools
-
+namespace // Tools
+{
     constexpr const char * pointer_from_enum(CURSOR CURSOR)
     {
         switch (CURSOR)
@@ -356,14 +347,14 @@ namespace { // Tools
         return username;
     }
 
-    namespace {
+    namespace // xcb error checking
+    {
         /**
-         *
-         * @brief Flushes any X server requests in que and checks for errors 
-         *
+         
+          @brief Flushes any X server requests in que and checks for errors 
+         
          */
-        void
-        flush_x(const char *__calling_function, uint32_t __window = 0)
+        void flush_x(const char *__calling_function, uint32_t __window = 0)
         {
             AutoTimer t(__func__);
 
@@ -382,8 +373,7 @@ namespace { // Tools
         #define FLUSH_XWin() flush_x(__func__, _window)
         #define FlushX_Win( __window ) do { flush_x( __func__, __window ); } while(0)
 
-        void
-        check_xcb_void_cookie(xcb_void_cookie_t cookie, const char *__calling_function)
+        void check_xcb_void_cookie(xcb_void_cookie_t cookie, const char *__calling_function)
         {
             AutoTimer t(__func__);
 
@@ -395,7 +385,8 @@ namespace { // Tools
             }
         }
 
-        class __window_geo__ {
+        class __window_geo__
+        {
             public:
                 // Use std::unique_ptr to manage the xcb_get_geometry_reply_t pointer
                 std::unique_ptr<xcb_get_geometry_reply_t, decltype(&free)> reply{nullptr, free};
@@ -439,8 +430,7 @@ namespace { // Tools
                     return reply.get();
                 }
         };
-
-    }/* xcb error checking */
+    }
 
     void pop_last_ss(stringstream & __ss)
     {
@@ -470,35 +460,38 @@ namespace { // Tools
     }
 
 }
-namespace {
-    enum {
+
+namespace
+{
+    enum
+    {
         KILL = 1,
     };
-
-    template<typename T1, typename T2>
-    using umap = unordered_map<T1, T2>;
     
     template<typename T1, typename T2 = int, typename T3 = void>
-    struct uumap {
+    struct uumap
+    {
         using uumap_type = umap<T1, umap<T2, function<void(T3)>>>;
     };
 
     template<typename T1, typename T2>
-    struct uumap<T1, T2, void> {
+    struct uumap<T1, T2, void>
+    {
         using uumap_type = umap<T1, umap<T2, function<void()>>>;
     };
 
     template<typename T1>
-    struct uumap<T1, int, void> {
+    struct uumap<T1, int, void>
+    {
         using uumap_type = umap<T1, umap<int, function<void()>>>;
     };
 
     template<typename T1, typename T2 = int, typename T3 = void>
     using uumap_t = typename uumap<T1, T2, T3>::uumap_type;
 
-
     template<typename T1, typename T2 = int, typename T3 = void>
-    class __uumap__ {
+    class __uumap__
+    {
         public:
             uumap_t<T1, T2, T3> _data;
 
@@ -566,11 +559,11 @@ namespace {
                 }
             }
 
-            void remove(uint32_t __w) {
+            void remove(uint32_t __w)
+            {
                 auto it = _data.find(__w);
                 if (it == _data.end()) return;
                 _data.erase(it);
-
             }
     };
 
@@ -580,52 +573,53 @@ namespace {
      *
      */
     template<typename Type, typename ArgType = void>
-    struct umap_w_id {
+    struct umap_w_id
+    {
         using type = unordered_map<Type, vector<pair<int, function<void(ArgType)>>>>;
     };
 
     /*
-     *
-     * Specialization for when ArgType is void, meaning the function takes no arguments.
-     *
+     
+      Specialization for when ArgType is void, meaning the function takes no arguments.
+     
      */
     template<typename Type>
-    struct umap_w_id<Type, void> {
+    struct umap_w_id<Type, void>
+    {
         using type = unordered_map<Type, vector<pair<int, function<void()>>>>;
     };
 
     /*
-     *
-     * Helper type alias to simplify usage
-     *
+     
+      Helper type alias to simplify usage
+     
      */
     template<typename Type, typename ArgType = void>
     using umap_w_id_t = typename umap_w_id<Type, ArgType>::type;
 
     /*
-     *
-     * Forward declaration of the class template to allow its use in the specialization below
-     *
+     
+      Forward declaration of the class template to allow its use in the specialization below
+     
      */
     template<typename Type, typename ArgType = void>
     class UMapWithID;
 
     // Specialization for when ArgType is void, meaning the function takes no arguments.
     template<typename Type>
-    class UMapWithID<Type, void> {
+    class UMapWithID<Type, void>
+    {
         public:
         /* Vatiables */
             using SignalMap = unordered_map<Type, vector<pair<int, function<void()>>>>;
             SignalMap signalMap;
 
-        /* Methods */
-            // Connect a signal with no arguments
+        /* Methods   */
             void connect(Type key, int signalID, function<void()> callback)
             {
                 signalMap[key].emplace_back(signalID, std::move(callback));
             }
 
-            // Emit a signal with no arguments
             void emit(Type key, int signalID)
             {
                 auto it = signalMap.find(key);
@@ -644,7 +638,8 @@ namespace {
 
     // Primary template for cases where ArgType is not void
     template<typename Type, typename ArgType>
-    class UMapWithID {
+    class UMapWithID
+    {
         public:
         /* Variables */
             using SignalMap = unordered_map<Type, vector<pair<int, function<void(ArgType)>>>>;
@@ -677,7 +672,8 @@ namespace {
     #define CLI_SIG    [](client *c) -> void
 
     template<typename ArgType>
-    class UMapWithID<client *, ArgType> {
+    class UMapWithID<client *, ArgType>
+    {
         public:
         /* Variables */
             using SignalMap = unordered_map<client *, vector<pair<int, function<void(ArgType)>>>>;
@@ -708,7 +704,8 @@ namespace {
     };
 
     template<>
-    class UMapWithID<client *, void> {
+    class UMapWithID<client *, void>
+    {
         public:
         /* Vatiables */
             using SignalMap = unordered_map<client *, vector<pair<int, function<void()>>>>;
@@ -739,7 +736,8 @@ namespace {
     };
 
     template<>
-    class UMapWithID<client *, client *> {
+    class UMapWithID<client *, client *>
+    {
         public:
         /* Variables */
             using SignalMap = unordered_map<client *, vector<pair<int, function<void(client *)>>>>;
@@ -777,7 +775,8 @@ namespace {
     };
 
     template<>
-    class UMapWithID<uint32_t> {
+    class UMapWithID<uint32_t>
+    {
         public:
         /* Vatiables */
             using SignalMap = unordered_map<uint32_t, vector<pair<int, function<void()>>>>;
@@ -839,13 +838,14 @@ namespace {
     };
 
     template<> /* for windows to pass the window as well */
-    class UMapWithID<uint32_t, window> {
+    class UMapWithID<uint32_t, window>
+    {
         public:
         /* Vatiables */
             using SignalMap = unordered_map<uint32_t, vector<pair<int, function<void(window &)>>>>;
             SignalMap signalMap;
 
-        /* Methods */
+        /* Methods   */
             template<EV __signal_id, typename Callback>
             void connect(uint32_t __key, Callback &&__callback)
             {
@@ -891,7 +891,8 @@ namespace {
     };
 
     template<>
-    class UMapWithID<window &, void> {
+    class UMapWithID<window &, void>
+    {
         public:
             unordered_map<window *, vector<std::pair<int, function<void()>>>> windowSignalMap;
 
@@ -950,55 +951,54 @@ namespace {
             }
     };
 
-
     class __window_client_map__
     {
-    public:
-        umap<uint32_t, client *> _data;
+        public:
+            umap<uint32_t, client *> _data;
 
-        void
-        connect(uint32_t __window, client *__c)
-        {
-            _data[__window] = __c;
-        }
-
-        client *
-        retrive(uint32_t __window)
-        {
-            auto it = _data.find(__window);
-            if (it != _data.end())
+            void connect(uint32_t __window, client *__c)
             {
-                return it->second;
-            }
-            return nullptr;
-
-        }/** @brief @returns @p 'client' from uint32_t */
-        
-        void
-        remove(uint32_t __window)
-        {
-            _data.erase(__window);
-        }
-
-        void
-        remove_by_value(client* __c)
-        {
-            for (auto it = _data.begin(); it != _data.end();)
-            {
-                if (it->second == __c)
-                {
-                    it = _data.erase(it); // Erase and move to next valid iterator
-                }
-                else
-                {
-                    ++it; // Move to next item if current doesn't match
-                }
+                _data[__window] = __c;
             }
 
-            loutI << "Deleted window from map, current size:" << _data.size() << '\n';
-        }
+            /**
+
+              @brief @returns @p client from uint32_t
+
+             */
+            client *retrive(uint32_t __window)
+            {
+                auto it = _data.find(__window);
+                if (it != _data.end())
+                {
+                    return it->second;
+                }
+                return nullptr;
+
+            }
+
+            void remove(uint32_t __window)
+            {
+                _data.erase(__window);
+            }
+
+            void remove_by_value(client* __c)
+            {
+                for (auto it = _data.begin(); it != _data.end();)
+                {
+                    if (it->second == __c)
+                    {
+                        it = _data.erase(it); // Erase and move to next valid iterator
+                    }
+                    else
+                    {
+                        ++it; // Move to next item if current doesn't match
+                    }
+                }
+
+                loutI << "Deleted window from map, current size:" << _data.size() << '\n';
+            }
     };
-
 }
 
 namespace XCB
@@ -1007,23 +1007,23 @@ namespace XCB
     {
         return xcb_get_geometry(conn, __w);
     }
+
     inline xcb_get_geometry_reply_t *g_r(xcb_get_geometry_cookie_t __cok)
     {
         return xcb_get_geometry_reply(conn, __cok, nullptr);        
     }
+    
     inline xcb_get_window_attributes_cookie_t attributes_cookie(uint32_t __w)
     {
         return xcb_get_window_attributes(conn, __w);    
     }    
     
-    inline xcb_get_window_attributes_reply_t *
-    attributes_reply(xcb_get_window_attributes_cookie_t __cok)
+    inline xcb_get_window_attributes_reply_t *attributes_reply(xcb_get_window_attributes_cookie_t __cok)
     {
         return xcb_get_window_attributes_reply(conn, __cok, nullptr);          
     }    
     
-    inline xcb_intern_atom_cookie_t
-    atom_cok(const char *__s)
+    inline xcb_intern_atom_cookie_t atom_cok(const char *__s)
     {
         if (strcmp(__s, "_NET_WM_STATE"))
         {
@@ -1032,14 +1032,12 @@ namespace XCB
         return {};
     }
     
-    inline xcb_intern_atom_reply_t *
-    atom_r(xcb_intern_atom_cookie_t __atom_cok)
+    inline xcb_intern_atom_reply_t *atom_r(xcb_intern_atom_cookie_t __atom_cok)
     {
         return xcb_intern_atom_reply(conn, __atom_cok, NULL);
     }
 
-    bool
-    is_mapped(uint32_t __w)
+    bool is_mapped(uint32_t __w)
     {
         wAttrR w_attr(__w);
         if (w_attr.is_not_valid())
@@ -1065,8 +1063,7 @@ namespace XCB
         return (state == XCB_MAP_STATE_VIEWABLE);
     } */
 
-    void
-    change_back_pixel(uint32_t __w, uint32_t __pix)
+    /* void change_back_pixel(uint32_t __w, uint32_t __pix)
     {
         VoidC cookie = xcb_change_window_attributes(
             conn,
@@ -1079,15 +1076,14 @@ namespace XCB
         );
         CheckVoidC(cookie, "ERROR ( xcb_change_window_attributes ) Failed");
         FlushX_Win(__w);
-    }
+    } */
 
     #define ConfW(__w, __mask, ...) \
         unsigned int __value[] = {__VA_ARGS__}; \
         xcb_configure_window(conn, __w, __mask, __value); \
         xcb_flush(conn);
 
-    xcb_get_geometry_cookie_t
-    get_unchecked_geoC(uint32_t __w)
+    xcb_get_geometry_cookie_t get_unchecked_geoC(uint32_t __w)
     {
         return xcb_get_geometry_unchecked(conn, __w);
     }
@@ -1101,25 +1097,30 @@ namespace XCB
 ****************************************/
 class __ev_sigs
 {
+    /* Defines */
+        #define ConnEvSig(__w, __sig, __cb) \
+        do { \
+            ev_sigs->connect(__w, __sig, [this](const vector<uint32_t> &ev) -> void { __cb }); \
+        } while(false)
+
     public:
+    /* Variabels */
         umap<uint32_t, umap<int, function<void(vector<uint32_t>)>>> _data;
 
+    /* Methods */
         template<typename Callback>
         void connect(uint32_t __w, uint8_t __sig, Callback &&__cb)
         {
             _data[__w][__sig] = std::forward<Callback>(__cb);
         }
 
-        void emit(uint32_t __w, uint8_t __sig, const vector<uint32_t> &__w2)
+        void emit(uint32_t __w, uint8_t __sig, const vector<uint32_t> &__event_vec)
         {
-            AutoTimer t("__window_signals__:" + string(__func__) + ":2");
+            AutoTimer t("__ev_sigs::emit");
 
             auto it = _data[__w].find(__sig);
-            if (it != _data[__w].end())
-            {
-                it->second(__w2);
-                xcb_flush(conn);
-            }
+            if (it == _data[__w].end()) return;
+            it->second(__event_vec);
         }
 
         void remove(uint32_t __w)
@@ -1137,7 +1138,8 @@ static __ev_sigs *ev_sigs(nullptr);
 **** @class @c __signal_manager__
 *****************************************
 ****************************************/
-class __signal_manager__ {
+class __signal_manager__
+{
     /* Defines   */
         #define WS_conn signal_manager->_window_signals.conect
         #define WS_emit(_window, _event) signal_manager->_window_signals.emit(_window, _event)
@@ -1249,35 +1251,39 @@ class __signal_manager__ {
 };
 static __signal_manager__ *signal_manager(nullptr);
 
-class __window_attr__ {
+class __window_attr__
+{
     private:
+    /** @c Variabels   */
         xcb_get_window_attributes_reply_t* reply = nullptr;
         uint32_t _window;
 
-    /* Methods */
-        xcb_get_window_attributes_cookie_t get_cookie__(uint32_t __window) {
+    /** @c Methods     */
+        xcb_get_window_attributes_cookie_t get_cookie__(uint32_t __window)
+        {
             return xcb_get_window_attributes(conn, __window);
-
         }
-        void get_reply__() {
-            reply = xcb_get_window_attributes_reply(conn, get_cookie__(_window), nullptr);  // Error handling omitted for brevity
-            
+        
+        void get_reply__()
+        {
+            reply = xcb_get_window_attributes_reply(conn, get_cookie__(_window), nullptr);
         }
     
     public:
-        // Constructor
-        __window_attr__(uint32_t __window) :
-        _window(__window) {
+    /** @c Constructor */
+        __window_attr__(uint32_t __window)
+        : _window(__window)
+        {
             get_reply__();
-
         }
 
-        // Destructor
-        ~__window_attr__() {
+    /** @c Destructor  */
+        ~__window_attr__()
+        {
             free(reply);  // Free the allocated memory
-
         }
-
+    
+    /** @c Operators   */
         // Deleted copy constructor and copy assignment operator to prevent copying
         __window_attr__(const __window_attr__&) = delete;
         __window_attr__& operator=(const __window_attr__&) = delete;
@@ -1301,21 +1307,14 @@ class __window_attr__ {
         }
 
         // Public method to access the reply
-        xcb_get_window_attributes_reply_t *
-        get() const
+        xcb_get_window_attributes_reply_t *get() const
         {
             return reply;
         }
-
 };
 
-class __atoms__ {
-    public:
-        xcb_atom_t WM_DELETE_WINDOW, WM_PROTOCOLS;
-    
-}; static __atoms__ *atoms(nullptr);
-
-class __crypto__ {
+class __crypto__
+{
     /* Defines */
         #define HASH(__input) \
             crypro->str_hash_32(__input)
@@ -1375,12 +1374,13 @@ class __crypto__ {
             return paddedHexString;
         }
 
-}; static __crypto__ *crypro(nullptr);
+};
+static __crypto__ *crypro(nullptr);
 
-// namespace fs = filesystem;
 namespace fs = std::filesystem;
 
-class __file_system__ {
+class __file_system__
+{
     /* Defines */
         #define FS_ACC(__folder, __sub_path) file_system->accessor(__folder, __sub_path)
         #define ICONFOLDER __file_system__::ICON_FOLDER
@@ -1478,9 +1478,11 @@ class __file_system__ {
 
         }
 
-}; static __file_system__ *file_system(nullptr);
+};
+static __file_system__ *file_system(nullptr);
 
-class __net_logger__ {
+class __net_logger__
+{
     // Defines.
         #define ESP_SERVER "192.168.0.29"
         #define ESP_PORT 23
@@ -1592,11 +1594,10 @@ class __net_logger__ {
         : _connected(false) {}
 
 }; 
-#ifdef NET_LOG_ENABLED
-    static __net_logger__ *net_logger(nullptr);
-#endif
+/* static __net_logger__ *net_logger(nullptr); */
 
-struct size_pos {
+struct size_pos
+{
     void save(const int & x, const int & y, const int & width, const int & height) {
         this->x = x;
         this->y = y;
@@ -1607,7 +1608,8 @@ struct size_pos {
 
 };
 
-class mxb {
+class mxb
+{
     class XConnection {
         public:
         // constructor and destructor
@@ -1887,21 +1889,24 @@ class mxb {
     };
 };
 
-class pointer {
+class pointer
+{
     public:
     /* Methods   */
-        int16_t x() {
+        int16_t x()
+        {
             xcb_query_pointer_cookie_t cookie = xcb_query_pointer(conn, screen->root);
             xcb_query_pointer_reply_t *reply = xcb_query_pointer_reply(conn, cookie, nullptr);
-            if (!reply) {
+            if (!reply)
+            {
                 loutE << "reply is nullptr" << loutEND;
                 return 0;
+            }
 
-            } int16_t x = reply->root_x;
-            
+            int16_t x = reply->root_x;
             free(reply);
+            
             return x;
-
         }
 
         int16_t y()
@@ -1921,7 +1926,8 @@ class pointer {
 
         void teleport(int16_t __x, int16_t __y)
         {
-            xcb_warp_pointer(
+            xcb_warp_pointer
+            (
                 conn,
                 XCB_NONE,
                 screen->root,
@@ -1937,7 +1943,8 @@ class pointer {
 
         void grab()
         {
-            xcb_grab_pointer_cookie_t cookie = xcb_grab_pointer(
+            xcb_grab_pointer_cookie_t cookie = xcb_grab_pointer
+            (
                 conn,
                 false,
                 screen->root,
@@ -1984,7 +1991,8 @@ class pointer {
 
 };
 
-class __pointer__ {
+class __pointer__
+{
     public:
     /* Methods   */
         int16_t x()
@@ -2080,7 +2088,8 @@ class __pointer__ {
             ungrab();
         }
 
-}; static __pointer__ *m_pointer(nullptr);
+};
+static __pointer__ *m_pointer(nullptr);
 
 class fast_vector
 {
@@ -2141,7 +2150,8 @@ class fast_vector
         vector<const char*>(data);
 };
 
-class string_tokenizer {
+class string_tokenizer
+{
     public:
     // Constructors and Destructor.
         string_tokenizer() {}
@@ -2299,7 +2309,8 @@ class str
         bool is_null = false;
 };
 
-class fast_str_vector {
+class fast_str_vector
+{
     public:
     // operators.
         operator vector<str>() const
@@ -2348,7 +2359,8 @@ class fast_str_vector {
         vector<str>(data); // Internal vector to store const char* strings
 };
 
-class Directory_Searcher {
+class Directory_Searcher
+{
     public:
     // Construtor.
         Directory_Searcher() {}
@@ -2407,7 +2419,8 @@ class Directory_Searcher {
 
 };
 
-class Directory_Lister {
+class Directory_Lister
+{
     public:
     // Constructor.
         Directory_Lister() {}
@@ -2436,7 +2449,8 @@ class Directory_Lister {
 
 };
 
-class File {
+class File
+{
     public:
     // Sub Classes.
         class search {
@@ -2580,7 +2594,8 @@ class File {
 };
 
 extern char **environ;
-class __pid_manager__ {
+class __pid_manager__
+{
     private:
     /* Structs     */
         typedef struct {
@@ -2823,9 +2838,11 @@ class __pid_manager__ {
     /* Constructor */
         __pid_manager__() {}
 
-}; static __pid_manager__ *pid_manager(nullptr);
+};
+static __pid_manager__ *pid_manager(nullptr);
 
-class Launcher {
+class Launcher
+{
     public:
     /* Methods   */
         int program(char *program) {
@@ -2898,7 +2915,8 @@ class Launcher {
         File file;
 };
 
-class __key_codes__ {
+class __key_codes__
+{
     public:
     // constructor and destructor.
         __key_codes__() 
@@ -3028,93 +3046,8 @@ class __key_codes__ {
         xcb_key_symbols_t * keysyms;
 };
 
-// queue<xcb_expose_event_t *> expose_events;
-
-void handle_configure_request(xcb_configure_request_event_t* event)
-{
-    uint32_t values[7];
-    int i = 0;
-
-    if (event->value_mask & XCB_CONFIG_WINDOW_X)
-    {
-        values[i++] = event->x;
-    }
-    if (event->value_mask & XCB_CONFIG_WINDOW_Y)
-    {
-        values[i++] = event->y;
-    }
-    if (event->value_mask & XCB_CONFIG_WINDOW_WIDTH)
-    {
-        values[i++] = event->width;
-    }
-    if (event->value_mask & XCB_CONFIG_WINDOW_HEIGHT)
-    {
-        values[i++] = event->height;
-    }
-    if (event->value_mask & XCB_CONFIG_WINDOW_BORDER_WIDTH)
-    {
-        values[i++] = event->border_width;
-    }
-    if (event->value_mask & XCB_CONFIG_WINDOW_SIBLING)
-    {
-        values[i++] = event->sibling;
-    }
-    if (event->value_mask & XCB_CONFIG_WINDOW_STACK_MODE)
-    {
-        values[i++] = event->stack_mode;
-    }
-
-    xcb_configure_window(conn, event->window, event->value_mask, values);
-    xcb_flush(conn);
-}
-
 static void buttonPressH(const xcb_generic_event_t *ev);
 static void keyPressH(const xcb_generic_event_t *ev);
-
-enum EvBit
-{
-    EXPOSE_EV = 1 << 0,
-    BUTTON_PRESS_EV = 1 << 1,
-    BUTTON_RELEASE_EV = 1 << 2,
-    MOTION_EV = 1 << 3,
-    KEY_PRESS_EV = 1 << 4,
-    KEY_RELEASE_EV = 1 << 5,
-    ENTER_EV = 1 << 6,
-    LEAVE_EV = 1 << 7,
-    FOCUS_IN_EV = 1 << 8,
-    FOCUS_OUT_EV = 1 << 9,
-    /* KEYMAP_NOTIFY_EV = 1 << 10,
-    EXPOSE_EV_IWIN = 1 << 11,
-    BUTTON_PRESS_EV_IWIN = 1 << 12,
-    BUTTON_RELEASE_EV_IWIN = 1 << 13,
-    MOTION_EV_IWIN = 1 << 14,
-    KEY_PRESS_EV_IWIN = 1 << 15,
-    KEY_RELEASE_EV_IWIN = 1 << 16,
-    ENTER_EV_IWIN = 1 << 17,
-    LEAVE_EV_IWIN = 1 << 18,
-    FOCUS_IN_EV_IWIN = 1 << 19, */
-};
-map<uint8_t, int> evMap = {
-    {XCB_EXPOSE, EXPOSE_EV},
-    {XCB_BUTTON_PRESS, BUTTON_PRESS_EV},
-    {XCB_BUTTON_RELEASE, BUTTON_RELEASE_EV},
-    {XCB_MOTION_NOTIFY, MOTION_EV},
-    {XCB_KEY_PRESS, KEY_PRESS_EV},
-    {XCB_KEY_RELEASE, KEY_RELEASE_EV},
-    {XCB_ENTER_NOTIFY, ENTER_EV},
-    {XCB_LEAVE_NOTIFY, LEAVE_EV},
-    {XCB_FOCUS_IN, FOCUS_IN_EV},
-    {XCB_FOCUS_OUT, FOCUS_OUT_EV},
-    /* {XCB_KEYMAP_NOTIFY, KEYMAP_NOTIFY_EV}, */
-};
-
-int
-getMappedEv(uint8_t __ev)
-{
-    auto it = evMap.find(__ev);
-    if (it == evMap.end()) return 0;
-    return it->second;
-}
 
 /**
 *****************************************
@@ -3303,7 +3236,6 @@ class evH
 static evH *ev_hand(nullptr);
 
 using Ev = const xcb_generic_event_t *;
-
 class __event_handler__
 {
     /* Defines   */
@@ -3908,90 +3840,93 @@ class __event_handler__
         /* ThreadPool thread_pool{20}; */
 
 };
-
 static __event_handler__ *event_handler(nullptr);
 using EventCallback = function<void(Ev)>;
 
-class Bitmap {
-    int width, height;
-    vector<vector<bool>>(bitmap);
+class Bitmap
+{
+    private:
+    /** @c Variabels */
+        int width, height;
+        vector<vector<bool>>(bitmap);
         
-public:
-    void
-    modify(int row, int startCol, int endCol, bool value)
-    {
-        if (row < 0 || row >= height || startCol < 0 || endCol > width)
+    public:
+    /** @c Methods   */
+        void modify(int row, int startCol, int endCol, bool value)
         {
-            loutE << "Invalid row or column indices" << loutEND;
-        }
-    
-        for (int i = startCol; i < endCol; ++i)
-        {
-            bitmap[row][i] = value;
-        }
-    }
-
-    void
-    exportToPng(const char * file_name) const
-    {
-        FILE *fp = fopen(file_name, "wb");
-        if (!fp)
-        {
-            loutE << "Failed to create PNG file" << loutEND;
-            return;
-        }
-
-        png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-        if (!png_ptr)
-        {
-            fclose(fp);
-            loutE << "Failed to create PNG write struct" << loutEND;
-            return;
-        }
-
-        png_infop info_ptr = png_create_info_struct(png_ptr);
-        if (!info_ptr)
-        {
-            fclose(fp);
-            png_destroy_write_struct(&png_ptr, nullptr);
-            loutE << "Failed to create PNG info struct" << loutEND;
-            return;
-        }
-
-        if (setjmp(png_jmpbuf(png_ptr)))
-        {
-            fclose(fp);
-            png_destroy_write_struct(&png_ptr, &info_ptr);
-            loutE << "Error during PNG creation" << loutEND;
-            return;
-        }
-
-        png_init_io(png_ptr, fp);
-        png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-        png_write_info(png_ptr, info_ptr);
-
-        png_bytep row = new png_byte[width];
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
+            if (row < 0 || row >= height || startCol < 0 || endCol > width)
             {
-                row[x] = bitmap[y][x] ? 0xFF : 0x00;
+                loutE << "Invalid row or column indices" << loutEND;
+            }
+        
+            for (int i = startCol; i < endCol; ++i)
+            {
+                bitmap[row][i] = value;
+            }
+        }
+
+        void exportToPng(const char * file_name) const
+        {
+            FILE *fp = fopen(file_name, "wb");
+            if (!fp)
+            {
+                loutE << "Failed to create PNG file" << loutEND;
+                return;
             }
 
-            png_write_row(png_ptr, row);
+            png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+            if (!png_ptr)
+            {
+                fclose(fp);
+                loutE << "Failed to create PNG write struct" << loutEND;
+                return;
+            }
+
+            png_infop info_ptr = png_create_info_struct(png_ptr);
+            if (!info_ptr)
+            {
+                fclose(fp);
+                png_destroy_write_struct(&png_ptr, nullptr);
+                loutE << "Failed to create PNG info struct" << loutEND;
+                return;
+            }
+
+            if (setjmp(png_jmpbuf(png_ptr)))
+            {
+                fclose(fp);
+                png_destroy_write_struct(&png_ptr, &info_ptr);
+                loutE << "Error during PNG creation" << loutEND;
+                return;
+            }
+
+            png_init_io(png_ptr, fp);
+            png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+            png_write_info(png_ptr, info_ptr);
+
+            png_bytep row = new png_byte[width];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    row[x] = bitmap[y][x] ? 0xFF : 0x00;
+                }
+
+                png_write_row(png_ptr, row);
+            }
+
+            delete[] row;
+            png_write_end(png_ptr, nullptr);
+            fclose(fp);
+            png_destroy_write_struct(&png_ptr, &info_ptr);
         }
 
-        delete[] row;
-        png_write_end(png_ptr, nullptr);
-        fclose(fp);
-        png_destroy_write_struct(&png_ptr, &info_ptr);
-    }
-
     Bitmap(int width, int height) 
-    :   width(width), height(height), bitmap(height, std::vector<bool>(width, false)) {}
+    : width(width), height(height), bitmap(height, std::vector<bool>(width, false))
+    {}
 };
 
-class __color_bitmap__ {
+class __color_bitmap__
+{
     private:
     /* Variabels   */
         int width, height;
@@ -4058,7 +3993,8 @@ class __color_bitmap__ {
 
 };
 
-class _scale {
+class _scale
+{
     public:
     /* Methods */
         static uint16_t from_8_to_16_bit(const uint8_t & n)
@@ -4067,8 +4003,10 @@ class _scale {
         }
 };
 
-namespace { /* 'window' class Namespace */
-    enum BORDER {
+namespace // 'window' class Namespace
+{
+    enum BORDER
+    {
         NONE  = 0,
         LEFT  = 1 << 0, /* 1  */
         RIGHT = 1 << 1, /* 2  */
@@ -4077,7 +4015,8 @@ namespace { /* 'window' class Namespace */
         ALL   = LEFT | RIGHT | UP | DOWN
     };
 
-    enum window_flags {
+    enum window_flags
+    {
         MAP             = 1 << 0, /* 1 */
         DEFAULT_KEYS    = 1 << 1, /* 2 */
         FOCUS_INPUT     = 1 << 2, /* 4 */
@@ -4085,7 +4024,8 @@ namespace { /* 'window' class Namespace */
         RAISE           = 1 << 4  /* 16 */
     };
 
-    enum window_event_mask : uint32_t {
+    enum window_event_mask : uint32_t
+    {
         KILL_WINDOW = 1 << 25 /* 33554432 */
     };
 
@@ -4105,17 +4045,19 @@ namespace { /* 'window' class Namespace */
     }
 
     /**
-     *
-     * @brief Struct representing the _MOTIF_WM_HINTS property format 
-     *
+     
+      @brief Struct representing the _MOTIF_WM_HINTS property format 
+     
      */
-    typedef struct {
+    typedef struct
+    {
         uint32_t flags;
         uint32_t functions;
         uint32_t decorations;
         int32_t  input_mode;
         uint32_t status;
-    } motif_wm_hints;
+    }
+    motif_wm_hints;
 
     // Define macros to create the enum class and declare the bitwise operators
     #define DEFINE_BITWISE_ENUM(EnumName, UnderlyingType) \
@@ -4134,8 +4076,10 @@ namespace { /* 'window' class Namespace */
         } \
         enum class EnumName : UnderlyingType
 
-    namespace { // WINDOW_CONFIG.
-        enum class WINDOW_CONF : uint32_t {
+    namespace // WINDOW_CONFIG
+    {
+        enum class WINDOW_CONF : uint32_t
+        {
             X      = 1 << 0,
             Y      = 1 << 1,
             WIDTH  = 1 << 2,
@@ -4178,7 +4122,8 @@ namespace { /* 'window' class Namespace */
     }
 
     /** EXPEREMENT: TODO: implement  */
-    enum DataType {
+    enum DataType
+    {
         TYPE_NONE,
         TYPE_INT,
         TYPE_FLOAT,
@@ -4187,7 +4132,8 @@ namespace { /* 'window' class Namespace */
         // TYPE_OTHER_DATA,
     };
 
-    struct WindowData {
+    struct WindowData
+    {
         DataType type;
         union {
             int intValue;
@@ -4233,159 +4179,6 @@ class window
     
     /* Methods     */
         /* Create        */
-            void create(const uint8_t  &depth,
-                        const uint32_t &parent,
-                        const int16_t  &x,
-                        const int16_t  &y,
-                        const uint16_t &width,
-                        const uint16_t &height,
-                        const uint16_t &border_width,
-                        const uint16_t &_class,
-                        const uint32_t &visual,
-                        const uint32_t &value_mask,
-                        const void     *value_list)
-            {
-                /* _depth = depth; */
-                _parent = parent;
-                _x = x;
-                _y = y;
-                _width = width;
-                _height = height;
-                /* _border_width = border_width;
-                __class = _class;
-                _visual = visual;
-                _value_mask = value_mask;
-                _value_list = value_list; */
-
-                make_window();
-
-            }
-
-            void create_default(const uint32_t &parent, const int16_t &x, const int16_t &y, const uint16_t &width, const uint16_t &height)
-            {
-                /* _depth = 0L; */
-                _parent = parent;
-                _x = x;
-                _y = y;
-                _width = width;
-                _height = height;
-                /* _border_width = 0;
-                __class = XCB_WINDOW_CLASS_INPUT_OUTPUT;
-                _visual = screen->root_visual;
-                _value_mask = 0;
-                _value_list = nullptr; */
-
-                make_window();
-            }
-
-            void create_def(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask)
-            {
-                /* _depth        = 0L; */
-                _parent       = __parent;
-                _x            = __x;
-                _y            = __y;
-                _width        = __width;
-                _height       = __height;
-                /* _border_width = 0;
-                __class       = XCB_WINDOW_CLASS_INPUT_OUTPUT;
-                _visual       = screen->root_visual;
-                _value_mask   = 0;
-                _value_list   = nullptr; */
-
-                make_window();
-                set_backround_color(__color);
-                grab_default_keys();
-
-                if (__mask > 0) {
-                    apply_event_mask(&__mask);
-                }
-            }
-
-            void create_def_no_keys(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask)
-            {
-                /* _depth        = 0L; */
-                _parent       = __parent;
-                _x            = __x;
-                _y            = __y;
-                _width        = __width;
-                _height       = __height;
-                /* _border_width = 0;
-                __class       = XCB_WINDOW_CLASS_INPUT_OUTPUT;
-                _visual       = screen->root_visual;
-                _value_mask   = 0;
-                _value_list   = nullptr; */
-
-                make_window();
-                set_backround_color(__color);
-                if (__mask > 0) apply_event_mask(&__mask);
-            }
-
-            void create_def_and_map(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask)
-            {
-                /* _depth        = 0L; */
-                _parent       = __parent;
-                _x            = __x;
-                _y            = __y;
-                _width        = __width;
-                _height       = __height;
-                /* _border_width = 0;
-                __class       = XCB_WINDOW_CLASS_INPUT_OUTPUT;
-                _visual       = screen->root_visual;
-                _value_mask   = 0;
-                _value_list   = nullptr; */
-
-                make_window();
-                set_backround_color(__color);
-                grab_default_keys();
-                if (__mask > 0) apply_event_mask(&__mask);
-                map();
-                raise();
-            }
-
-            void create_def_and_map_no_keys(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask)
-            {
-                /* _depth        = 0L; */
-                _parent       = __parent;
-                _x            = __x;
-                _y            = __y;
-                _width        = __width;
-                _height       = __height;
-                /* _border_width = 0;
-                __class       = XCB_WINDOW_CLASS_INPUT_OUTPUT;
-                _visual       = screen->root_visual;
-                _value_mask   = 0;
-                _value_list   = nullptr; */
-
-                make_window();
-                set_backround_color(__color);
-                if (__mask > 0) apply_event_mask(&__mask);
-                map();
-                raise();
-            }
-
-            void create_def_and_map_no_keys_with_borders(const uint32_t &__parent, const int16_t &__x, const int16_t &__y, const uint16_t &__width, const uint16_t &__height, COLOR __color, const uint32_t &__mask, int __border_info[3])
-            {
-                /* _depth        = 0L; */
-                _parent       = __parent;
-                _x            = __x;
-                _y            = __y;
-                _width        = __width;
-                _height       = __height;
-                /* _border_width = 0;
-                __class       = XCB_WINDOW_CLASS_INPUT_OUTPUT;
-                _visual       = screen->root_visual;
-                _value_mask   = 0;
-                _value_list   = nullptr; */
-
-                make_window();
-                set_backround_color(__color);
-                if (__mask > 0) apply_event_mask(&__mask);
-                map();
-                raise();
-                make_borders(__border_info[0], __border_info[1], __border_info[2]);
-
-            }
-            
             void create_window( uint32_t __parent,
                                 int16_t  __x,
                                 int16_t  __y,
@@ -4394,7 +4187,7 @@ class window
                                 COLOR    __color = DEFAULT_COLOR,
                                 uint32_t __event_mask = 0,
                                 int      __flags = NONE,
-                                void    *__border_data = nullptr,
+                                const void    *__border_data = nullptr,
                                 CURSOR   __cursor = CURSOR::arrow)
             {
                 AutoTimer t(__func__);
@@ -4426,7 +4219,7 @@ class window
 
                 if (__border_data != nullptr)
                 {
-                    int *border_data = static_cast<int *>(__border_data);
+                    const int *border_data = static_cast<const int *>(__border_data);
                     make_borders(border_data[0], border_data[1], border_data[2]);
                 }
 
@@ -4441,29 +4234,6 @@ class window
                 }
             
             }
-            
-            void create_client_window(const uint32_t &parent, const int16_t &x, const int16_t &y, const uint16_t &width, const uint16_t &height)
-            {
-                _window = xcb_generate_id(conn);
-                uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
-                uint32_t value_list[2];
-                value_list[0] = screen->white_pixel;
-                value_list[1] = XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_STRUCTURE_NOTIFY;
-
-                /* _depth = 0L; */
-                _parent = parent;
-                _x = x;
-                _y = y;
-                _width = width;
-                _height = height;
-                /* _border_width = 0;
-                __class = XCB_WINDOW_CLASS_INPUT_OUTPUT;
-                _visual = screen->root_visual;
-                _value_mask = value_mask;
-                _value_list = value_list; */
-                
-                make_window();
-            }
 
         /* Borders       */
             void make_borders(int __border_mask, uint32_t __size, int __color)
@@ -4475,12 +4245,15 @@ class window
             }
 
             #define CHANGE_BORDER_COLOR(__window) \
-                if (__window != 0)                                      \
-                {                                                       \
-                    change_back_pixel(Color->get(__color), __window);    \
-                    FlushX_Win( __window );                             \
-                    clear_window(__window);                             \
-                    FLUSH_X();                                          \
+                if (__window != 0)          \
+                {                           \
+                    XCB::change_back_pixel  \
+                    (                       \
+                        __window,           \
+                        Color->get(__color) \
+                    );                      \
+                    clear_window(__window); \
+                    XCB::flush();           \
                 }
             ;
             
@@ -4494,7 +4267,8 @@ class window
             
             void make_xcb_borders(int __color)
             {
-                xcb_change_window_attributes(
+                xcb_change_window_attributes
+                (
                     conn,
                     _window,
                     XCB_CW_BORDER_PIXEL,
@@ -4510,65 +4284,26 @@ class window
             void raise()
             {
                 AutoTimer t("window::raise");
-
-                xcb_void_cookie_t cookie = xcb_configure_window_checked(
-                    conn,
-                    _window,
-                    XCB_CONFIG_WINDOW_STACK_MODE, 
-                    (const uint32_t[1])
-                    {
-                        XCB_STACK_MODE_ABOVE
-                    }
-                );
-                xcb_generic_error_t *err = xcb_request_check(conn, cookie);
-                if (err)
-                {
-                    loutEWin << "xcb_configure_window_checked Failed" << '\n';
-                }
-                xcb_flush(conn);
+                XCB::raise_window(_window);
             }  
             
             void map()
             {
                 AutoTimer t(__func__);
-
-                xcb_map_window(conn, _window);
-                xcb_flush(conn);
+                XCB::map_window(_window);
             }
             
             void unmap()
             {
                 AutoTimer t(__func__);
-
-                xcb_unmap_window(conn, _window);
-                xcb_flush(conn);
+                XCB::unmap_window(_window);
             }
             
             void reparent(uint32_t __new_parent, int16_t __x, int16_t __y)
             {
                 AutoTimer t(__func__);
-
-                xcb_reparent_window(
-                    conn,
-                    _window,
-                    __new_parent,
-                    __x,
-                    __y
-                );
-                xcb_flush(conn);
-            }
-            
-            void make_child(uint32_t __window_to_make_child, uint32_t __child_x, uint32_t __child_y)
-            {
-                xcb_reparent_window(
-                    conn,
-                    __window_to_make_child,
-                    _window,
-                    __child_x,
-                    __child_y
-                );
-                xcb_flush(conn);
-            }            
+                XCB::reparent_window(_window, __new_parent, __x, __y);
+            }          
              
             void kill()
             {
@@ -4647,44 +4382,21 @@ class window
             void clear()
             {
                 AutoTimer timer(__func__);
-
-                xcb_clear_area(
-                    conn, 
-                    0,
-                    _window,
-                    0, 
-                    0,
-                    _width,
-                    _height
-                );
-                xcb_flush(conn);
+                XCB::clear_area(_window, _width, _height);
             }
-            
-            /* void focus_input()
-            {
-                AutoTimer timer(__func__);
-                
-                xcb_set_input_focus(
-                    conn,
-                    // XCB_INPUT_FOCUS_PARENT,XCB_INPUT_FOCUS_POINTER_ROOT,
-                    _window,
-                    XCB_CURRENT_TIME
-                );
-                xcb_flush(conn);
-            } */
 
             int focus()
             {
                 AutoTimer timer("window::focus");
                 focus_input();
-                this->set_active_EWMH_window();
+                set_active_EWMH_window();
                 xcb_flush(conn);
                 if (!is_active_EWMH_window())
                 {
                     loutEWin << "window wan not correctly set as 'active EWMH window'" << '\n';
                     return 1;
                 }
-                this->raise();
+                raise();
                 return 0;
             }
             
@@ -4769,11 +4481,6 @@ class window
                     xcb_flush(conn);
                 }
             }
-
-            void send_intern_struct_update()
-            {
-                send_event(XCB_EVENT_MASK_STRUCTURE_NOTIFY, (uint32_t[]){static_cast<const uint32_t>(_x), static_cast<const uint32_t>(_y), _width, _height});
-            }
             
             void update(uint32_t __x, uint32_t __y, uint32_t __width, uint32_t __height)
             {
@@ -4784,62 +4491,6 @@ class window
                 _width  = __width;
                 _height = __height;
             }
-
-        /* Signal System */
-            template<typename Callback>
-            void setup_WIN_SIG(EV __signal_id, Callback &&__callback)
-            {
-                signal_manager->_window_signals.conect(this->_window, __signal_id,  std::forward<Callback>(__callback));
-            }
-
-            void emit_WIN_SIG(EV __signal_id)
-            {
-                signal_manager->_window_signals.emit(this->_window, __signal_id);
-            }
-
-        /* Experimental  */
-            /* template<typename Type>
-            void setValue(Type&& value)
-            {
-                _storedValue = forward<T>(value);
-            } */
-
-            /* template<typename Type>
-            Type getValue() const
-            {
-                try
-                {
-                    return any_cast<Type>(_storedValue);
-                }
-                catch (const bad_any_cast& e)
-                {
-                    loutE << "Bad any_cast: " << e.what() << loutEND;
-                    throw;
-                }
-            } */
-
-            /* template<typename Func>
-            void setAction(Func&& func)
-            {
-                // Ensure the function is wrapped in a std::function with a known signature.
-                _action = function<void()>(forward<Func>(func));
-            } */
-
-            /* void triggerAction()
-            {
-                if (_action.has_value())
-                {
-                    try
-                    {
-                        // We need to cast back to std::function<void()> before calling.
-                        any_cast<function<void()>>(_action)();
-                    }
-                    catch (const bad_any_cast& e)
-                    {
-                        loutE << "Failed to invoke action. " << e.what() << loutEND;
-                    }
-                }
-            } */
 
         /* Check         */
             bool check_atom(xcb_atom_t __atom)
@@ -5026,7 +4677,8 @@ class window
             {
                 AutoTimer timer(__func__);
 
-                xcb_void_cookie_t cookie = xcb_ewmh_set_active_window_checked(
+                xcb_void_cookie_t cookie = xcb_ewmh_set_active_window_checked
+                (
                     ewmh,
                     0,
                     _window
@@ -5039,7 +4691,8 @@ class window
             {
                 AutoTimer t(__func__);
 
-                xcb_change_property(
+                xcb_change_property
+                (
                     conn,
                     XCB_PROP_MODE_REPLACE,
                     _window,
@@ -5365,12 +5018,12 @@ class window
                 uint32_t t_for = 0; // Default to 0 (no parent)
                 xcb_get_property_cookie_t cookie = xcb_get_property(conn, 0, _window, XCB_ATOM_WM_TRANSIENT_FOR, XCB_ATOM_WINDOW, 0, sizeof(uint32_t));
                 xcb_get_property_reply_t *reply = xcb_get_property_reply(conn, cookie, NULL);
-
                 if (reply && xcb_get_property_value_length(reply) == sizeof(uint32_t))
                 {
                     t_for = *(uint32_t *)xcb_get_property_value(reply);
                     free(reply); /* Remember to free the reply */
                 }
+
                 return t_for;
             }
             
@@ -5765,14 +5418,7 @@ class window
             void apply_event_mask(const uint32_t *__mask)
             {
                 AutoTimer t(__func__);
-
-                xcb_change_window_attributes(
-                    conn,
-                    _window,
-                    XCB_CW_EVENT_MASK,
-                    __mask
-                );
-                xcb_flush(conn);
+                XCB::apply_ev_mask(_window, __mask);
             }
             
             void set_pointer(CURSOR cursor_type)
@@ -5844,6 +5490,7 @@ class window
                     void geo(int16_t *__x = nullptr, int16_t *__y = nullptr, uint16_t *__width = nullptr, uint16_t *__height = nullptr)
                     {
                         AutoTimer timer(__func__);
+
                         xcb_get_geometry_cookie_t cookie = xcb_get_geometry_unchecked(conn, _window);
                         xcb_get_geometry_reply_t *reply = xcb_get_geometry_reply(conn, cookie, nullptr);
                         if ( !reply )
@@ -5851,18 +5498,14 @@ class window
                             loutEWin << "reply == nullptr" << '\n';
                             return;
                         }
+
                         if (__x      != nullptr) *__x      = reply->x;
                         if (__y      != nullptr) *__y      = reply->y;
                         if (__width  != nullptr) *__width  = reply->width;
                         if (__height != nullptr) *__height = reply->height;
+
                         free(reply);
                     }
-
-                void configure(uint16_t __mask, const void *__value_list)
-                {
-                    xcb_configure_window(conn, _window, __mask, __value_list);
-                    xcb_flush(conn);
-                } 
                 
                 void x(uint32_t x)
                 {
@@ -6005,15 +5648,15 @@ class window
                 _font_gc_good = false;
             }
             
-            void set_backround_color_8_bit(const uint8_t &red_value, const uint8_t &green_value, const uint8_t &blue_value)
+            /* void set_backround_color_8_bit(const uint8_t &red_value, const uint8_t &green_value, const uint8_t &blue_value)
             {
                 change_back_pixel(get_color(red_value, green_value, blue_value));
-            }
+            } */
             
-            void set_backround_color_16_bit(const uint16_t & red_value, const uint16_t & green_value, const uint16_t & blue_value)
+            /* void set_backround_color_16_bit(const uint16_t & red_value, const uint16_t & green_value, const uint16_t & blue_value)
             {
                 change_back_pixel(get_color(red_value, green_value, blue_value));
-            }
+            } */
             
             void set_backround_png(const char *imagePath)
             {
@@ -6120,114 +5763,12 @@ class window
                 clear();
             }
             
-            /* void
-            set_backround_png(const string &__imagePath)
-            {
-                set_backround_png(__imagePath.c_str());
-                // Imlib_Image image = imlib_load_image(__imagePath.c_str());
-                // if (!image)
-                // {
-                //     loutE << "Failed to load image: " << __imagePath << endl;
-                //     return;
-                // }
-
-                // imlib_context_set_image(image);
-                // int originalWidth = imlib_image_get_width();
-                // int originalHeight = imlib_image_get_height();
-
-                // // Calculate new size maintaining aspect ratio
-                // double aspectRatio = (double)originalWidth / originalHeight;
-                // int newHeight = _height;
-                // int newWidth = (int)(newHeight * aspectRatio);
-
-                // if (newWidth > _width)
-                // {
-                //     newWidth = _width;
-                //     newHeight = (int)(newWidth / aspectRatio);
-                // }
-
-                // Imlib_Image scaledImage = imlib_create_cropped_scaled_image(
-                //     0, 
-                //     0, 
-                //     originalWidth, 
-                //     originalHeight, 
-                //     newWidth, 
-                //     newHeight
-                // );
-                // imlib_free_image(); // Free original image
-                // imlib_context_set_image(scaledImage);
-                // DATA32 *data = imlib_image_get_data(); // Get the scaled image data
-                
-                // // Create an XCB image from the scaled data
-                // xcb_image_t *xcb_image = xcb_image_create_native( 
-                //     conn, 
-                //     newWidth, 
-                //     newHeight,
-                //     XCB_IMAGE_FORMAT_Z_PIXMAP, 
-                //     screen->root_depth, 
-                //     NULL, 
-                //     ~0, (uint8_t*)data
-                // );
-
-                // create_pixmap();
-                // create_graphics_exposure_gc();
-                // xcb_rectangle_t rect = {0, 0, _width, _height};
-                // xcb_poly_fill_rectangle(
-                //     conn, 
-                //     pixmap, 
-                //     _gc, 
-                //     1, 
-                //     &rect
-                // );
-
-                // // Calculate position to center the image
-                // int x(0), y(0);
-                // if (newWidth != _width)
-                // {
-                //     x = (_width - newWidth) / 2;
-                // }
-                // if (newHeight != _height)
-                // {
-                //     y = (_height - newHeight) / 2;
-                // }
-                
-                // xcb_image_put( // Put the scaled image onto the pixmap at the calculated position
-                //     conn, 
-                //     pixmap, 
-                //     _gc,
-                //     xcb_image, 
-                //     x,
-                //     y, 
-                //     0
-                // );
-
-                // xcb_change_window_attributes( // Set the pixmap as the background of the window
-                //     conn,
-                //     _window,
-                //     XCB_CW_BACK_PIXMAP,
-                //     &pixmap
-                // );
-
-                // // Cleanup
-                // xcb_free_gc(conn, _gc); // Free the GC
-                // xcb_image_destroy(xcb_image);
-                // imlib_free_image(); // Free scaled image
-
-                // clear_window();
-            } */
-            
-            void make_then_set_png(const char * file_name, const std::vector<std::vector<bool>> &bitmap)
+            void make_then_set_png(const char * file_name, const vector<vector<bool>> &bitmap)
             {
                 create_png_from_vector_bitmap(file_name, bitmap);
                 set_backround_png(file_name);
             }
-            
-            void make_then_set_png(const string &__file_name, const std::vector<std::vector<bool>> &bitmap)
-            {
-                create_png_from_vector_bitmap(__file_name.c_str(), bitmap);
-                set_backround_png(__file_name.c_str());
-            }
-            
+
             void make_then_set_png(const string &__file_name, bool bitmap[20][20])
             {
                 create_png_from_vector_bitmap(__file_name.c_str(), bitmap);
@@ -6651,49 +6192,29 @@ class window
                 void focus_input()
                 {
                     AutoTimer timer("window::focus_input");
-                    
-                    xcb_set_input_focus(
-                        conn,
-                        XCB_INPUT_FOCUS_POINTER_ROOT,
-                        _window,
-                        XCB_CURRENT_TIME
-                    );
-                    xcb_flush(conn);
+                    XCB::set_focus_input(_window);
                 }
 
             void make_window()
             {
                 AutoTimer t("window::make_window");
 
-                if ((_window = xcb_generate_id( conn )) == U32_MAX)
+                if ((_window = XCB::gen_Xid()) == U32_MAX)
                 {
                     loutEWin << "Could not generate id for window" << '\n';
                     _bit_state &= ~(1 << Xid_gen_success);
                     return;
                 }
 
-                xcb_create_window
+                XCB::create_window
                 (
-                    conn,
-                    /* _depth, */ 0L,
                     _window,
                     _parent,
                     _x,
                     _y,
                     _width,
-                    _height,
-                    0,
-                    XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                    screen->root_visual,
-                    0,
-                    nullptr
-                    /* _border_width,
-                    __class,
-                    _visual,
-                    _value_mask,
-                    _value_list */
+                    _height
                 );
-                xcb_flush(conn);
 
                 /** NOTE: Setting @p Xid_gen_success bit of @class member variable @p '_bit_state' */
                 _bit_state |= (1 << Xid_gen_success);
@@ -6701,17 +6222,7 @@ class window
 
             void clear_window(uint32_t __window)
             {
-                xcb_clear_area
-                (
-                    conn, 
-                    0,
-                    __window,
-                    0,
-                    0,
-                    20,
-                    20
-                );
-                xcb_flush(conn);
+                XCB::clear_area(__window, 20, 20);
             }
 
             void change_attributes(uint32_t __mask, const void *__data)
@@ -6731,7 +6242,8 @@ class window
                     AutoTimer t(__func__);
                     
                     _gc = xcb_generate_id(conn);
-                    xcb_create_gc(
+                    xcb_create_gc
+                    (
                         conn,
                         _gc,
                         _window,
@@ -6746,24 +6258,24 @@ class window
                     xcb_flush(conn);
                 }
 
-                void create_font_gc(int text_color, int backround_color, xcb_font_t font)
+                void create_font_gc(int __text_color, int __backround_color, xcb_font_t __font)
                 {
                     AutoTimer t(__func__);
 
-                    font_gc = xcb_generate_id(conn);
-                    xcb_create_gc(
-                        conn, 
-                        font_gc, 
-                        _window, 
+                    font_gc = XCB::gen_Xid();
+                    XCB::create_gc
+                    (
+                        _window,
+                        font_gc,
                         GC_FONT_MASK,
                         (const uint32_t[3])
                         {
-                            Color->get(text_color),
-                            Color->get(backround_color),
+                            Color->get(__text_color),
+                            Color->get(__backround_color),
                             font
                         }
                     );
-                    xcb_flush(conn);
+                    XCB::flush();
 
                     _font_gc_good = true;
                 }
@@ -6774,14 +6286,14 @@ class window
                     AutoTimer t(__func__);
 
                     pixmap = xcb_generate_id(conn);
-                    xcb_create_pixmap(
+                    xcb_create_pixmap
+                    (
                         conn,
                         screen->root_depth,
                         pixmap,
                         _window,
                         _width,
                         _height
-
                     );
                     xcb_flush(conn);
                 }
@@ -6909,289 +6421,40 @@ class window
             void get_font(const char *font_name)
             {
                 AutoTimer timer(__func__);
-
-                font = xcb_generate_id(conn);
-                xcb_open_font(
-                    conn,
-                    font,
-                    slen(font_name),
-                    font_name
-                );
-                xcb_flush(conn);
+                font = XCB::open_and_get_font_id(font_name);
             }
         
         /* Background */
-            void
-            change_back_pixel(uint32_t pixel)
+            void change_back_pixel(uint32_t __pixel)
             {
                 AutoTimer timer(__func__);
+                XCB::change_back_pixel(_window, __pixel);
+            }
 
-                xcb_change_window_attributes(
-                    conn,
-                    _window,
-                    XCB_CW_BACK_PIXEL,
-                    (const uint32_t[1])
-                    {
-                        pixel
-                    }
-                );
-                xcb_flush(conn);
-            }
-            
-            void
-            change_back_pixel(uint32_t pixel, uint32_t __window)
-            {
-                xcb_change_window_attributes(
-                    conn,
-                    __window,
-                    XCB_CW_BACK_PIXEL,
-                    (const uint32_t[1])
-                    {
-                        pixel
-                    }
-                );
-                xcb_flush(conn);
-            }
-            
-            uint32_t
-            get_color(int __color)
-            {
-                AutoTimer timer(__func__);
-
-                uint32_t pi          = 0;
-                xcb_colormap_t cmap  = screen->default_colormap;
-                rgb_color_code ccode = rgb_code(__color);
-                xcb_alloc_color_reply_t *r = xcb_alloc_color_reply(
-                    conn,
-                    xcb_alloc_color(
-                        conn,
-                        cmap,
-                        _scale::from_8_to_16_bit(ccode.r), 
-                        _scale::from_8_to_16_bit(ccode.g),
-                        _scale::from_8_to_16_bit(ccode.b)
-                    ),
-                    NULL
-                );
-                pi = r->pixel;
-                free(r);    
-                return pi;
-            }
-            
-            uint32_t
-            get_color(const uint16_t &red_value, const uint16_t &green_value, const uint16_t &blue_value)
-            {
-                uint32_t                pi = 0;
-                xcb_colormap_t        cmap = screen->default_colormap;
-                xcb_alloc_color_reply_t *r = xcb_alloc_color_reply(
-                    conn,
-                    xcb_alloc_color(
-                        conn,
-                        cmap,
-                        red_value,
-                        green_value,
-                        blue_value
-                    ),
-                    nullptr
-                );
-                pi = r->pixel;
-                free(r);
-                return pi;
-            }
-            
-            uint32_t
-            get_color(const uint8_t & red_value, const uint8_t & green_value, const uint8_t & blue_value)
-            {
-                uint32_t                pi = 0;
-                xcb_colormap_t        cmap = screen->default_colormap;
-                xcb_alloc_color_reply_t *r = xcb_alloc_color_reply(
-                    conn,
-                    xcb_alloc_color(
-                        conn,
-                        cmap,
-                        _scale::from_8_to_16_bit(red_value), 
-                        _scale::from_8_to_16_bit(green_value),
-                        _scale::from_8_to_16_bit(blue_value)
-                    ),
-                    NULL
-                );
-                pi = r->pixel;
-                free(r);
-                return pi;
-            }
-            
-            rgb_color_code
-            rgb_code(int __color)
-            {
-                AutoTimer timer(__func__);
-
-                rgb_color_code color;
-                uint8_t r, g, b;
-                
-                switch (__color)
-                {
-                    case WHITE:
-                    {
-                        r = 255; g = 255; b = 255;
-                        break;
-                    }
-                    case BLACK:
-                    {
-                        r = 0; g = 0; b = 0;
-                        break;
-                    }
-                    case RED:
-                    {
-                        r = 255; g = 0; b = 0;
-                        break;
-                    }
-                    case GREEN:
-                    {
-                        r = 0; g = 255; b = 0;
-                        break;
-                    }
-                    case BLUE:
-                    {
-                        r = 0; g = 0; b = 255;
-                        break;
-                    }
-                    case BLUE_2:
-                    {
-                        r = 0; g = 0; b = 230;
-                        break;
-                    }
-                    case BLUE_3:
-                    {
-                        r = 0; g = 0; b = 204;
-                        break;
-                    }
-                    case BLUE_4:
-                    {
-                        r = 0; g = 0; b = 178;
-                        break;
-                    }
-                    case BLUE_5:
-                    {
-                        r = 0; g = 0; b = 153;
-                        break;
-                    }
-                    case BLUE_6:
-                    {
-                        r = 0; g = 0; b = 128;
-                        break;
-                    }
-                    case BLUE_7:
-                    {
-                        r = 0; g = 0; b = 102;
-                        break;
-                    }
-                    case BLUE_8:
-                    {
-                        r = 0; g = 0; b = 76;
-                        break;
-                    }
-                    case BLUE_9:
-                    {
-                        r = 0; g = 0; b = 51;
-                        break;
-                    }
-                    case BLUE_10:
-                    {
-                        r = 0; g = 0; b = 26;
-                        break;
-                    }
-                    case YELLOW:
-                    {
-                        r = 255; g = 255; b = 0;
-                        break;
-                    }
-                    case CYAN:
-                    {
-                        r = 0; g = 255; b = 255;
-                        break;    
-                    }
-                    case MAGENTA:
-                    {
-                        r = 255; g = 0; b = 255;
-                        break;    
-                    }
-                    case GREY:
-                    {
-                        r = 128; g = 128; b = 128;
-                        break;
-                    }
-                    case LIGHT_GREY:
-                    {
-                        r = 192; g = 192; b = 192;
-                        break;
-                    }
-                    case DARK_GREY:
-                    {
-                        r = 64; g = 64; b = 64;
-                        break;
-                    }
-                    case DARK_GREY_2: {
-                        r = 70; g = 70; b = 70;
-                        break;
-                    }
-                    case DARK_GREY_3:
-                    {
-                        r = 76; g = 76; b = 76;
-                        break;
-                    }
-                    case DARK_GREY_4:
-                    {
-                        r = 82; g = 82; b = 82;
-                        break;
-                    }
-                    case ORANGE:
-                    {
-                        r = 255; g = 165; b = 0;
-                        break;
-                    }
-                    case PURPLE:
-                    {
-                        r = 128; g = 0; b = 128;
-                        break;
-                    }
-                    case BROWN:
-                    {
-                        r = 165; g = 42; b = 42;
-                        break;
-                    }
-                    case PINK:
-                    {
-                        r = 255; g = 192; b = 203;
-                        break;
-                    }
-                    default:
-                    {
-                        r = 0; g = 0; b = 0; 
-                        break;
-                    }
-
-                }
-                color.r = r;
-                color.g = g;
-                color.b = b;
-                return color;
-            }
-        
         /* Borders    */
             void create_border_window(BORDER __border, int __color, uint32_t __x, uint32_t __y, uint32_t __width, uint32_t __height)
             {
                 AutoTimer timer(__func__);
 
                 uint32_t window;
-                if ((window = xcb->gen_Xid()) == U32_MAX)
+                if ((window = XCB::gen_Xid()) == U32_MAX)
                 {
                     loutEWin << "Failed to create border window: " << WINDOW_ID_BY_INPUT(window) << '\n';
                     return;
                 }
-                xcb->create_w(_window, window, __x, __y, __width, __height);
-
-                change_back_pixel(Color->get(__color), window);
-                xcb_map_window(conn, window);
-                xcb_flush(conn);
+                
+                XCB::create_window
+                (
+                    window,
+                    _window,
+                    __x,
+                    __y,
+                    __width,
+                    __height
+                );
+                XCB::change_back_pixel(window, Color->get(__color));
+                XCB::map_window(window);
+                XCB::flush();
 
                 if (__border == UP   ) _border[0] = window;
                 if (__border == DOWN ) _border[1] = window;
@@ -7204,16 +6467,18 @@ class window
             #define CREATE_LEFT_BORDER(__size, __color)  create_border_window(LEFT,  __color, 0, 0, __size, _height)
             #define CREATE_RIGHT_BORDER(__size, __color) create_border_window(RIGHT, __color, (_width - __size), 0, __size, _height)
             
-            #define Create_Border(__flag, __color, ...)  do { \
+            #define Create_Border(__flag, __color, ...) \
+            do { \
                 unsigned int __bits[] = { __VA_ARGS__ }; \
-                create_border_window( \
+                create_border_window \
+                ( \
                     __flag, \
                     __color, \
                     __bits[0], \
                     __bits[1], \
                     __bits[2], \
-                    __bits[3]); \
-                \
+                    __bits[3] \
+                ); \
             } while(0)
             
             void make_border_window(int __border, uint32_t __size, int __color)
@@ -7359,7 +6624,8 @@ class client
 {
     public:
     /* Sub Classes */
-        class client_border_decor {
+        class client_border_decor
+        {
             /* Defines */
                 #define left 0
                 #define right 1
@@ -7390,22 +6656,24 @@ class client
             //     }
             // }
 
-            window &operator[](size_t index) {
+            window &operator[](size_t index)
+            {
                 return border[index];
-
             }
 
             // client_border_decor() { create_arr(); }
             // DynamicArray<window> border;
             FixedArray<window, 8> border;
-
         };
-        struct __atoms__ {
+
+        struct __atoms__
+        {
             bool is_modal = false;
             bool has_modal = false;
-
         };
-        struct __modal_data__ {
+
+        struct __modal_data__
+        {
             uint32_t transient_for = 0;
             uint32_t modal_window = 0;
         };
@@ -7769,9 +7037,8 @@ class client
                 AutoTimer t("client::_y");
 
                 const uint32_t newY = __y;
-                xcb_configure_window_checked
+                XCB::configure_window_checked
                 (
-                    conn,
                     frame,
                     XCB_CONFIG_WINDOW_Y,
                     (const uint32_t[1])
@@ -7779,7 +7046,7 @@ class client
                         newY
                     }
                 );
-                xcb_flush(conn);
+                XCB::flush();
                 
                 frame.update
                 (
@@ -8301,26 +7568,22 @@ class client
             }
         
         /* Size_pos  */
-            void
-            save_ogsize()
+            void save_ogsize()
             {
                 ogsize.save(x, y, width, height);
             }
             
-            void
-            save_tile_ogsize()
+            void save_tile_ogsize()
             {
                 tile_ogsize.save(x, y, width, height);
             }
             
-            void
-            save_max_ewmh_ogsize()
+            void save_max_ewmh_ogsize()
             {
                 max_ewmh_ogsize.save(x, y, width, height);
             }
             
-            void
-            save_max_button_ogsize()
+            void save_max_button_ogsize()
             {
                 max_button_ogsize.save(x, y, width, height);
             }
@@ -8374,20 +7637,19 @@ class client
             }
 
         /* Get       */
-            void
-            get_window_parameters()
+            void get_window_parameters()
             {
                 AutoTimer t("client:" + string(__func__));
 
-                xcb_get_geometry_cookie_t cookie = xcb_get_geometry( conn, win );
-                xcb_get_geometry_reply_t *reply = xcb_get_geometry_reply( conn, cookie, nullptr );
-                if ( reply == nullptr )
+                xcb_get_geometry_cookie_t cookie = xcb_get_geometry(conn, win);
+                xcb_get_geometry_reply_t *reply = xcb_get_geometry_reply(conn, cookie, nullptr);
+                if (reply == nullptr)
                 {
                     loutE << "Unable to get window geometry" << '\n';
                     return;
                 }
 
-                if ( reply->x >= screen->width_in_pixels )
+                if (reply->x >= screen->width_in_pixels)
                 {
                     loutE << "geo reply->x" << reply->x << '\n';
                     x = ( screen->width_in_pixels / 4 );
@@ -8397,7 +7659,7 @@ class client
                     x = reply->x;
                 }
                 
-                if ( reply->y >= screen->height_in_pixels )
+                if (reply->y >= screen->height_in_pixels)
                 {
                     loutE << "geo reply->y" << reply->y << '\n';
                     y = ( screen->height_in_pixels / 4 );
@@ -8407,7 +7669,7 @@ class client
                     y = reply->y;
                 }
                 
-                if ( reply->width >= screen->width_in_pixels )
+                if (reply->width >= screen->width_in_pixels)
                 {
                     loutE << Var_( reply->width ) << '\n';
                     width = ( screen->width_in_pixels / 2 );
@@ -8417,7 +7679,7 @@ class client
                     width = reply->width;
                 }
 
-                if ( reply->height >= screen->height_in_pixels )
+                if (reply->height >= screen->height_in_pixels)
                 {
                     loutE << Var_( reply->height );
                     height = ( screen->height_in_pixels / 2 );
@@ -8427,51 +7689,33 @@ class client
                     height = reply->height;
                 }
 
-                // loutI << "reply->x"      << reply->x      << '\n';
-                // loutI << "reply->y"      << reply->y      << '\n';
-                // loutI << "reply->width"  << reply->width  << '\n';
-                // loutI << "reply->height" << reply->height << '\n';
-
-                free(reply);
-
-            }
-
-            void
-            get_window_parameters_and_log()
-            {
-                xcb_get_geometry_cookie_t cookie = xcb_get_geometry(conn, win);
-                xcb_get_geometry_reply_t *reply = xcb_get_geometry_reply(conn, cookie, nullptr);
-                if (reply == nullptr) {
-                    loutE << "Unable to get window geometry" << '\n';
-                    return;
-                }
-
-                loutI << "reply->x"      << reply->x      << '\n';
-                loutI << "reply->y"      << reply->y      << '\n';
-                loutI << "reply->width"  << reply->width  << '\n';
-                loutI << "reply->height" << reply->height << '\n';
-
                 free(reply);
             }
 
         /* Unset     */
-            void
-            unset_EWMH_fullscreen_state()
+            void unset_EWMH_fullscreen_state()
             {
                 win.unset_EWMH_fullscreen_state();
             }
 
         /* Bit State */
-            bool check_bit( uint8_t __pos ) {
-                return ((this->bit_state & ( 1ULL << __pos )) != 0);
+            bool check_bit( uint8_t __pos )
+            {
+                return ((this->bit_state & (1ULL << __pos)) != 0);
             }
-            void set_bit( uint8_t __pos ) {
+
+            void set_bit( uint8_t __pos )
+            {
                 bit_state |= (1ULL << __pos);
             }
-            void clear_bit( uint8_t __pos ) {
+            
+            void clear_bit( uint8_t __pos )
+            {
                 bit_state &= ~(1ULL << __pos);
             }
-            void flip_bit( uint8_t __pos ) {
+            
+            void flip_bit( uint8_t __pos )
+            {
                 bit_state ^= ( 1ULL << __pos );
             }
     
@@ -8540,18 +7784,16 @@ class client
             draw_title(TITLE_REQ_DRAW);
 
             ConnSig(titlebar, XCB_EXPOSE,
-            {
                 titlebar.clear();
                 titlebar.draw_acc_16(win.get_net_wm_name().c_str());
                 xcb_flush(conn);
-            });
+            );
 
             ConnSig(win, XCB_PROPERTY_NOTIFY,
-            {
                 titlebar.clear();
                 titlebar.draw_acc_16(win.get_net_wm_name_by_req().c_str());
                 xcb_flush(conn);
-            });
+            );
 
             titlebar.send_event(XCB_EVENT_MASK_EXPOSURE);
         }
@@ -8560,7 +7802,8 @@ class client
         {
             AutoTimer t(__func__);
 
-            close_button.create_window(
+            close_button.create_window
+            (
                 frame,
                 (width - BUTTON_SIZE - BORDER_SIZE),
                 BORDER_SIZE,
@@ -8572,13 +7815,12 @@ class client
                 (int[]){ALL, 1, BLACK},
                 CURSOR::hand2
             );
-            xcb_flush(conn);
+            XCB::flush();
             CWC(close_button);
             close_button.make_then_set_png(USER_PATH_PREFIX("/close.png"), CLOSE_BUTTON_BITMAP);
             close_button.grab_button({{L_MOUSE_BUTTON, NULL}});
 
-            CONN(L_MOUSE_BUTTON_EVENT,
-            {
+            ConnSig(close_button, L_MOUSE_BUTTON_EVENT,
                 if (!win.is_mapped())
                 {
                     kill();
@@ -8586,22 +7828,17 @@ class client
                 }
                 win.kill_test();
                 xcb_flush(conn);
-            },
-            close_button);
+            );
 
-            CONN(XCB_ENTER_NOTIFY,
-            {
+            ConnSig(close_button, XCB_ENTER_NOTIFY,
                 close_button.change_border_color(WHITE);
-                xcb_flush(conn);   
-            },
-            close_button);
+                XCB::flush();   
+            );
 
-            CONN(XCB_LEAVE_NOTIFY,
-            {
+            ConnSig(close_button, XCB_LEAVE_NOTIFY,
                 close_button.change_border_color(BLACK);
-                xcb_flush(conn);   
-            },
-            close_button);
+                XCB::flush();
+            );
         }
         
         void make_max_button()
@@ -8620,7 +7857,7 @@ class client
                 (int[3]) {ALL, 1, BLACK},
                 CURSOR::hand2
             );
-            xcb_flush(conn);
+            XCB::flush();
             CWC(max_button);
             max_button.grab_button({{L_MOUSE_BUTTON, NULL}});
 
@@ -8652,26 +7889,20 @@ class client
 
             max_button.set_backround_png(string(USER_PATH_PREFIX("/max.png")).c_str());
 
-            CONN(L_MOUSE_BUTTON_EVENT,
-            {
+            ConnSig(max_button, L_MOUSE_BUTTON_EVENT,
                 C_EMIT(this, BUTTON_MAXWIN_PRESS);
-                xcb_flush(conn);
-            },
-            max_button);
+                XCB::flush();
+            );
 
-            CONN(XCB_ENTER_NOTIFY,
-            {
+            ConnSig(max_button, XCB_ENTER_NOTIFY,
                 max_button.change_border_color(WHITE);
-                xcb_flush(conn);  
-            },
-            max_button);
+                XCB::flush();
+            );
 
-            CONN(XCB_LEAVE_NOTIFY,
-            {
+            ConnSig(max_button, XCB_LEAVE_NOTIFY,
                 max_button.change_border_color(BLACK);
-                xcb_flush(conn);  
-            },
-            max_button);
+                XCB::flush();
+            );
         }
         
         void make_min_button()
@@ -8692,7 +7923,7 @@ class client
                 CURSOR::hand2
 
             );
-            xcb_flush(conn);
+            XCB::flush();
 
             CWC( min_button );
             min_button.grab_button({{L_MOUSE_BUTTON, NULL}});
@@ -8706,15 +7937,13 @@ class client
             min_button.set_backround_png(s.c_str());
 
             ConnSig(min_button, XCB_ENTER_NOTIFY,
-
                 min_button.change_border_color(WHITE);
-                xcb_flush(conn);  
+                XCB::flush();
             );
 
             ConnSig(min_button, XCB_LEAVE_NOTIFY,
-
                 min_button.change_border_color(BLACK);
-                xcb_flush(conn);  
+                XCB::flush();
             );
         }
         
@@ -8735,7 +7964,7 @@ class client
                 nullptr,
                 CURSOR::left_side
             );
-            xcb_flush(conn);
+            XCB::flush();
 
             CWC(border[left]);
             border[left].grab_button({{L_MOUSE_BUTTON, NULL}});
@@ -8753,7 +7982,7 @@ class client
                 nullptr,
                 CURSOR::right_side
             );
-            xcb_flush(conn);
+            XCB::flush();
 
             CWC(border[right]);
             border[right].grab_button({{L_MOUSE_BUTTON, NULL}});
@@ -8771,7 +8000,7 @@ class client
                 nullptr,
                 CURSOR::top_side
             );
-            xcb_flush(conn);
+            XCB::flush();
 
             CWC(border[top]);
             border[top].grab_button({{L_MOUSE_BUTTON, NULL}});
@@ -8789,7 +8018,7 @@ class client
                 nullptr,
                 CURSOR::bottom_side
             );
-            xcb_flush(conn);
+            XCB::flush();
             
             CWC(border[bottom]);
             border[bottom].grab_button({{L_MOUSE_BUTTON, NULL}});
@@ -8806,9 +8035,8 @@ class client
                 MAP,
                 nullptr,
                 CURSOR::top_left_corner
-
             );
-            xcb_flush(conn);
+            XCB::flush();
 
             CWC(border[top_left]);
             border[top_left].grab_button({{L_MOUSE_BUTTON, NULL}});
@@ -8825,9 +8053,8 @@ class client
                 MAP,
                 nullptr,
                 CURSOR::top_right_corner
-
             );
-            xcb_flush(conn);
+            XCB::flush();
             
             CWC(border[top_right]);
             border[top_right].grab_button({{L_MOUSE_BUTTON, NULL}});
@@ -8845,7 +8072,7 @@ class client
                 nullptr,
                 CURSOR::bottom_left_corner
             );
-            xcb_flush(conn);
+            XCB::flush();
 
             CWC(border[bottom_left]);
             border[bottom_left].grab_button({{L_MOUSE_BUTTON, NULL}});
@@ -8863,19 +8090,20 @@ class client
                 nullptr,
                 CURSOR::bottom_right_corner
             );
-            xcb_flush(conn);
+            XCB::flush();
             
             CWC(border[bottom_right]);
             border[bottom_right].grab_button({{L_MOUSE_BUTTON, NULL}});
             
-            xcb_flush(conn);
+            XCB::flush();
         }
         
         void set_icon_png()
         {
             AutoTimer timer(__func__);
 
-            icon.create_window(
+            icon.create_window
+            (
                 frame,
                 BORDER_SIZE,
                 BORDER_SIZE,
@@ -8885,15 +8113,16 @@ class client
                 NONE,
                 MAP
             );
-            xcb_flush(conn);
-            CWC(icon);
+            XCB::flush();
 
+            CWC(icon);
             win.make_png_from_icon();
             icon.set_backround_png(PNG_HASH(win.get_icccm_class()).c_str());
         }
     
     /* Variables   */
-        bool CLOSE_BUTTON_BITMAP[20][20] {
+        bool CLOSE_BUTTON_BITMAP[20][20]
+        {
             {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
             {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
             {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -8915,9 +8144,10 @@ class client
             {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
             {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
         };
-
 };
-class desktop {
+
+class desktop
+{
     public:
     // Variabels
         vector<client *>(current_clients);
@@ -8929,7 +8159,9 @@ class desktop {
         uint16_t height;
 
 };
-class Key_Codes {
+
+class Key_Codes
+{
     public:
     // constructor and destructor.
         Key_Codes() 
@@ -9046,7 +8278,8 @@ class Entry
         {
             AutoTimer t("Entry:make_window");
 
-            window.create_window(
+            window.create_window
+            (
                 __parent,
                 __x,
                 __y,
@@ -9056,14 +8289,32 @@ class Entry
                 BUTTON_EVENT_MASK,
                 MAP
             );
-            ConnSig(window , XCB_EXPOSE, window.draw_acc(name.c_str()););
-            CONN(L_MOUSE_BUTTON_EVENT, if ( __window == this->window && this->action != nullptr ) this->action(); WS_emit(window.parent(), HIDE_CONTEXT_MENU);, this->window);
-            CONN(R_MOUSE_BUTTON_EVENT, if (__window == this->window) Emit(window.parent(), HIDE_CONTEXT_MENU );, this->window);
-            
-            ConnSig(window, XCB_ENTER_NOTIFY, window.change_backround_color(WHITE););
-            ConnSig(window, XCB_LEAVE_NOTIFY, window.change_backround_color(BLACK););
 
-            window.grab_button({{L_MOUSE_BUTTON, XCB_BUTTON_MASK_ANY}});
+            ConnSig(window, XCB_EXPOSE,
+                window.draw_acc(name.c_str());
+            );
+
+            ConnSig(window, L_MOUSE_BUTTON_EVENT,
+                Emit(window.parent(), HIDE_CONTEXT_MENU);
+                if (action != nullptr) action();
+            );
+
+            ConnSig(window, R_MOUSE_BUTTON_EVENT,
+                Emit(window.parent(), HIDE_CONTEXT_MENU);
+            );
+            
+            ConnSig(window, XCB_ENTER_NOTIFY,
+                window.change_backround_color(WHITE);
+            );
+
+            ConnSig(window, XCB_LEAVE_NOTIFY,
+                window.change_backround_color(BLACK);
+            );
+
+            window.grab_button
+            ({
+                {L_MOUSE_BUTTON, XCB_BUTTON_MASK_ANY}
+            });
         }
 };
 
@@ -9130,13 +8381,15 @@ class context_menu
                     _width,
                     _height
                 );
-                signal_manager->_window_signals.emit(entries[i].window, EXPOSE);
+                Emit(entries[i].window, XCB_EXPOSE);
             }
         }
     
     public:
+    /* Variabels */
         window context_window;
     
+    /* Methods   */
         void show()
         {
             _x = m_pointer->x();
@@ -9164,20 +8417,24 @@ class context_menu
             context_window.x_y_width_height((_x - BORDER_SIZE), (_y - BORDER_SIZE), _width, new_height);
             context_window.map();
             context_window.focus();
-            CONN(HIDE_CONTEXT_MENU, this->hide__();, this->context_window);
+            ConnSig(context_window, HIDE_CONTEXT_MENU,
+                hide__();
+            );
             make_entries__();
         }
         
-        void
-        add_entry(string name, function<void()> action)
+        void add_entry(string name, function<void()> action)
         {
             Entry entry;
             entry.name = name;
             entry.action = action;
             entries.push_back(entry);
         }
-    
-    context_menu() { create_dialog_win__(); }
+
+    context_menu()
+    {
+        create_dialog_win__();
+    }
 };
 
 /**
@@ -9220,12 +8477,12 @@ class Window_Manager
             {
                 AutoTimer timer("Class Window_Manager: " + string(__func__));
 
-                _conn(nullptr, nullptr);
-                _setup();
-                _iter();
-                _screen();
-                xcb = connect_to_server( conn, screen );
-                if (( xcb->check_conn() & ( 1ULL << X_CONN_ERROR )) != 0 )
+                conn__(nullptr, nullptr);
+                setup__();
+                iter__();
+                screen__();
+                xcb = connect_to_server(conn, screen);
+                if ((xcb->check_conn() & (1ULL << X_CONN_ERROR)) != 0)
                 {
                     loutE << "x not connected" << loutEND;
                 }
@@ -9272,9 +8529,9 @@ class Window_Manager
                 root.height( screen->height_in_pixels );
                 
 
-                setSubstructureRedirectMask();
-                configure_root();
-                _ewmh();
+                setSubstructureRedirectMask__();
+                configure_root__();
+                ewmh__();
                 
                 key_codes.init();
                 event_handler = new __event_handler__();
@@ -9294,18 +8551,18 @@ class Window_Manager
                 context_menu->add_entry("falkon",               [this]() { launcher.launch_child_process("falkon"); });
                 context_menu->add_entry("quit",                 [this]() { quit(0); });
 
-                setup_events(); 
+                setup_events__();
             }
 
             void quit(int __status)
             {
                 pid_manager->kill_all_pids();
-                xcb_flush( conn );
-                delete_client_vec( client_list );
-                delete_desktop_vec( desktop_list );
-                xcb_ewmh_connection_wipe( ewmh );
-                xcb_disconnect( conn );
-                exit( __status );
+                xcb_flush(conn);
+                delete_client_vec__(client_list);
+                delete_desktop_vec__(desktop_list);
+                xcb_ewmh_connection_wipe(ewmh);
+                xcb_disconnect(conn);
+                exit(__status);
             }
             
             void get_atom(char *name, xcb_atom_t *atom)
@@ -9325,7 +8582,8 @@ class Window_Manager
             {
                 AutoTimer t(__func__);
 
-                xcb_set_input_focus(
+                xcb_set_input_focus
+                (
                     conn,
                     XCB_NONE,
                     screen->root,
@@ -9400,7 +8658,7 @@ class Window_Manager
                     if (focused_client == nullptr)
                     {
                         if (cur_d->current_clients.size() == 0) return;
-                        for (long i(0); i < cur_d->current_clients.size(); ++i)
+                        for (int i=0; i<cur_d->current_clients.size(); ++i)
                         {
                             if (cur_d->current_clients[i] == nullptr) continue;
                             
@@ -9438,7 +8696,8 @@ class Window_Manager
                 void unfocus()
                 {
                     window(tmp);
-                    tmp.create_default(
+                    tmp.create_window
+                    (
                         screen->root,
                         -20,
                         -20,
@@ -9647,54 +8906,48 @@ class Window_Manager
             {
                 AutoTimer timer(__func__);
 
-                client *c = make_client(__window);
+                client *c = make_client__(__window);
                 if (c == nullptr)
                 {
                     loutE << "could not make client" << loutEND;
                     return;
                 }
 
-                loutI << "pre nums " << Var_(c->x) << ' ' << Var_(c->y) << ' ' << Var_(c->width) << ' ' << Var_(c->height) << '\n';
-
                 int16_t x = 0, y = 0; uint16_t width = 0, height = 0;
                 c->win.geo(&x, &y, &width, &height);
-                loutI << "from req " << Var_(x) << ' ' << Var_(y) << ' ' << Var_(width) << ' ' << Var_(height) << '\n';
                 
-                if ( c->width < width || c->width >= screen->width_in_pixels ) c->width = width;
-                if ( c->height < height || c->height >= screen->height_in_pixels ) c->height = height;
+                if (c->width  < width  || c->width  >= screen->width_in_pixels)  c->width = width;
+                if (c->height < height || c->height >= screen->height_in_pixels) c->height = height;
 
-                c->x = ((screen->width_in_pixels / 2) - (c->width / 2));
+                c->x = ((screen->width_in_pixels  / 2) - (c->width  / 2));
                 c->y = ((screen->height_in_pixels / 2) - (c->height / 2));
 
                 c->win.get_override_redirect();
                 c->win.x_y_width_height(c->x, c->y, c->width, c->height);
-                xcb_flush(conn);
+                XCB::flush();
                 pid_manager->check_pid(c->win.get_pid());
 
                 c->win.map();
-                c->win.grab_button(
-                    {
-                        { L_MOUSE_BUTTON, ALT },
-                        { R_MOUSE_BUTTON, ALT },
-                        { L_MOUSE_BUTTON, NULL }
-                    }
-                );
+                c->win.grab_button
+                ({
+                    {L_MOUSE_BUTTON, ALT},
+                    {R_MOUSE_BUTTON, ALT},
+                    {L_MOUSE_BUTTON, NULL}
+                });
 
                 if (!c->win.check_frameless_window_hint())
                 {
                     c->make_decorations();
                     c->frame.set_event_mask(FRAME_EVENT_MASK);
                     c->win.set_event_mask(CLIENT_EVENT_MASK);
-                    c->update();
-                    c->focus();
-                    focused_client = c;
-                    cur_d->focused_client = c;
-                    /* check_client(c); */
                     c->frame.grab_default_keys();
-                    /* c->add_to_map(); */
                 }
                 c->win.grab_default_keys();
                 xcb_flush(conn);
+                c->update();
+                c->focus();
+                focused_client = c;
+                cur_d->focused_client = c;
             }
 
             client *make_internal_client(window &window)
@@ -9734,13 +8987,16 @@ class Window_Manager
                 {
                     focused_client = nullptr;
                 }
+
                 if (c == cur_d->focused_client)
                 {
                     cur_d->focused_client = nullptr;
                 }
 
-                client_list.erase(
-                    remove(
+                client_list.erase
+                (
+                    remove
+                    (
                         client_list.begin(),
                         client_list.end(),
                         c
@@ -9755,8 +9011,10 @@ class Window_Manager
                         desktop_list[i]->focused_client = nullptr;
                     }
 
-                    desktop_list[i]->current_clients.erase(
-                        remove(
+                    desktop_list[i]->current_clients.erase
+                    (
+                        remove
+                        (
                             desktop_list[i]->current_clients.begin(),
                             desktop_list[i]->current_clients.end(),
                             c
@@ -9772,12 +9030,18 @@ class Window_Manager
             }
 
         /* Desktop      */
-            void create_new_desktop(const uint16_t &n)
+            void create_new_desktop(uint16_t __n)
             {
                 AutoTimer timer(__func__);
+
+                for (int i = 0; i < desktop_list.size(); ++i)
+                {
+                    if (desktop_list[i]->desktop == __n) return;
+                }
+
                 desktop *d = new desktop;
                 
-                d->desktop = n;
+                d->desktop = __n;
                 d->width   = screen->width_in_pixels;
                 d->height  = screen->height_in_pixels;
                 cur_d      = d;
@@ -9786,8 +9050,7 @@ class Window_Manager
             }
 
         /* Experimental */
-            xcb_visualtype_t *
-            find_argb_visual(xcb_connection_t *conn, xcb_screen_t *screen)
+            xcb_visualtype_t *find_argb_visual(xcb_connection_t *conn, xcb_screen_t *screen)
             {
                 xcb_depth_iterator_t depth_iter = xcb_screen_allowed_depths_iterator(screen);
                 for (; depth_iter.rem; xcb_depth_next(&depth_iter))
@@ -9804,8 +9067,7 @@ class Window_Manager
                 return nullptr;
             }
 
-            void
-            synchronize_xcb()
+            void synchronize_xcb()
             {
                 free(xcb_get_input_focus_reply(conn, xcb_get_input_focus(conn), NULL));
             }
@@ -9830,15 +9092,13 @@ class Window_Manager
     private:
     /* Functions   */
         /* Init   */
-            void
-            _conn(const char *displayname, int *screenp)
+            void conn__(const char *displayname, int *screenp)
             {
                 conn = xcb_connect( displayname, screenp );
-                check_conn();
+                check_conn__();
             }
             
-            void
-            _ewmh()
+            void ewmh__()
             {
                 if ( !( ewmh = static_cast<xcb_ewmh_connection_t *>( calloc( 1, sizeof( xcb_ewmh_connection_t )))))
                 {
@@ -9854,26 +9114,22 @@ class Window_Manager
                 }
             }
             
-            void
-            _setup()
+            void setup__()
             {
                 setup = xcb_get_setup(conn);
             }
-            
-            void
-            _iter()
+
+            void iter__()
             {
                 iter = xcb_setup_roots_iterator(setup);
             }
             
-            void
-            _screen()
+            void screen__()
             {
                 screen = iter.data;
             }
             
-            bool
-            setSubstructureRedirectMask()
+            bool setSubstructureRedirectMask__()
             {
                 xcb_void_cookie_t cookie = xcb_change_window_attributes_checked(
                     conn,
@@ -9892,8 +9148,7 @@ class Window_Manager
                 return false;
             }
             
-            void
-            configure_root()
+            void configure_root__()
             {
                 root.set_backround_color( DARK_GREY );
                 root.set_event_mask( ROOT_EVENT_MASK );
@@ -9918,64 +9173,68 @@ class Window_Manager
             }
 
         /* Check  */
-            void check_error(const int &code)
+            void check_error__(const int &code)
             {
-                switch (code) {
-                    case CONN_ERR: {
+                switch (code)
+                {
+                    case CONN_ERR:
+                    {
                         log_error("Connection error.");
                         quit(CONN_ERR);
                         break;
-
                     }
-                    case EXTENTION_NOT_SUPPORTED_ERR: {
+
+                    case EXTENTION_NOT_SUPPORTED_ERR:
+                    {
                         log_error("Extension not supported.");
                         quit(EXTENTION_NOT_SUPPORTED_ERR);
                         break;
-
-                    }                        
-                    case MEMORY_INSUFFICIENT_ERR: {
+                    }
+               
+                    case MEMORY_INSUFFICIENT_ERR:
+                    {
                         log_error("Insufficient memory.");
                         quit(MEMORY_INSUFFICIENT_ERR);
                         break;
-
-                    }                        
-                    case REQUEST_TO_LONG_ERR: {
+                    }
+      
+                    case REQUEST_TO_LONG_ERR:
+                    {
                         log_error("Request to long.");
                         quit(REQUEST_TO_LONG_ERR);
                         break;
-
                     }
-                    case PARSE_ERR: {
+
+                    case PARSE_ERR:
+                    {
                         log_error("Parse error.");
                         quit(PARSE_ERR);
                         break;
-
                     }
-                    case SCREEN_NOT_FOUND_ERR: {
+
+                    case SCREEN_NOT_FOUND_ERR:
+                    {
                         log_error("Screen not found.");
                         quit(SCREEN_NOT_FOUND_ERR);
                         break;
-
                     }
-                    case FD_ERR: {
+
+                    case FD_ERR:
+                    {
                         log_error("File descriptor error.");
                         quit(FD_ERR);
                         break;
-
                     }
-
                 }
-
             }
             
-            void check_conn()
+            void check_conn__()
             {
                 int status = xcb_connection_has_error(conn);
-                check_error(status);
+                check_error__(status);
             }
             
-            int
-            cookie_error(xcb_void_cookie_t cookie , const char *sender_function)
+            int cookie_error__(xcb_void_cookie_t cookie , const char *sender_function)
             {
                 xcb_generic_error_t *err = xcb_request_check(conn, cookie);
                 uint8_t err_code = 0;
@@ -9987,44 +9246,50 @@ class Window_Manager
                 return err_code;
             }
             
-            void check_error(xcb_void_cookie_t cookie , const char *sender_function, const char *err_msg) {
-                xcb_generic_error_t * err = xcb_request_check(conn, cookie);
-                if (err) {
+            void check_error__(xcb_void_cookie_t cookie , const char *sender_function, const char *err_msg)
+            {
+                xcb_generic_error_t *err = xcb_request_check(conn, cookie);
+                if (err)
+                {
                     log_error_code(err_msg, err->error_code);
                     free(err);
-
                 }
-
             }
 
         /* Delete */
-            void delete_client_vec(vector<client *> &vec) {
-                for (client *c : vec) {
+            void delete_client_vec__(vector<client *> &vec)
+            {
+                for (client *c : vec)
+                {
                     send_sigterm_to_client(c);
-                    xcb_flush(conn);
-                    
-                } vec.clear();
+                    xcb_flush(conn);    
+                }
+                vec.clear();
                 vector<client *>().swap(vec);
-            
             }
-            void delete_desktop_vec(vector<desktop *> &vec) {
-                for (desktop *d : vec) {
-                    delete_client_vec(d->current_clients);
+
+            void delete_desktop_vec__(vector<desktop *> &vec)
+            {
+                for (desktop *d : vec)
+                {
+                    delete_client_vec__(d->current_clients);
                     delete d;
-
-                } vec.clear();
+                }
+                vec.clear();
                 vector<desktop *>().swap(vec);
-                
             }
+            
             template <typename Type>
-            static void delete_ptr_vector(vector<Type *>& vec) {
-                for (Type *ptr : vec) {
+            static void delete_ptr_vector__(vector<Type *>& vec)
+            {
+                for (Type *ptr : vec)
+                {
                     delete ptr;
-
-                } vec.clear(); vector<Type *>().swap(vec);
-
+                }
+                vec.clear(); vector<Type *>().swap(vec);
             }
-            void remove_client_from_vector(client * c, vector<client *> &vec)
+            
+            void remove_client_from_vector__(client * c, vector<client *> &vec)
             {
                 if (c == nullptr)
                 {
@@ -10044,8 +9309,7 @@ class Window_Manager
             }
 
         /* Client */
-            client *
-            make_client(uint32_t window)
+            client *make_client__(uint32_t window)
             {
                 client *c = new client;
                 if (c == nullptr)
@@ -10081,7 +9345,7 @@ class Window_Manager
                     c->win.set_EWMH_fullscreen_state();
                 }
 
-                if ( c->win.check_atom(ewmh->_NET_WM_STATE_MODAL))
+                if (c->win.check_atom(ewmh->_NET_WM_STATE_MODAL))
                 {
                     c->atoms.is_modal = true;
                     c->modal_data.transient_for = c->win.get_transient_for_window();
@@ -10092,8 +9356,7 @@ class Window_Manager
                 return c;
             }
 
-            void
-            check_client(client *c)
+            void check_client__(client *c)
             {
                 /* c->win.x(BORDER_SIZE);
                 FLUSH_X();
@@ -10161,11 +9424,11 @@ class Window_Manager
             }
 
         /* Window */
-            void get_window_parameters(const uint32_t &__window, int16_t *__x, int16_t *__y, uint16_t *__width,  uint16_t *__height)
+            void get_window_parameters__(const uint32_t &__window, int16_t *__x, int16_t *__y, uint16_t *__width,  uint16_t *__height)
             {
                 xcb_get_geometry_cookie_t cookie = xcb_get_geometry(conn, __window);
                 xcb_get_geometry_reply_t *reply = xcb_get_geometry_reply(conn, cookie, nullptr);
-                if ( reply == nullptr )
+                if (reply == nullptr)
                 {
                     loutE << "Unable to get window geometry." << loutEND;
                     return;
@@ -10179,28 +9442,16 @@ class Window_Manager
                 free(reply);
             }
 
-        /* Status */
-            void check_volt()
-            {
-                loutE << "running" << loutEND;
-                this_thread::sleep_for(chrono::minutes(1));
-                check_volt();
-            }
-
-
         /* Events */
-            void
-            setup_events()
+            void setup_events__()
             {
                 ConnSig(screen->root, XCB_MAP_REQUEST,
-                
                     client *c = client_from_any_window(&w);
-                    if ( c != nullptr ) return;
+                    if (c != nullptr) return;
                     manage_new_client(w);
                 );
 
                 ConnSig(screen->root, XCB_DESTROY_NOTIFY,
-
                     loutI << "Destroy notify" << loutEND;
                     client *c = client_from_window(&w);
                     if ( c == nullptr ) return;
@@ -10209,7 +9460,6 @@ class Window_Manager
                 );
 
                 ConnSig(screen->root, L_MOUSE_BUTTON_EVENT,
-
                     unfocus();
                     if (context_menu->context_window.is_mapped())
                     {
@@ -10217,7 +9467,9 @@ class Window_Manager
                     }
                 );
                 
-                ConnSig(screen->root, R_MOUSE_BUTTON_EVENT, context_menu->show(););
+                ConnSig(screen->root, R_MOUSE_BUTTON_EVENT,
+                    context_menu->show();
+                );
                 
                 if (BORDER_SIZE == 0)
                 {
@@ -10228,7 +9480,8 @@ class Window_Manager
 };
 static Window_Manager *wm(nullptr);
 
-class __network__ {
+class __network__
+{
     public:
     /* Methods     */
         enum {
@@ -10248,7 +9501,7 @@ class __network__ {
             {
                 CONTINUE_IF(ifa->ifa_addr == nullptr);
                 if (ifa->ifa_addr->sa_family == AF_INET) // check it is IP4
-                { 
+                {
                     // is a valid IP4 Address
                     tmpAddrPtr = &((struct sockaddr_in*)ifa->ifa_addr)->sin_addr;
                     char addressBuffer[INET_ADDRSTRLEN];
@@ -10279,9 +9532,11 @@ class __network__ {
     /* Constructor */
         __network__() {}
 
-}; static __network__ *network(nullptr);
+};
+static __network__ *network(nullptr);
 
-class __wifi__ {
+class __wifi__
+{
     private:
     /* Methods     */
         void scan__(const char* interface)
@@ -10292,8 +9547,7 @@ class __wifi__ {
             int sock;
 
             // Open a socket to the wireless driver
-            sock = iw_sockets_open();
-            if (sock < 0)
+            if ((sock = iw_sockets_open()) < 0)
             {
                 loutE << "could not open socket" << loutEND;
                 return;
@@ -10349,8 +9603,10 @@ class __wifi__ {
 
             for (ifa = ifAddrStruct; ifa != nullptr; ifa = ifa->ifa_next)
             {
-                CONTINUE_IF(!ifa->ifa_addr);
-                if (ifa->ifa_addr->sa_family == AF_INET) // check it is IP4
+                if (!ifa->ifa_addr) continue;
+
+                // check it is IP4
+                if (ifa->ifa_addr->sa_family == AF_INET)
                 { 
                     // is a valid IP4 Address
                     tmpAddrPtr = &((struct sockaddr_in*)ifa->ifa_addr)->sin_addr;
@@ -10363,7 +9619,8 @@ class __wifi__ {
                         loutI << "Interface: " << ifa->ifa_name << " Address: " << addressBuffer << loutEND;
                     }
                 }
-                else if (ifa->ifa_addr->sa_family == AF_INET6) // check it is IP6
+                // check it is IP6
+                else if (ifa->ifa_addr->sa_family == AF_INET6)
                 {
                     // is a valid IP6 Address
                     tmpAddrPtr = &((struct sockaddr_in6*)ifa->ifa_addr)->sin6_addr;
@@ -10371,10 +9628,9 @@ class __wifi__ {
                     inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
                     loutI << "Interface: " << ifa->ifa_name << " Address: " << addressBuffer << loutEND;
                 } 
-                // Here, you could attempt to deduce the interface type (e.g., wlan for WiFi) by name or other means
             }
+            if (ifAddrStruct) freeifaddrs(ifAddrStruct);
 
-            if (ifAddrStruct != nullptr) freeifaddrs(ifAddrStruct);
             return;
         }
 
@@ -10382,15 +9638,20 @@ class __wifi__ {
     /* Methods     */
         void init()
         {
-            event_handler->set_key_press_callback((ALT + SUPER), wm->key_codes.f, [this]()-> void { scan__("wlo1"); });
+            event_handler->set_key_press_callback((ALT + SUPER), wm->key_codes.f, [this]()
+            {
+                scan__("wlo1");
+            });
         }
 
     /* Constructor */
         __wifi__() {}
 
-}; static __wifi__ *wifi(nullptr);
+};
+static __wifi__ *wifi(nullptr);
 
-class __audio__ {
+class __audio__
+{
     private:
     /* Variabels   */
         pa_mainloop* mainloop = nullptr;
@@ -10536,9 +9797,11 @@ class __audio__ {
     /* Constructor */
         __audio__() {}
 
-}; __audio__ audio;
+};
+__audio__ audio;
 
-namespace {
+namespace // '__status_bar__' helpers
+{
     #define BAR_WINDOW_X      0
     #define BAR_WINDOW_Y      0
     #define BAR_WINDOW_WIDTH  screen->width_in_pixels
@@ -10570,9 +9833,11 @@ namespace {
     #define WIFI_INFO_WINDOW_WIDTH  WIFI_DROPDOWN_WIDTH - 40
     #define WIFI_INFO_WINDOW_HEIGHT WIFI_DROPDOWN_HEIGHT - 120
 }
-class __status_bar__ {
+
+class __status_bar__
+{
     private:
-    // Methods.
+    /* Methods */
         void create_windows__()
         {
             _w[_BAR].create_window
@@ -10598,13 +9863,9 @@ class __status_bar__ {
                 XCB_EVENT_MASK_EXPOSURE,
                 MAP
             );
-            ConnSig
-            (
-                _w[_TIME_DATE],
-                XCB_EXPOSE,
-                {
-                    _w[_TIME_DATE].draw_acc(get_time_and_date__().c_str());
-                }
+
+            ConnSig(_w[_TIME_DATE], XCB_EXPOSE,
+                _w[_TIME_DATE].draw_acc(get_time_and_date().c_str());
             );
 
             _w[_WIFI].create_window
@@ -10618,25 +9879,21 @@ class __status_bar__ {
                 XCB_EVENT_MASK_BUTTON_PRESS,
                 MAP
             );
-            ConnSig
-            (
-                _w[_WIFI],
-                L_MOUSE_BUTTON_EVENT,
+
+            ConnSig(_w[_WIFI], L_MOUSE_BUTTON_EVENT,
+                if (this->_w[_WIFI_DROPWOWN].is_mapped())
                 {
-                    if (this->_w[_WIFI_DROPWOWN].is_mapped())
+                    hide__(this->_w[_WIFI_DROPWOWN]);
+                }
+                else
+                {
+                    if (_w[_AUDIO_DROPDOWN].is_mapped())
                     {
-                        hide__(this->_w[_WIFI_DROPWOWN]);
+                        hide__(_w[_AUDIO_DROPDOWN]);
                     }
-                    else
-                    {
-                        if (_w[_AUDIO_DROPDOWN].is_mapped())
-                        {
-                            hide__(_w[_AUDIO_DROPDOWN]);
-                        }
-                        show__(_w[_WIFI_DROPWOWN]);
-                        _w[_WIFI_INFO].send_event(XCB_EVENT_MASK_EXPOSURE);
-                        _w[_WIFI_CLOSE].send_event(XCB_EVENT_MASK_EXPOSURE);
-                    }
+                    show__(_w[_WIFI_DROPWOWN]);
+                    _w[_WIFI_INFO].send_event(XCB_EVENT_MASK_EXPOSURE);
+                    _w[_WIFI_CLOSE].send_event(XCB_EVENT_MASK_EXPOSURE);
                 }
             );
 
@@ -10679,15 +9936,13 @@ class __status_bar__ {
                 CURSOR::hand2
             );
             
-            CONN(XCB_EXPOSE,
-            {
+            ConnSig(_w[_AUDIO], XCB_EXPOSE,
                 _w[_AUDIO].draw("Audio");
-            },
-            _w[_AUDIO]);
+            );
+
             _w[_AUDIO].send_event(XCB_EVENT_MASK_EXPOSURE);
 
-            CONN(L_MOUSE_BUTTON_EVENT,
-            {
+            ConnSig(_w[_AUDIO], L_MOUSE_BUTTON_EVENT,
                 if (_w[_AUDIO_DROPDOWN].is_mapped())
                 {
                     hide__(_w[_AUDIO_DROPDOWN]);
@@ -10700,27 +9955,23 @@ class __status_bar__ {
                     }
                     show__(_w[_AUDIO_DROPDOWN]);
                 }
-            },
-            _w[_AUDIO]);
+            );
 
-            CONN(XCB_ENTER_NOTIFY,
-            {
+            ConnSig(_w[_AUDIO], XCB_ENTER_NOTIFY,
                 _w[_AUDIO].change_backround_color(WHITE);
-            },
-            _w[_AUDIO]);
+            );
 
-            CONN(XCB_LEAVE_NOTIFY,
-            {
+            ConnSig(_w[_AUDIO], XCB_LEAVE_NOTIFY,
                 _w[_AUDIO].change_backround_color(DARK_GREY);
-            },
-            _w[_AUDIO]);
+            );
         }
 
         void show__(uint32_t __window)
         {
             if (__window == _w[_WIFI_DROPWOWN])
             {
-                _w[_WIFI_DROPWOWN].create_window(
+                _w[_WIFI_DROPWOWN].create_window
+                (
                     screen->root,
                     WIFI_DROPDOWN_X,
                     WIFI_DROPDOWN_Y,
@@ -10729,10 +9980,11 @@ class __status_bar__ {
                     DARK_GREY,
                     NONE,
                     MAP,
-                    (int[3]){ALL, WIFI_DROPDOWN_BORDER, BLACK}
+                    (const int[]){ALL, WIFI_DROPDOWN_BORDER, BLACK}
                 );
                 
-                _w[_WIFI_CLOSE].create_window(
+                _w[_WIFI_CLOSE].create_window
+                (
                     _w[_WIFI_DROPWOWN],
                     WIFI_CLOSE_WINDOW_X,
                     WIFI_CLOSE_WINDOW_Y,
@@ -10741,37 +9993,30 @@ class __status_bar__ {
                     DARK_GREY,
                     BUTTON_EVENT_MASK,
                     MAP,
-                    (int[3]){ALL, WIFI_DROPDOWN_BORDER, BLACK},
+                    (const int[]){ALL, WIFI_DROPDOWN_BORDER, BLACK},
                     CURSOR::hand2
                 );
 
-                WS_conn(this->_w[_WIFI_CLOSE], L_MOUSE_BUTTON_EVENT, W_callback
-                {
-                    if (__window != this->_w[_WIFI_CLOSE]) return;
-                    this->hide__(this->_w[_WIFI_DROPWOWN]);
-                });
+                ConnSig(_w[_WIFI_CLOSE], L_MOUSE_BUTTON_EVENT,
+                    hide__(_w[_WIFI_DROPWOWN]);
+                );
 
-                WS_conn(this->_w[_WIFI_CLOSE], EXPOSE, W_callback
-                {
-                    if (__window != this->_w[_WIFI_CLOSE]) return;
-                    this->_w[_WIFI_CLOSE].draw_acc("Close");
-                });
+                ConnSig(_w[_WIFI_CLOSE], XCB_EXPOSE,
+                    _w[_WIFI_CLOSE].draw_acc("Close");
+                );
 
-                this->_w[_WIFI_CLOSE].send_event(XCB_EVENT_MASK_EXPOSURE);
+                _w[_WIFI_CLOSE].send_event(XCB_EVENT_MASK_EXPOSURE);
 
-                WS_conn(this->_w[_WIFI_CLOSE], ENTER_NOTIFY, W_callback
-                {
-                    if (__window != this->_w[_WIFI_CLOSE]) return;
-                    this->_w[_WIFI_CLOSE].change_backround_color(WHITE);
-                });
+                ConnSig(_w[_WIFI_CLOSE], XCB_ENTER_NOTIFY,
+                    _w[_WIFI_CLOSE].change_backround_color(WHITE);
+                );
 
-                WS_conn(this->_w[_WIFI_CLOSE], LEAVE_NOTIFY, W_callback
-                {
-                    if (__window != this->_w[_WIFI_CLOSE]) return;
-                    this->_w[_WIFI_CLOSE].change_backround_color(DARK_GREY);
-                });
+                ConnSig(_w[_WIFI_CLOSE], XCB_LEAVE_NOTIFY,
+                    _w[_WIFI_CLOSE].change_backround_color(DARK_GREY);
+                );
 
-                _w[_WIFI_INFO].create_window(
+                _w[_WIFI_INFO].create_window
+                (
                     _w[_WIFI_DROPWOWN],
                     WIFI_INFO_WINDOW_X,
                     WIFI_INFO_WINDOW_Y,
@@ -10780,24 +10025,24 @@ class __status_bar__ {
                     WHITE,
                     XCB_EVENT_MASK_EXPOSURE,
                     MAP,
-                    (int[3]){ALL, WIFI_DROPDOWN_BORDER, BLACK}
+                    (const int[]){ALL, WIFI_DROPDOWN_BORDER, BLACK}
                 );
 
-                WS_conn(this->_w[_WIFI_INFO], EXPOSE, W_callback
-                {
+                ConnSig(_w[_WIFI_INFO], XCB_EXPOSE,
                     string local_ip("Local ip: " + network->get_local_ip_info(__network__::LOCAL_IP));
-                    this->_w[_WIFI_INFO].draw_text_auto_color(local_ip.c_str(), 4, 16, BLACK);
+                    _w[_WIFI_INFO].draw_text_auto_color(local_ip.c_str(), 4, 16, BLACK);
 
                     string local_interface("interface: " + network->get_local_ip_info(__network__::INTERFACE_FOR_LOCAL_IP));
-                    this->_w[_WIFI_INFO].draw_text_auto_color(local_interface.c_str(), 4, 30, BLACK);
-                });
+                    _w[_WIFI_INFO].draw_text_auto_color(local_interface.c_str(), 4, 30, BLACK);
+                );
 
-                this->_w[_WIFI_INFO].send_event(XCB_EVENT_MASK_EXPOSURE);
+                _w[_WIFI_INFO].send_event(XCB_EVENT_MASK_EXPOSURE);
             }
             
             if (__window == _w[_AUDIO_DROPDOWN])
             {
-                _w[_AUDIO_DROPDOWN].create_window(
+                _w[_AUDIO_DROPDOWN].create_window
+                (
                     screen->root,
                     ((WIFI_WINDOW_X - (50 / 2) - (200 / 2))),
                     20,
@@ -10806,7 +10051,7 @@ class __status_bar__ {
                     DARK_GREY,
                     NONE,
                     MAP,
-                    (int[3]){ALL, 2, BLACK}
+                    (const int[]){ALL, 2, BLACK}
                 );
             }
         }
@@ -10847,7 +10092,7 @@ class __status_bar__ {
         }
 
     public:
-        string get_time_and_date__()
+        string get_time_and_date()
         {
             long now(time({}));
             char buf[80];
@@ -10862,7 +10107,6 @@ class __status_bar__ {
         }
 
         FixedArray<window, 8> _w{};
-        /* window _w[8]; */
         typedef enum {
             _BAR,
             _TIME_DATE,
@@ -10880,48 +10124,56 @@ class __status_bar__ {
             setup_thread__(_w[_TIME_DATE]);
         }
 
-        __status_bar__() {}
-
-}; static __status_bar__ *status_bar(nullptr);
+    __status_bar__() {}
+};
+static __status_bar__ *status_bar(nullptr);
 
 /**
- *
- * @class Mwm_Animator
- * @brief Class for animating the position and size of an XCB window.
- *
+
+  @class Mwm_Animator
+  @brief Class for animating the position and size of an XCB window.
+
  */
-class Mwm_Animator {
+class Mwm_Animator
+{
     public:
-    // Constructors And Destructor.
-        Mwm_Animator(const uint32_t &__window)
-        : window(__window) {}
+    /* Constructors */
+        Mwm_Animator(uint32_t __window)
+        : window(__window)
+        {}
 
         Mwm_Animator(client *c)
-        : c(c) {}
+        : c(c)
+        {}
 
-        ~Mwm_Animator()/**
-         * @brief Destructor to ensure the animation threads are stopped when the object is destroyed.
+    /* Destructor   */
+        /**
+          
+          @brief Destructor to ensure the animation threads are stopped when the object is destroyed.
+          
          */
+        ~Mwm_Animator()
         {
             stopAnimations();
         }
     
-    // Methods.
-        void animate(int startX, int startY, int startWidth, int startHeight, int endX, int endY, int endWidth, int endHeight, int duration) /**
-         *
-         * @brief Animates the position and size of an object from a starting point to an ending point.
-         * 
-         * @param startX The starting X coordinate.
-         * @param startY The starting Y coordinate.
-         * @param startWidth The starting width.
-         * @param startHeight The starting height.
-         * @param endX The ending X coordinate.
-         * @param endY The ending Y coordinate.
-         * @param endWidth The ending width.
-         * @param endHeight The ending height.
-         * @param duration The duration of the animation in milliseconds.
-         *
+    /* Methods      */
+        /**
+         
+          @brief Animates the position and size of an object from a starting point to an ending point.
+          
+          @param startX The starting X coordinate.
+          @param startY The starting Y coordinate.
+          @param startWidth The starting width.
+          @param startHeight The starting height.
+          @param endX The ending X coordinate.
+          @param endY The ending Y coordinate.
+          @param endWidth The ending width.
+          @param endHeight The ending height.
+          @param duration The duration of the animation in milliseconds.
+         
          */
+        void animate(int startX, int startY, int startWidth, int startHeight, int endX, int endY, int endWidth, int endHeight, int duration) 
         {
             stopAnimations(); // ENSURE ANY EXISTING ANIMATION IS STOPPED
             
@@ -10934,12 +10186,14 @@ class Mwm_Animator {
             int steps = duration; 
 
             /**
-             * @brief Calculate if the step is positive or negative for each property.
-             *
-             * The variables @param stepX, stepY, stepWidth, stepHeight are always set to either 1 or -1.
-             * This is determined by dividing the absolute value of the difference between the start and end values
-             * by the difference itself. This results in a value of 1 or -1, which is used to determine if the animation 
-             * is moving in a positive (increasing) or negative (decreasing) direction for each property.
+             
+              @brief Calculate if the step is positive or negative for each property.
+             
+              The variables @param stepX, stepY, stepWidth, stepHeight are always set to either 1 or -1.
+              This is determined by dividing the absolute value of the difference between the start and end values
+              by the difference itself. This results in a value of 1 or -1, which is used to determine if the animation 
+              is moving in a positive (increasing) or negative (decreasing) direction for each property.
+              
              */
             stepX      = abs(endX - startX)           / (endX - startX);
             stepY      = abs(endY - startY)           / (endY - startY);
@@ -10947,13 +10201,15 @@ class Mwm_Animator {
             stepHeight = abs(endHeight - startHeight) / (endHeight - startHeight);
 
             /**
-             * @brief CALCULATE THE DURATION FOR EACH STEP BASED ON THE TOTAL ANIMATION DURATION AND THE ABSOLUTE VALUE OF THE LENGTH OF EACH ANIMATION 
-             * 
-             * @param XAnimDuration, YAnimDuration, WAnimDuration, HAnimDuration represent the time each step takes to iterate one pixel for each respective thread.
-             * 
-             * The duration for each step is calculated by dividing the total animation duration by the absolute value of the lengt on the respective animation.
-             * This ensures that each thread will iterate each pixel from start to end value,
-             * ensuring that all threads will complete at the same time.
+             
+              @brief CALCULATE THE DURATION FOR EACH STEP BASED ON THE TOTAL ANIMATION DURATION AND THE ABSOLUTE VALUE OF THE LENGTH OF EACH ANIMATION 
+              
+              @param XAnimDuration, YAnimDuration, WAnimDuration, HAnimDuration represent the time each step takes to iterate one pixel for each respective thread.
+              
+              The duration for each step is calculated by dividing the total animation duration by the absolute value of the lengt on the respective animation.
+              This ensures that each thread will iterate each pixel from start to end value,
+              ensuring that all threads will complete at the same time.
+             
              */
             XAnimDuration = static_cast<const double &>(duration) / static_cast<const double &>(abs(endX - startX));
             YAnimDuration = static_cast<const double &>(duration) / static_cast<const double &>(abs(endY - startY)); 
@@ -11078,33 +10334,39 @@ class Mwm_Animator {
     // variabels.
         uint32_t window;
         client * c;
+        
         thread(GAnimationThread);
         thread(XAnimationThread);
         thread(YAnimationThread);
         thread(WAnimationThread);
         thread(HAnimationThread);
-        int currentX;
-        int currentY;
-        int currentWidth;
-        int currentHeight;
-        int stepX;
-        int stepY;
-        int stepWidth;
-        int stepHeight;
+        
+        uint32_t currentX;
+        uint32_t currentY;
+        uint32_t currentWidth;
+        uint32_t currentHeight;
+        uint32_t stepX;
+        uint32_t stepY;
+        uint32_t stepWidth;
+        uint32_t stepHeight;
+        
         double GAnimDuration;
         double XAnimDuration;
         double YAnimDuration;
         double WAnimDuration;
         double HAnimDuration;
+        
         atomic<bool> stopGFlag{false};
         atomic<bool> stopXFlag{false};
         atomic<bool> stopYFlag{false};
         atomic<bool> stopWFlag{false};
         atomic<bool> stopHFlag{false};
+        
         chrono::high_resolution_clock::time_point(XlastUpdateTime);
         chrono::high_resolution_clock::time_point(YlastUpdateTime);
         chrono::high_resolution_clock::time_point(WlastUpdateTime);
         chrono::high_resolution_clock::time_point(HlastUpdateTime);
+        
         const double frameRate = 120;
         const double frameDuration = 1000.0 / frameRate; 
     
@@ -11148,12 +10410,14 @@ class Mwm_Animator {
             
             if (XisTimeToRender())
             {
-                xcb_configure_window(
+                xcb_configure_window
+                (
                     conn,
                     window,
                     XCB_CONFIG_WINDOW_X,
-                    (const uint32_t[1]) {
-                        static_cast<const uint32_t &>(currentX)
+                    (const uint32_t[])
+                    {
+                        currentX
                     }
                 );
                 xcb_flush(conn);
@@ -11324,7 +10588,6 @@ class Mwm_Animator {
                 }
 
                 c->x_y_width_height(currentX, currentY, currentWidth, currentHeight);
-                c->titlebar.send_event(XCB_EVENT_MASK_EXPOSURE);
                 thread_sleep(GAnimDuration);
             }
         }
@@ -11335,17 +10598,10 @@ class Mwm_Animator {
             {
                 if (currentX == endX)
                 {
-                    if (c != nullptr)
-                    {
-                        conf_client_x();
-                    }
+                    conf_client_x();   
                     break;
                 }
-
-                if (c != nullptr)
-                {
-                    conf_client_x();
-                }
+                conf_client_x();
                 thread_sleep(GAnimDuration);
             }
         }
@@ -11664,7 +10920,8 @@ class Mwm_Animator {
         }
 };
 
-class __animate__ {
+class __animate__
+{
     public:
     /* Methods */
         static void window(window &__window, int __end_x, int __end_y, int __end_width, int __end_height, int __duration)
@@ -11690,7 +10947,8 @@ void animate(client * & c, const int & endX, const int & endY, const int & endWi
     if (c == nullptr) return;
 
     Mwm_Animator anim(c->frame);
-    anim.animate(
+    anim.animate
+    (
         c->x,
         c->y, 
         c->width, 
@@ -11700,17 +10958,17 @@ void animate(client * & c, const int & endX, const int & endY, const int & endWi
         endWidth, 
         endHeight, 
         duration
-
     );
     c->update();
 }
 
-void animate_client(client * & c, const int & endX, const int & endY, const int & endWidth, const int & endHeight, const int & duration)
+void animate_client(client *const &c, int endX, int endY, int endWidth, int endHeight, int duration)
 {
     if (c == nullptr) return;
 
     Mwm_Animator client_anim(c);
-    client_anim.animate_client(
+    client_anim.animate_client
+    (
         c->x,
         c->y,
         c->width,
@@ -11720,7 +10978,6 @@ void animate_client(client * & c, const int & endX, const int & endY, const int 
         endWidth,
         endHeight,
         duration
-
     );
     c->update();
 }
@@ -11738,10 +10995,11 @@ class button
     // Methods.
         void create(const uint32_t & parent_window, const int16_t & x, const int16_t & y, const uint16_t & width, const uint16_t & height, COLOR color)
         {
-            window.create_default(parent_window, x, y, width, height);
+            window.create_window(parent_window, x, y, width, height);
             window.set_backround_color(color);
-            window.grab_button({
-                { L_MOUSE_BUTTON, NULL }
+            window.grab_button
+            ({
+                {L_MOUSE_BUTTON, NULL}
             });
 
             window.map();
@@ -11832,7 +11090,8 @@ class buttons
         // }
 };
 
-class search_window {
+class search_window
+{
     private:
     // Methods.
         void setup_events()
@@ -12134,7 +11393,7 @@ class search_window {
     // Methods.
         void create(const uint32_t & parent_window, const uint32_t & x, const uint32_t & y, const uint32_t & width, const uint32_t & height)
         {
-            main_window.create_default(parent_window, x, y, width, height);
+            main_window.create_window(parent_window, x, y, width, height);
             main_window.set_backround_color(BLACK);
             uint32_t mask =  XCB_EVENT_MASK_STRUCTURE_NOTIFY | XCB_EVENT_MASK_FOCUS_CHANGE;
             main_window.apply_event_mask(& mask);
@@ -12149,7 +11408,7 @@ class search_window {
             for (int i = 0; i < 7; ++i)
             {
                 window entry;
-                entry.create_default(main_window, 0, (20 * (i + 1)) , 140, 20);
+                entry.create_window(main_window, 0, (20 * (i + 1)) , 140, 20);
                 entry.set_backround_color(BLACK);
                 /* entry.raise(); */
                 entry.map();
@@ -12172,7 +11431,8 @@ class search_window {
 
 };
 
-class add_app_dialog_window {
+class add_app_dialog_window
+{
     public:
     // Variables.
         window main_window;
@@ -12215,7 +11475,7 @@ class add_app_dialog_window {
 
         void create()
         {
-            main_window.create_default(screen->root, pointer.x(), pointer.y(), 300, 200);
+            main_window.create_window(screen->root, pointer.x(), pointer.y(), 300, 200);
             uint32_t mask = XCB_EVENT_MASK_STRUCTURE_NOTIFY;
             main_window.apply_event_mask(& mask);
             main_window.grab_button({
@@ -12257,7 +11517,8 @@ class add_app_dialog_window {
         function<void()> enter_function;
 };
 
-class __file_app__ {
+class __file_app__
+{
     /* Defines     */
         #define FILE_APP_LEFT_MENU_WIDTH 120
         #define FILE_APP_LEFT_MENU_ENTRY_HEIGHT 20
@@ -12334,7 +11595,7 @@ class __file_app__ {
                 {
                     uint32_t mask;
 
-                    _window.create_default(
+                    _window.create_window(
                         __parent_window,
                         0,
                         0,
@@ -12348,7 +11609,7 @@ class __file_app__ {
                         { L_MOUSE_BUTTON, NULL }
                     });
 
-                    _border.create_default(
+                    _border.create_window(
                         __parent_window,
                         FILE_APP_LEFT_MENU_WIDTH,
                         0,
@@ -12481,9 +11742,11 @@ class __file_app__ {
 
     /* Constructor */
         __file_app__() {}
-}; static __file_app__ *file_app;
+};
+static __file_app__ *file_app;
 
-class __screen_settings__ {
+class __screen_settings__
+{
     private:
     /* Methods     */
         void change_refresh_rate(xcb_connection_t *conn, int desired_width, int desired_height, int desired_refresh)
@@ -12926,7 +12189,8 @@ class __screen_settings__ {
 
     /* Constructor */
         __screen_settings__() {}
-}; static __screen_settings__ *screen_settings(nullptr);
+};
+static __screen_settings__ *screen_settings(nullptr);
 
 typedef struct dropdown_menu_t {
     window         _window;
@@ -12943,7 +12207,8 @@ typedef struct dropdown_menu_t {
 } dropdown_menu_t;
 
 /** NOTE: DEPRECATED */
-class Dock {
+class Dock
+{
     public:
     // Constructor.
         Dock() {}
@@ -12958,7 +12223,7 @@ class Dock {
     // Methods.
         void init()
         {
-            main_window.create_default(screen->root, 0, 0, width, height);
+            main_window.create_window(screen->root, 0, 0, width, height);
             setup_dock();
             configure_context_menu();
             make_apps();
@@ -13073,7 +12338,8 @@ class Dock {
         }
 };
 
-class __dock_search__ {
+class __dock_search__
+{
     /* Defines   */
         constexpr uint8_t char_to_keycode__(int8_t c)
         {
@@ -13120,23 +12386,25 @@ class __dock_search__ {
         }
 
         #define APPEND_TO_STR(__char) \
-            if (e->detail == char_to_keycode__(__char))             \
-            {                                                       \
-                if (e->state == SHIFT)                              \
-                {                                                   \
-                    search_string << lower_to_upper_case__(__char); \
-                }                                                   \
-                else                                                \
-                {                                                   \
-                    search_string << __char;                        \
-                }                                                   \
-            }
-    
+        if (ev[0] == char_to_keycode__(__char))                 \
+        {                                                       \
+            if (ev[1] == SHIFT)                                 \
+            {                                                   \
+                search_string << lower_to_upper_case__(__char); \
+            }                                                   \
+            else                                                \
+            {                                                   \
+                search_string << __char;                        \
+            }                                                   \
+        }
+
+        #define DockSearchEvent 113
+
     private:
     /* Methods   */
         void setup_events__()
         {
-            event_handler->setEventCallback(EV_CALL(XCB_KEY_PRESS)
+            /* event_handler->setEventCallback(EV_CALL(XCB_KEY_PRESS)
             {
                 RE_CAST_EV(xcb_key_press_event_t);
                 if (e->event == main_window)
@@ -13150,7 +12418,7 @@ class __dock_search__ {
                     {
                         pop_last_ss(search_string);
                         main_window.clear();
-                        FLUSH_X();
+                        XCB::flush();
                     }
 
                     if (e->detail == wm->key_codes.enter)
@@ -13162,12 +12430,12 @@ class __dock_search__ {
                     
                         search_string.str("");
                         main_window.clear();
-                        FLUSH_X();
+                        XCB::flush();
                     }
 
                     draw_text();
                 }
-            });
+            }); */
 
             event_handler->setEventCallback(EV_CALL(XCB_BUTTON_PRESS)
             {
@@ -13178,6 +12446,39 @@ class __dock_search__ {
                     main_window.focus_input(); */
                 }
             });
+
+            /* ConnEvSig(main_window, DockSearchEvent,
+                for (int i = 0; i < _char_vec.size(); ++i)
+                {
+                    APPEND_TO_STR(_char_vec[i]);
+                }
+
+                if (ev[0] == wm->key_codes._delete)
+                {
+                    pop_last_ss(search_string);
+                    main_window.clear();
+                    XCB::flush();
+                }
+
+                if (ev[0] == wm->key_codes.enter)
+                {
+                    if (enter_function)
+                    {
+                        enter_function();
+                    }
+                
+                    search_string.str("");
+                    main_window.clear();
+                    XCB::flush();
+                }
+
+                draw_text();
+            ); */
+
+            /* ConnSig(main_window, L_MOUSE_BUTTON_EVENT,
+                main_window.raise();
+                main_window.focus();
+            ); */
         }
 
     /* Variables */
@@ -13396,6 +12697,11 @@ class __dock__
                 show__(dock_menu);
             }
         }
+
+        uint32_t get_dock_search_window()
+        {
+            return dock_search.main_window;
+        }
     
     /* Constructor */
         __dock__() {}
@@ -13411,11 +12717,20 @@ static __dock__ *dock(nullptr);
 ****************************************/
 class DropDownTerm
 {
-    private:
+    /* Defines   */
         #define DropDownTermSignal 112
 
+        #define prosses_char(__char) \
+        if (ev[0] == char_to_keycode__(__char)) \
+        { \
+            ss << __char; \
+        }
+
+    private:
+    /* Variabels */
         vector<int8_t> _char_vec = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-', ' '};
 
+    /* Methods   */
         constexpr uint8_t char_to_keycode__(int8_t c)
         {
             switch (c)
@@ -13460,17 +12775,13 @@ class DropDownTerm
             return (c - 32);
         }
 
-        #define prosses_char(__char) \
-            if (ev[0] == char_to_keycode__(__char)) \
-            { \
-                ss << __char; \
-            }
-
     public:
+    /* Variabels */
         window w;
         stringstream ss;
 
-        void toggle__()
+    /* Methods   */
+        void toggle()
         {
             if (w.y() == - (screen->height_in_pixels / 2))
             {
@@ -13503,39 +12814,34 @@ class DropDownTerm
             wm->context_menu->add_entry
             (
                 "DropDownTerm",
-                [this]()-> void
+                [this]() -> void
                 {
-                    this->toggle__();
+                    toggle();
                 }
             );
-            
-            ev_sigs->connect
-            (
-                w,
-                DropDownTermSignal,
-                [this](const vector<uint32_t> ev)
+
+            ConnEvSig(w, DropDownTermSignal,
+                AutoTimer t("DropDownTerm SIG");
+
+                for (int i = 0; i < _char_vec.size(); ++i)
                 {
-                    AutoTimer t("DropDownTerm SIG");
-
-                    for (int i = 0; i < _char_vec.size(); ++i)
-                    {
-                        prosses_char(_char_vec[i]);
-                    }
-
-                    w.draw_text_auto_color
-                    (
-                        ss.str().c_str(),
-                        4,
-                        (w.height() - 20)
-                    );
-                    xcb_flush(conn);
+                    prosses_char(_char_vec[i]);
                 }
+
+                w.draw_text_auto_color
+                (
+                    ss.str().c_str(),
+                    4,
+                    (w.height() - 20)
+                );
+                xcb_flush(conn);
             );
         }
 };
 static DropDownTerm *ddTerm(nullptr);
 
-class mv_client {
+class mv_client
+{
     /* Defines     */
         #define RIGHT_  screen->width_in_pixels  - c->width
         #define BOTTOM_ screen->height_in_pixels - c->height
@@ -13740,7 +13046,8 @@ class mv_client {
 };
 
 mutex mtx;
-class change_desktop {
+class change_desktop
+{
     public:
     /* Constructor */
         change_desktop(xcb_connection_t *connection) {}
@@ -14960,13 +14267,14 @@ class resize_client
         }
 };
 
-class max_win {
+class max_win
+{
     private:
     /* Variabels   */
         client(*c);
 
     /* Methods     */
-        void max_win_animate(const int &endX, const int &endY, const int &endWidth, const int &endHeight)
+        void max_win_animate(int endX, int endY, int endWidth, int endHeight)
         {
             animate_client(
                 c,
@@ -14981,11 +14289,25 @@ class max_win {
         
         void button_unmax_win()
         {
-            if (c->max_button_ogsize.x > screen->width_in_pixels ) c->max_button_ogsize.x = (screen->width_in_pixels  / 4);
-            if (c->max_button_ogsize.y > screen->height_in_pixels) c->max_button_ogsize.y = (screen->height_in_pixels / 4);
+            if (c->max_button_ogsize.x > screen->width_in_pixels)
+            {
+                c->max_button_ogsize.x = (screen->width_in_pixels  / 4);
+            }
 
-            if (c->max_button_ogsize.width  == 0 || c->max_button_ogsize.width  > screen->width_in_pixels ) c->max_button_ogsize.width  = (screen->width_in_pixels  / 2);
-            if (c->max_button_ogsize.height == 0 || c->max_button_ogsize.height > screen->height_in_pixels) c->max_button_ogsize.height = (screen->height_in_pixels / 2);
+            if (c->max_button_ogsize.y > screen->height_in_pixels)
+            {
+                c->max_button_ogsize.y = (screen->height_in_pixels / 4);
+            }
+
+            if (c->max_button_ogsize.width  == 0 || c->max_button_ogsize.width  > screen->width_in_pixels)
+            {
+                c->max_button_ogsize.width  = (screen->width_in_pixels  / 2);
+            }
+
+            if (c->max_button_ogsize.height == 0 || c->max_button_ogsize.height > screen->height_in_pixels)
+            {
+                c->max_button_ogsize.height = (screen->height_in_pixels / 2);
+            }
 
             max_win_animate
             (
@@ -14999,7 +14321,8 @@ class max_win {
         void button_max_win()
         {
             c->save_max_button_ogsize();
-            max_win_animate(
+            max_win_animate
+            (
                 -BORDER_SIZE,
                 -BORDER_SIZE,
                 (screen->width_in_pixels  + (BORDER_SIZE * 2)),
@@ -15010,7 +14333,8 @@ class max_win {
         void ewmh_max_win()
         {
             c->save_max_ewmh_ogsize();
-            max_win_animate(
+            max_win_animate
+            (
                 - BORDER_SIZE,
                 - TITLE_BAR_HEIGHT - BORDER_SIZE,
                 screen->width_in_pixels + (BORDER_SIZE * 2),
@@ -15021,13 +14345,28 @@ class max_win {
 
         void ewmh_unmax_win()
         {
-            if (c->max_ewmh_ogsize.width  > (screen->width_in_pixels  + (BORDER_SIZE * 2))) c->max_ewmh_ogsize.width  = screen->width_in_pixels  / 2;
-            if (c->max_ewmh_ogsize.height > (screen->height_in_pixels + (BORDER_SIZE * 2))) c->max_ewmh_ogsize.height = screen->height_in_pixels / 2;
-            
-            if (c->max_ewmh_ogsize.x >= screen->width_in_pixels  - 1) c->max_ewmh_ogsize.x = ((screen->width_in_pixels / 2) - (c->max_ewmh_ogsize.width / 2) - BORDER_SIZE);
-            if (c->max_ewmh_ogsize.y >= screen->height_in_pixels - 1) c->max_ewmh_ogsize.y = ((screen->height_in_pixels / 2) - (c->max_ewmh_ogsize.height / 2) - TITLE_BAR_HEIGHT - BORDER_SIZE);
+            if (c->max_ewmh_ogsize.width  > (screen->width_in_pixels  + (BORDER_SIZE * 2)))
+            {
+                c->max_ewmh_ogsize.width  = screen->width_in_pixels  / 2;
+            }
 
-            max_win_animate(
+            if (c->max_ewmh_ogsize.height > (screen->height_in_pixels + (BORDER_SIZE * 2)))
+            {
+                c->max_ewmh_ogsize.height = screen->height_in_pixels / 2;
+            }
+            
+            if (c->max_ewmh_ogsize.x >= screen->width_in_pixels  - 1)
+            {
+                c->max_ewmh_ogsize.x = ((screen->width_in_pixels / 2) - (c->max_ewmh_ogsize.width / 2) - BORDER_SIZE);
+            }
+
+            if (c->max_ewmh_ogsize.y >= screen->height_in_pixels - 1)
+            {
+                c->max_ewmh_ogsize.y = ((screen->height_in_pixels / 2) - (c->max_ewmh_ogsize.height / 2) - TITLE_BAR_HEIGHT - BORDER_SIZE);
+            }
+
+            max_win_animate
+            (
                 c->max_ewmh_ogsize.x, 
                 c->max_ewmh_ogsize.y, 
                 c->max_ewmh_ogsize.width, 
@@ -16090,17 +15429,23 @@ void keyPressH(const xcb_generic_event_t *ev)
 
     if (e->detail == wm->key_codes.f12)
     {
-        ddTerm->toggle__();
+        ddTerm->toggle();
     }
 
     if (e->detail == wm->key_codes.super_l && (e->state & SHIFT) != 0)
     {
         dock->toggle();
     }
+
     if (e->event == ddTerm->w)
     {
         ev_sigs->emit(ddTerm->w, DropDownTermSignal, {e->detail, e->state});
     }
+
+    /* if (e->event == dock->get_dock_search_window())
+    {
+        ev_sigs->emit(dock->get_dock_search_window(), DockSearchEvent, {e->detail, e->state});
+    } */
 
     /* if (e->detail == wm->key_codes.tab)
     {
@@ -16201,7 +15546,8 @@ void buttonPressH(const xcb_generic_event_t *ev)
     }
 }
 
-class test {
+class test
+{
     private:
     // Methods.
         void setup_events()
@@ -16255,7 +15601,7 @@ class test {
         void mv_test()
         {
             window(win_1);
-            win_1.create_default(
+            win_1.create_window(
                 wm->root,
                 0,
                 0,

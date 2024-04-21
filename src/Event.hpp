@@ -3,112 +3,77 @@
 
 #include <cstdint>
 #include <functional>
-#include <unordered_map>
 #include <utility>
 #include <xcb/xcb.h>
 #include <xcb/xproto.h>
-// #include "thread.hpp"
-// #include "xcb.hpp"
+#include <vector>
 
-#define lambdA(__Ref, __Param, ...) do { \
-    [__Ref](__Param) __VA_ARGS__ \
-} while(0)
+#include "globals.h"
+#include "defenitions.hpp"
 
-#define MAKE_MAP_LAMBDA(__Map, __Event, ...) \
-    do { \
-        __Map[__Event] = lambdA(this, xcb_generic_event_t *, __VA_ARGS__) \
-    } \
-    while(0)
+using namespace std;
 
-#define reCast(__Type, ...) \
-    do { \
-        auto e = reinterpret_cast<__Type *>(ev); \
-        __VA_ARGS__ \
-    } while(0)
-
-/* typedef struct loop_data_t {
-    uint8_t state = 1, event = 0;
-    operator uint8_t&() { return this->state; }
-
-    loop_data_t(uint8_t event) {
-        
-    }
-
-} loop_data_t; */
-
-class loop_data_t {
+class __event_signals__
+{
     private:
-        uint8_t state = 1;
-        uint8_t event = 0;
-        static loop_data_t* instance;
-
-        // Private constructor
-        loop_data_t(uint8_t eventValue) : event(eventValue) {}
-
+        umap<uint8_t, function<void(const vector<uint32_t> &ev)>> _event_map;
+    
     public:
-        // Delete copy constructor and assignment operator
-        loop_data_t(const loop_data_t&) = delete;
-        loop_data_t& operator=(const loop_data_t&) = delete;
-
-        // Public method to access the instance
-        static loop_data_t* getInstance(uint8_t eventValue)
+        template<typename Cb>
+        void connect(uint8_t __sig, Cb &&__cb)
         {
-            if (!instance)
-            {
-                instance = new loop_data_t(eventValue);
-            }
-            return instance;
+            _event_map[__sig] = std::forward<Cb>(__cb);
         }
 
-        // Operator to access the state as uint8_t&
-        operator uint8_t&() { return this->state; }
+        void emit(uint32_t __window, uint8_t __sig, const vector<uint32_t> &__ev)
+        {
+            auto it = _event_map.find(__sig);
+            if (it == _event_map.end()) return;
+            it->second(__ev);
+        }
 
-        // Optionally, methods to manipulate state and event
+        __event_signals__() {}
 };
 
-template<typename Type>
-Type get_type( const xcb_generic_event_t *ev ) {};
+template<uint8_t EventType> static constexpr void handle_event(xcb_generic_event_t *ev) { return; };
 
-// Initialize the static instance pointer to nullptr
-inline loop_data_t* loop_data_t::instance = nullptr;
+template<> constexpr void handle_event<XCB_EXPOSE>(xcb_generic_event_t *ev) {  }
 
-class __event__handler {
+class __event__handler
+{
     private:
-        std::unordered_map<int, std::function<void(xcb_generic_event_t *)>> Map;
+        unordered_map<int, function<void(xcb_generic_event_t *)>> map;
         xcb_generic_event_t *ev;
-        xcb_connection_t *conn;
 
-        void makeMap_() {
-            Map[XCB_EXPOSE] = [this](xcb_generic_event_t *ev) -> void {
-                reCast(xcb_expose_event_t,
-                    
-                    
-                );
-                
-            };
+        void makeMap_()
+        {
+            map[XCB_EXPOSE] = [this](xcb_generic_event_t *ev) -> void
+            {
             
+            };
         }
 
     public:
         template<typename Func>
-        void addCb(int __s, Func &&func) {
-            Map[__s] = std::forward<Func>(func);
-            
+        void addCb(int __s, Func &&func)
+        {
+            map[__s] = std::forward<Func>(func);
         }
-        void run() {
-            while ((ev = xcb_wait_for_event(conn)) != nullptr) {
+            
+        void run()
+        {
+            while ((ev = xcb_wait_for_event(conn)) != nullptr)
+            {
                 uint8_t responseType = ev->response_type & ~0x80;
-                if (Map.find(responseType) != Map.end()) {
-                    Map[responseType](ev);
-
-                } /* free(ev); // Remember to free the event */
-            
+                if (map.find(responseType) != map.end())
+                {
+                    map[responseType](ev);
+                }
+                free(ev);
             }
-            
         }
-
+            
         __event__handler(xcb_connection_t *conn) : ev(new xcb_generic_event_t) {}
-
 };
 
 #endif

@@ -16,13 +16,29 @@ class window_t
         uint32_t _window = 0;
 
     public:
-        operator uint32_t() { return _window; }
-        operator const uint32_t&() const { return _window; }
+        operator uint32_t()
+        {
+            return _window;
+        }
+
+        operator const uint32_t&() const
+        {
+            return _window;
+        }
 
         void map()
         {
-            xcb_map_window(conn, _window);
-            xcb_flush(conn);
+            XCB::map_window(_window);
+        }
+
+        void unmap()
+        {
+            XCB::unmap_window(_window);
+        }
+
+        void raise()
+        {
+            XCB::raise_window(_window);
         }
 
         void change_attribute(uint32_t __mask, const void *__data)

@@ -200,8 +200,48 @@ uint32_t __color__::get(int __color)
 
     for (const pair<int, uint32_t> &pair : colorVec)
     {
-        if ( pair.first == __color ) return pair.second;
+        if (pair.first == __color) return pair.second;
     }
 
     return 0;
 }
+
+/* uint32_t get_color(const uint16_t &red_value, const uint16_t &green_value, const uint16_t &blue_value)
+{
+    uint32_t                pi = 0;
+    xcb_colormap_t        cmap = screen->default_colormap;
+    xcb_alloc_color_reply_t *r = xcb_alloc_color_reply(
+        conn,
+        xcb_alloc_color(
+            conn,
+            cmap,
+            red_value,
+            green_value,
+            blue_value
+        ),
+        nullptr
+    );
+    pi = r->pixel;
+    free(r);
+    return pi;
+}
+
+uint32_t get_color(const uint8_t & red_value, const uint8_t & green_value, const uint8_t & blue_value)
+{
+    uint32_t                pi = 0;
+    xcb_colormap_t        cmap = screen->default_colormap;
+    xcb_alloc_color_reply_t *r = xcb_alloc_color_reply(
+        conn,
+        xcb_alloc_color(
+            conn,
+            cmap,
+            _scale::from_8_to_16_bit(red_value), 
+            _scale::from_8_to_16_bit(green_value),
+            _scale::from_8_to_16_bit(blue_value)
+        ),
+        NULL
+    );
+    pi = r->pixel;
+    free(r);
+    return pi;
+} */

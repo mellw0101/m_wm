@@ -471,6 +471,16 @@ class atoms_t {
 
 namespace XCB
 {
+    inline uint32_t gen_Xid()
+    {
+        return xcb_generate_id(conn);
+    }
+
+    inline void flush()
+    {
+        xcb_flush(conn);
+    }
+    
     inline void change_window_attributes(uint32_t __window, uint32_t __mask, const void *__data)
     {
         xcb_change_window_attributes
@@ -525,6 +535,187 @@ namespace XCB
         {
             loutE << WINDOW_ID_BY_INPUT(__window) << "error_code" << error->error_code << loutEND;
         }
+    }
+
+    inline void map_window(uint32_t __window)
+    {
+        xcb_map_window(conn, __window);
+        xcb_flush(conn);
+    }
+
+    inline void unmap_window(uint32_t __window)
+    {
+        xcb_unmap_window(conn, __window);
+        xcb_flush(conn);
+    }
+
+    inline void raise_window(uint32_t __window)
+    {
+        XCB::configure_window
+        (
+            __window,
+            XCB_CONFIG_WINDOW_STACK_MODE,
+            (const uint32_t[])
+            {
+                XCB_STACK_MODE_ABOVE
+            }
+        );
+        xcb_flush(conn);
+    }
+
+    inline void reparent_window(uint32_t __window, uint32_t __new_parent, int16_t __x, int16_t __y)
+    {
+        xcb_reparent_window
+        (
+            conn,
+            __window,
+            __new_parent,
+            __x,
+            __y
+        );
+        xcb_flush(conn);
+    }
+
+    /**
+     * @brief avalible 'revert_to' options 
+     *
+     * @p XCB_INPUT_FOCUS_NONE 
+     * @p XCB_INPUT_FOCUS_PARENT 
+     * @p XCB_INPUT_FOCUS_POINTER_ROOT
+     *
+     * @p XCB_INPUT_FOCUS_FOLLOW_KEYBOARD NOTE: This is experemental
+     * 
+     */
+    inline void set_focus_input(uint32_t __window, uint8_t __revert_to = XCB_INPUT_FOCUS_POINTER_ROOT)
+    {
+        xcb_set_input_focus
+        (
+            conn,
+            __revert_to,
+            __window,
+            XCB_CURRENT_TIME
+        );
+        xcb_flush(conn);
+    }
+
+    inline void clear_area(uint32_t __window, uint16_t __width, uint16_t __height, int16_t __x = 0, int16_t __y = 0)
+    {
+        xcb_clear_area
+        (
+            conn,
+            0,
+            __window,
+            __x,
+            __y,
+            __width,
+            __height
+        );
+        xcb_flush(conn);
+    }
+
+    inline void open_font(uint32_t __font_id, const char *__font_name)
+    {
+        xcb_open_font
+        (
+            conn,
+            __font_id,
+            slen(__font_name),
+            __font_name
+        );
+        xcb_flush(conn);
+    }
+
+    inline uint32_t open_and_get_font_id(const char *__font_name)
+    {
+        uint32_t font_id = XCB::gen_Xid();
+        XCB::open_font(font_id, __font_name);
+        return font_id;
+    }
+
+    inline void change_back_pixel(uint32_t __window, uint32_t __pixel)
+    {
+        XCB::change_window_attributes(__window, XCB_CW_BACK_PIXEL, (const uint32_t[]){ __pixel });
+    }
+
+    inline void apply_ev_mask(uint32_t __window, const uint32_t *__mask)
+    {
+        XCB::change_window_attributes(__window, XCB_CW_EVENT_MASK, __mask);
+        XCB::flush();
+    }
+
+    inline void create_window(
+        uint32_t    __window,
+        uint32_t    __parent,
+        int16_t     __x,
+        int16_t     __y,
+        uint16_t    __width,
+        uint16_t    __height,
+        uint8_t     __depth        = screen->root_depth,
+        uint16_t    __border_width = 0,
+        uint16_t    ___class       = XCB_WINDOW_CLASS_INPUT_OUTPUT,
+        uint32_t    __visual       = screen->root_visual,
+        uint32_t    __value_mask   = 0,
+        const void *__value_list   = nullptr)
+    {
+        xcb_create_window
+        (
+            conn,
+            __depth,
+            __window,
+            __parent,
+            __x,
+            __y,
+            __width,
+            __height,
+            __border_width,
+            ___class,
+            __visual,
+            __value_mask,
+            __value_list
+        );
+        XCB::flush();
+    }
+
+    inline void create_gc(uint32_t __window, uint32_t __gc, uint32_t __mask, const void *__data)
+    {
+        xcb_create_gc
+        (
+            conn,
+            __gc,
+            __window,
+            __mask,
+            __data
+        );
+        XCB::flush();
+    }
+
+    inline uint32_t create_graphics_exposure_gc(uint32_t __window)
+    {
+        uint32_t gc = XCB::gen_Xid();
+        XCB::create_gc
+        (
+            __window,
+            gc,
+            XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_GRAPHICS_EXPOSURES,
+            (const uint32_t[])
+            {
+                screen->black_pixel,
+                screen->white_pixel,
+                0
+            }
+        );
+
+        return gc;
+    }
+
+    inline xcb_get_geometry_cookie_t get_geometry(uint32_t __window)
+    {
+        return xcb_get_geometry(conn, __window);
+    }
+
+    inline xcb_get_geometry_reply_t *get_geometry_reply(xcb_get_geometry_cookie_t __cookie)
+    {
+        return xcb_get_geometry_reply(conn, __cookie, nullptr);
     }
 }
 
