@@ -13,23 +13,21 @@
 #include <iomanip>
 #include "prof.hpp"
 
+using namespace std;
 
-void
-ProfilerStats::record(double value)
+void ProfilerStats::record(double value)
 {
     values.push_back(value);
 }
 
-double
-ProfilerStats::mean() const
+double ProfilerStats::mean() const
 {
     if (values.empty()) return 0.0;
     double sum = std::accumulate(values.begin(), values.end(), 0.0);
     return sum / values.size();
 }
 
-double
-ProfilerStats::stddev() const
+double ProfilerStats::stddev() const
 {
     if (values.size() < 2) return 0.0;
     double mean_val = mean();
@@ -37,20 +35,17 @@ ProfilerStats::stddev() const
     return std::sqrt(sq_sum / values.size());
 }
 
-double
-ProfilerStats::min() const
+double ProfilerStats::min() const
 {
     return values.empty() ? 0.0 : *std::min_element(values.begin(), values.end());
 }
 
-double
-ProfilerStats::max() const
+double ProfilerStats::max() const
 {
     return values.empty() ? 0.0 : *std::max_element(values.begin(), values.end());
 }
 
-size_t
-ProfilerStats::count() const
+size_t ProfilerStats::count() const
 {
     return values.size();
 }
@@ -60,19 +55,15 @@ ProfilerStats::count() const
 **********************************************************************
 ****************<<    @class @c GlobalProfiler      >>****************
 **********************************************************************
-**********************************************************************
-*/
-
-void
-GlobalProfiler::record(const std::string& name, double duration)
+*********************************************************************/
+void GlobalProfiler::record(const string &name, double duration)
 {
     stats[name].record(duration);
 }
 
-std::string
-makeNamePadding(const std::string &__s)
+string makeNamePadding(const string &__s)
 {
-    std::stringstream ss;
+    stringstream ss;
     for (int i = 0; (i + __s.length()) < 30; ++i)
     {
         ss << ' ';
@@ -80,8 +71,7 @@ makeNamePadding(const std::string &__s)
     return ss.str();
 }
 
-/* std::string
-makeDoublePadding(const double &__d)
+/* string makeDoublePadding(const double &__d)
 {
     std::stringstream ss;
     for (int i = 0; (i + std::to_string(__d).length()) < 12; ++i)
@@ -91,8 +81,7 @@ makeDoublePadding(const double &__d)
     return ss.str();
 } */
 
-/* std::string
-makeDoublePadding(const double &__d)
+/* string makeDoublePadding(const double &__d)
 {
     std::ostringstream oss;
     oss << std::setprecision(2) << __d; // Set desired precision for the double's string representation
@@ -106,8 +95,7 @@ makeDoublePadding(const double &__d)
     return ss.str();
 } */
 
-std::string
-mili()
+string mili()
 {
     // Get the current time point
     auto now = std::chrono::system_clock::now();
@@ -133,8 +121,7 @@ mili()
     return ss.str();
 }
 
-void
-GlobalProfiler::report(const std::string &filename)
+void GlobalProfiler::report(const string &filename)
 {
     std::ofstream file(filename, std::ios::app);
     file << "\n\nProfiling report: " << mili() << '\n';
@@ -164,14 +151,12 @@ GlobalProfiler::report(const std::string &filename)
     }
 }
 
-GlobalProfiler *
-GlobalProfiler::createNewGprof()
+GlobalProfiler *GlobalProfiler::createNewGprof()
 {
     return new GlobalProfiler;
 }
 
-void
-init_gProf()
+void init_gProf()
 {
     gProf = GlobalProfiler::createNewGprof();
 }
@@ -181,11 +166,9 @@ init_gProf()
 **********************************************************************
 *****************<<      @class @c AutoTimer      >>******************
 **********************************************************************
-**********************************************************************
-**/
-
-AutoTimer::AutoTimer(const std::string& name)
-: name(name), start(std::chrono::high_resolution_clock::now()) {}
+**********************************************************************/
+AutoTimer::AutoTimer(const string &name)
+: name(name), start(chrono::high_resolution_clock::now()) {}
 
 AutoTimer::~AutoTimer()
 {
@@ -195,8 +178,8 @@ AutoTimer::~AutoTimer()
 }
 
 
-void /* Register at-exit handler to generate the report */
-setupReportGeneration()
+/* Register at-exit handler to generate the report */
+void setupReportGeneration()
 {
     std::atexit([]
     {
@@ -204,8 +187,8 @@ setupReportGeneration()
     });
 }
 
-void /* Register at-exit handler to generate the report */
-setupVulkanReportGen()
+/* Register at-exit handler to generate the report */
+void setupVulkanReportGen()
 {
     std::atexit([]
     {
@@ -213,8 +196,7 @@ setupVulkanReportGen()
     });
 }
 
-/* int
-main()
+/* int main()
 {
     setupReportGeneration();
 
