@@ -8481,7 +8481,7 @@ class Window_Manager
                 setup__();
                 iter__();
                 screen__();
-                xcb = connect_to_server(conn, screen);
+                xcb = connect_to_server(screen);
                 if ((xcb->check_conn() & (1ULL << X_CONN_ERROR)) != 0)
                 {
                     loutE << "x not connected" << loutEND;
@@ -8567,7 +8567,7 @@ class Window_Manager
             
             void get_atom(char *name, xcb_atom_t *atom)
             {
-                xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(conn, xcb_intern_atom(conn, 0, slen(name), name), NULL);
+                xcb_intern_atom_reply_t *reply = XCB::intern_atom_reply(XCB::intern_atom(0, name));
                 if (reply == nullptr)
                 {
                     *atom = XCB_NONE;
@@ -8593,18 +8593,6 @@ class Window_Manager
             }
 
         /* Window       */
-            /* bool window_exists(uint32_t __window) {
-                xcb_generic_error_t *err;
-                free(xcb_query_tree_reply(conn, xcb_query_tree(conn, __window), &err));
-
-                if (err != NULL) {
-                    free(err);
-                    return false;
-
-                } return true;
-
-            } */
-
             uint32_t window_exists(uint32_t __w)
             {
                 xcb_get_property_cookie_t cookie = xcb_get_property_unchecked(conn, 0, __w, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 0, 0);
@@ -8619,7 +8607,7 @@ class Window_Manager
             
             void window_stack(uint32_t __window1, uint32_t __window2, uint32_t __mode)
             {
-                if (__window2 == XCB_NONE) return;
+                if (__window2 == 0L) return;
                 
                 uint16_t mask = XCB_CONFIG_WINDOW_SIBLING | XCB_CONFIG_WINDOW_STACK_MODE;
                 uint32_t values[] = {__window2, __mode};
@@ -8627,28 +8615,26 @@ class Window_Manager
                 xcb_configure_window(conn, __window1, mask, values);    
             }
             
-            void window_above(const uint32_t &__window1, const uint32_t &__window2)
+            // stack '__window1' above '__window2'
+            void window_above(uint32_t __window1, uint32_t __window2)
             {
-                window_stack(
+                window_stack
+                (
                     __window1,
                     __window2,
                     XCB_STACK_MODE_ABOVE
                 );
-            }/* stack '__window1' above '__window2' */
+            }
             
-            void window_below(const uint32_t &__window1, const uint32_t &__window2)
+            // stack '__window1' below '__window2'
+            void window_below(uint32_t __window1, uint32_t __window2)
             {
-                window_stack(
+                window_stack
+                (
                     __window1,
                     __window2,
                     XCB_STACK_MODE_BELOW    
                 );
-            }/* stack '__window1' below '__window2' */
-            
-            void unmap_window(uint32_t __window)
-            {
-                xcb_unmap_window(conn, __window);
-                xcb_flush(conn);
             }
 
         /* Client       */

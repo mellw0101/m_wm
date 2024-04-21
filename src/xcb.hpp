@@ -471,110 +471,25 @@ class atoms_t {
 
 namespace XCB
 {
-    inline uint32_t gen_Xid()
-    {
-        return xcb_generate_id(conn);
-    }
+    uint32_t gen_Xid();
 
-    inline void flush()
-    {
-        xcb_flush(conn);
-    }
+    void flush();
     
-    inline void change_window_attributes(uint32_t __window, uint32_t __mask, const void *__data)
-    {
-        xcb_change_window_attributes
-        (
-            conn,
-            __window,
-            __mask,
-            __data
-        );
-        xcb_flush(conn);
-    }
+    void change_window_attributes(uint32_t __window, uint32_t __mask, const void *__data);
 
-    inline void change_window_attributes_checked(uint32_t __window, uint32_t __mask, const void *__data)
-    {
-        xcb_void_cookie_t cookie = xcb_change_window_attributes
-        (
-            conn,
-            __window,
-            __mask,
-            __data
-        );
-        xcb_generic_error_t *error = xcb_request_check(conn, cookie);
-        if (error != nullptr)
-        {
-            loutE << WINDOW_ID_BY_INPUT(__window) << "error_code" << error->error_code << loutEND;
-        }
-        xcb_flush(conn);
-    }
+    void change_window_attributes_checked(uint32_t __window, uint32_t __mask, const void *__data);
 
-    inline void configure_window(uint32_t __window, uint32_t __mask, const void *__data)
-    {
-        xcb_configure_window
-        (
-            conn,
-            __window,
-            __mask,
-            __data
-        );
-    }
+    void configure_window(uint32_t __window, uint32_t __mask, const void *__data);
 
-    inline void configure_window_checked(uint32_t __window, uint32_t __mask, const void *__data)
-    {
-        xcb_void_cookie_t cookie = xcb_configure_window_checked
-        (
-            conn,
-            __window,
-            __mask,
-            __data
-        );
-        xcb_generic_error_t *error = xcb_request_check(conn, cookie);
-        if (error != nullptr)
-        {
-            loutE << WINDOW_ID_BY_INPUT(__window) << "error_code" << error->error_code << loutEND;
-        }
-    }
+    void configure_window_checked(uint32_t __window, uint32_t __mask, const void *__data);
 
-    inline void map_window(uint32_t __window)
-    {
-        xcb_map_window(conn, __window);
-        xcb_flush(conn);
-    }
+    void map_window(uint32_t __window);
 
-    inline void unmap_window(uint32_t __window)
-    {
-        xcb_unmap_window(conn, __window);
-        xcb_flush(conn);
-    }
+    void unmap_window(uint32_t __window);
 
-    inline void raise_window(uint32_t __window)
-    {
-        XCB::configure_window
-        (
-            __window,
-            XCB_CONFIG_WINDOW_STACK_MODE,
-            (const uint32_t[])
-            {
-                XCB_STACK_MODE_ABOVE
-            }
-        );
-        xcb_flush(conn);
-    }
+    void raise_window(uint32_t __window);
 
-    inline void reparent_window(uint32_t __window, uint32_t __new_parent, int16_t __x, int16_t __y)
-    {
-        xcb_reparent_window
-        (
-            conn,
-            __window,
-            __new_parent,
-            __x,
-            __y
-        );
-        xcb_flush(conn);
-    }
+    void reparent_window(uint32_t __window, uint32_t __new_parent, int16_t __x, int16_t __y);
 
     /**
      * @brief avalible 'revert_to' options 
@@ -586,64 +501,20 @@ namespace XCB
      * @p XCB_INPUT_FOCUS_FOLLOW_KEYBOARD NOTE: This is experemental
      * 
      */
-    inline void set_focus_input(uint32_t __window, uint8_t __revert_to = XCB_INPUT_FOCUS_POINTER_ROOT)
-    {
-        xcb_set_input_focus
-        (
-            conn,
-            __revert_to,
-            __window,
-            XCB_CURRENT_TIME
-        );
-        xcb_flush(conn);
-    }
+    void set_focus_input(uint32_t __window, uint8_t __revert_to = XCB_INPUT_FOCUS_POINTER_ROOT);
 
-    inline void clear_area(uint32_t __window, uint16_t __width, uint16_t __height, int16_t __x = 0, int16_t __y = 0)
-    {
-        xcb_clear_area
-        (
-            conn,
-            0,
-            __window,
-            __x,
-            __y,
-            __width,
-            __height
-        );
-        xcb_flush(conn);
-    }
+    void clear_area(uint32_t __window, uint16_t __width, uint16_t __height, int16_t __x = 0, int16_t __y = 0);
 
-    inline void open_font(uint32_t __font_id, const char *__font_name)
-    {
-        xcb_open_font
-        (
-            conn,
-            __font_id,
-            slen(__font_name),
-            __font_name
-        );
-        xcb_flush(conn);
-    }
+    void open_font(uint32_t __font_id, const char *__font_name);
 
-    inline uint32_t open_and_get_font_id(const char *__font_name)
-    {
-        uint32_t font_id = XCB::gen_Xid();
-        XCB::open_font(font_id, __font_name);
-        return font_id;
-    }
+    uint32_t open_and_get_font_id(const char *__font_name);
 
-    inline void change_back_pixel(uint32_t __window, uint32_t __pixel)
-    {
-        XCB::change_window_attributes(__window, XCB_CW_BACK_PIXEL, (const uint32_t[]){ __pixel });
-    }
+    void change_back_pixel(uint32_t __window, uint32_t __pixel);
 
-    inline void apply_ev_mask(uint32_t __window, const uint32_t *__mask)
-    {
-        XCB::change_window_attributes(__window, XCB_CW_EVENT_MASK, __mask);
-        XCB::flush();
-    }
+    void apply_ev_mask(uint32_t __window, const uint32_t *__mask);
 
-    inline void create_window(
+    void create_window
+    (
         uint32_t    __window,
         uint32_t    __parent,
         int16_t     __x,
@@ -655,114 +526,76 @@ namespace XCB
         uint16_t    ___class       = XCB_WINDOW_CLASS_INPUT_OUTPUT,
         uint32_t    __visual       = screen->root_visual,
         uint32_t    __value_mask   = 0,
-        const void *__value_list   = nullptr)
-    {
-        xcb_create_window
-        (
-            conn,
-            __depth,
-            __window,
-            __parent,
-            __x,
-            __y,
-            __width,
-            __height,
-            __border_width,
-            ___class,
-            __visual,
-            __value_mask,
-            __value_list
-        );
-        XCB::flush();
-    }
+        const void *__value_list   = nullptr
+    );
 
-    inline void create_gc(uint32_t __window, uint32_t __gc, uint32_t __mask, const void *__data)
-    {
-        xcb_create_gc
-        (
-            conn,
-            __gc,
-            __window,
-            __mask,
-            __data
-        );
-        XCB::flush();
-    }
+    void create_gc(uint32_t __window, uint32_t __gc, uint32_t __mask, const void *__data);
 
-    inline uint32_t create_graphics_exposure_gc(uint32_t __window)
-    {
-        uint32_t gc = XCB::gen_Xid();
-        XCB::create_gc
-        (
-            __window,
-            gc,
-            XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_GRAPHICS_EXPOSURES,
-            (const uint32_t[])
-            {
-                screen->black_pixel,
-                screen->white_pixel,
-                0
-            }
-        );
+    uint32_t create_graphics_exposure_gc(uint32_t __window);
 
-        return gc;
-    }
+    xcb_get_geometry_cookie_t get_geometry(uint32_t __window);
 
-    inline xcb_get_geometry_cookie_t get_geometry(uint32_t __window)
-    {
-        return xcb_get_geometry(conn, __window);
-    }
+    xcb_get_geometry_reply_t *get_geometry_reply(xcb_get_geometry_cookie_t __cookie);
 
-    inline xcb_get_geometry_reply_t *get_geometry_reply(xcb_get_geometry_cookie_t __cookie)
-    {
-        return xcb_get_geometry_reply(conn, __cookie, nullptr);
-    }
+    xcb_intern_atom_cookie_t intern_atom(bool __only_if_exists, const char *__name);
+
+    xcb_intern_atom_reply_t *intern_atom_reply(xcb_intern_atom_cookie_t __cookie);
 }
 
-class xcb {
-    /* xcb_connection_t *_conn; */
-    xcb_screen_t * _s;
-    xcb_generic_error_t* _err;
-    xcb_void_cookie_t _cookie;
+class xcb
+{
+    private:
+        xcb_screen_t * _s;
+        xcb_generic_error_t* _err;
+        xcb_void_cookie_t _cookie;
 
-    uint64_t _flags = 0xffffffffffffffff;
-    // vector<uint32_t> _xid_vec;
-    // void_err_t void_err;
+        uint64_t _flags = 0xffffffffffffffff;
 
-    void check_error();
+        void check_error();
 
-public:
-    bool is_flag_set(unsigned int __f);
-    void set_flag(unsigned int __f);
-    void clear_flag(unsigned int __f);
-    void toggle_flag(unsigned int __f);
+    public:
+        bool is_flag_set(unsigned int __f);
+        
+        void set_flag(unsigned int __f);
+        
+        void clear_flag(unsigned int __f);
+        
+        void toggle_flag(unsigned int __f);
+        
+        xcb_intern_atom_cookie_t intern_atom_cookie(const char *__name);
+        
+        xcb_atom_t get_atom(uint8_t __only_if_exists, const char *name);
+        
+        xcb_intern_atom_reply_t *intern_atom_reply(xcb_intern_atom_cookie_t __cookie);
+        
+        xcb_atom_t intern_atom(const char *__name);
+        
+        /* bool window_exists(uint32_t __w); */
+        
+        uint32_t gen_Xid();
+        
+        void window_stack(uint32_t __window1, uint32_t __window2, uint32_t __mode);
+        
+        inline bool check_req_err() { return ((_flags & (1ULL << X_REQ_ERROR)) != 0); }
+        
+        void mapW(uint32_t __w);
 
-    xcb_intern_atom_cookie_t intern_atom_cookie(const char *__name);
-    xcb_atom_t get_atom(uint8_t __only_if_exists, const char *name);
-    xcb_intern_atom_reply_t *intern_atom_reply(xcb_intern_atom_cookie_t __cookie);
-    xcb_atom_t intern_atom(const char *__name);
-    /* bool window_exists(uint32_t __w); */
-    uint32_t gen_Xid();
-    void window_stack(uint32_t __window1, uint32_t __window2, uint32_t __mode);
-    inline bool check_req_err() { return ((_flags & (1ULL << X_REQ_ERROR)) != 0); }
-    void mapW(uint32_t __w);
+        uint64_t &check_conn();
 
-    uint64_t &check_conn();
-    void create_w(uint32_t __pw, uint32_t __w, int16_t __x, int16_t __y,
-                    uint16_t __width, uint16_t __height);
+        void create_w(uint32_t __pw, uint32_t __w, int16_t __x, int16_t __y, uint16_t __width, uint16_t __height);
 
-    xcb_font_t get_font(const char *font_name);
-    uint32_t get_input_focus();
-    uint32_t get_input_focus_unchecked();
-    uint32_t window_exists(uint32_t w);
+        xcb_font_t get_font(const char *font_name);
+        uint32_t get_input_focus();
+        uint32_t get_input_focus_unchecked();
+        uint32_t window_exists(uint32_t w);
 
-    xcb(/* xcb_connection_t *__conn, */ xcb_screen_t *__s);
+        xcb(/* xcb_connection_t *__conn, */ xcb_screen_t *__s);
 };
 static class xcb *xcb(nullptr);
 
-inline class xcb *connect_to_server(xcb_connection_t *__conn, xcb_screen_t *__s)
+inline class xcb *connect_to_server(xcb_screen_t *__s)
 {
-    return new class xcb(/* __conn, */ __s);
+    return new class xcb(__s);
 }
 
 #endif/* XCB__HPP */
