@@ -2099,7 +2099,7 @@ class mxb
 };
 
 class pointer
-{
+{ 
     public:
     /* Methods   */
         int16_t x()
