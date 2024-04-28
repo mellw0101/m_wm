@@ -17,7 +17,7 @@ ARMV8_LDFLAGS =  ${LIBS}       	\
                  -std=c++20		\
 				 -DARMV8_BUILD
 
-FASTFLAGS = \dadad
+FASTFLAGS = \
 	-O3 					\
 	-march=native			\
 	-funroll-loops			\
