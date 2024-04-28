@@ -385,51 +385,51 @@ namespace // Tools
             }
         }
 
-        class __window_geo__
-        {
-            public:
-                // Use std::unique_ptr to manage the xcb_get_geometry_reply_t pointer
-                std::unique_ptr<xcb_get_geometry_reply_t, decltype(&free)> reply{nullptr, free};
+        // class __window_geo__
+        // {
+        //     public:
+        //         // Use std::unique_ptr to manage the xcb_get_geometry_reply_t pointer
+        //         std::unique_ptr<xcb_get_geometry_reply_t, decltype(&free)> reply{nullptr, free};
 
-                // Constructor that attempts to retrieve the window geometry
-                __window_geo__(uint32_t __window)
-                {
-                    xcb_get_geometry_cookie_t cookie = xcb_get_geometry(conn, __window);
-                    xcb_generic_error_t* error = nullptr;
-                    reply.reset(xcb_get_geometry_reply(conn, cookie, &error));
+        //         // Constructor that attempts to retrieve the window geometry
+        //         __window_geo__(uint32_t __window)
+        //         {
+        //             xcb_get_geometry_cookie_t cookie = xcb_get_geometry(conn, __window);
+        //             xcb_generic_error_t* error = nullptr;
+        //             reply.reset(xcb_get_geometry_reply(conn, cookie, &error));
                     
-                    // Handle potential errors
-                    if (error)
-                    {
-                        loutE << "Failed to get window geometry, XCB error code:" << error->error_code << loutEND;
-                        free(error);  // Remember to free the error
-                    }
+        //             // Handle potential errors
+        //             if (error)
+        //             {
+        //                 loutE << "Failed to get window geometry, XCB error code:" << error->error_code << loutEND;
+        //                 free(error);  // Remember to free the error
+        //             }
 
-                    if (!reply)
-                    {
-                        loutE << "Failed to get window geometry, reply is null." << loutEND;
-                    }
-                }
+        //             if (!reply)
+        //             {
+        //                 loutE << "Failed to get window geometry, reply is null." << loutEND;
+        //             }
+        //         }
 
-                // Deleted copy constructor and copy assignment operator to prevent copying
-                __window_geo__(const __window_geo__&) = delete;
-                __window_geo__& operator=(const __window_geo__&) = delete;
+        //         // Deleted copy constructor and copy assignment operator to prevent copying
+        //         __window_geo__(const __window_geo__&) = delete;
+        //         __window_geo__& operator=(const __window_geo__&) = delete;
 
-                // Default move constructor and move assignment operator
-                __window_geo__(__window_geo__&& other) noexcept = default;
-                __window_geo__& operator=(__window_geo__&& other) noexcept = default;
+        //         // Default move constructor and move assignment operator
+        //         __window_geo__(__window_geo__&& other) noexcept = default;
+        //         __window_geo__& operator=(__window_geo__&& other) noexcept = default;
 
-                // Public method to access the reply
-                xcb_get_geometry_reply_t* get() const
-                {
-                    return reply.get();
-                }
+        //         // Public method to access the reply
+        //         xcb_get_geometry_reply_t* get() const
+        //         {
+        //             return reply.get();
+        //         }
 
-                operator xcb_get_geometry_reply_t *() const
-                {
-                    return reply.get();
-                }
-        };
+        //         operator xcb_get_geometry_reply_t *() const
+        //         {
+        //             return reply.get();
+        //         }
+        // };
     }
 
     void pop_last_ss(stringstream & __ss)
