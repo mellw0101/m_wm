@@ -269,52 +269,261 @@ constexpr Type make_constexpr(Type value) { return value; }
 
 namespace // Tools
 {
-    constexpr const char * pointer_from_enum(CURSOR CURSOR)
+    constexpr const char *pointer_from_enum(CURSOR CURSOR)
     {
         switch (CURSOR)
         {
-            case CURSOR::arrow: return "arrow";
-            case CURSOR::hand1: return "hand1";
-            case CURSOR::hand2: return "hand2";
-            case CURSOR::watch: return "watch";
-            case CURSOR::xterm: return "xterm";
-            case CURSOR::cross: return "cross";
-            case CURSOR::left_ptr: return "left_ptr";
-            case CURSOR::right_ptr: return "right_ptr";
-            case CURSOR::center_ptr: return "center_ptr";
-            case CURSOR::sb_v_double_arrow: return "sb_v_double_arrow";
-            case CURSOR::sb_h_double_arrow: return "sb_h_double_arrow";
-            case CURSOR::fleur: return "fleur";
-            case CURSOR::question_arrow: return "question_arrow";
-            case CURSOR::pirate: return "pirate";
-            case CURSOR::coffee_mug: return "coffee_mug";
-            case CURSOR::umbrella: return "umbrella";
-            case CURSOR::circle: return "circle";
-            case CURSOR::xsb_left_arrow: return "xsb_left_arrow";
-            case CURSOR::xsb_right_arrow: return "xsb_right_arrow";
-            case CURSOR::xsb_up_arrow: return "xsb_up_arrow";
-            case CURSOR::xsb_down_arrow: return "xsb_down_arrow";
-            case CURSOR::top_left_corner: return "top_left_corner";
-            case CURSOR::top_right_corner: return "top_right_corner";
-            case CURSOR::bottom_left_corner: return "bottom_left_corner";
-            case CURSOR::bottom_right_corner: return "bottom_right_corner";
-            case CURSOR::sb_left_arrow: return "sb_left_arrow";
-            case CURSOR::sb_right_arrow: return "sb_right_arrow";
-            case CURSOR::sb_up_arrow: return "sb_up_arrow";
-            case CURSOR::sb_down_arrow: return "sb_down_arrow";
-            case CURSOR::top_side: return "top_side";
-            case CURSOR::bottom_side: return "bottom_side";
-            case CURSOR::left_side: return "left_side";
-            case CURSOR::right_side: return "right_side";
-            case CURSOR::top_tee: return "top_tee";
-            case CURSOR::bottom_tee: return "bottom_tee";
-            case CURSOR::left_tee: return "left_tee";
-            case CURSOR::right_tee: return "right_tee";
-            case CURSOR::top_left_arrow: return "top_left_arrow";
-            case CURSOR::top_right_arrow: return "top_right_arrow";
-            case CURSOR::bottom_left_arrow: return "bottom_left_arrow";
-            case CURSOR::bottom_right_arrow: return "bottom_right_arrow";
-            default: return "left_ptr";
+            case CURSOR::arrow:
+                {
+                    return "arrow";
+                }
+                break;
+                
+            case CURSOR::hand1:
+                {
+                    return "hand1";
+                }
+                break;
+
+            case CURSOR::hand2:
+                {
+                    return "hand2";
+                }
+                break;
+
+            case CURSOR::watch:
+                {
+                    return "watch";
+                }
+                break;
+                
+            case CURSOR::xterm:
+                {
+                    return "xterm";
+                }
+                break;
+                
+            case CURSOR::cross:
+                {
+                    return "cross";
+                }
+                break;
+                
+            case CURSOR::left_ptr:
+                {
+                    return "left_ptr";
+                }
+                break;
+                
+            case CURSOR::right_ptr:
+                {
+                    return "right_ptr";
+                }
+                break;
+                
+            case CURSOR::center_ptr:
+                {
+                    return "center_ptr";
+                }
+                break;
+                
+            case CURSOR::sb_v_double_arrow:
+                {
+                    return "sb_v_double_arrow";
+                }
+                break;
+                
+            case CURSOR::sb_h_double_arrow:
+                {
+                    return "sb_h_double_arrow";
+                }
+                break;
+                
+            case CURSOR::fleur:
+                {
+                    return "fleur";
+                }
+                break;
+                
+            case CURSOR::question_arrow:
+                {
+                    return "question_arrow";
+                }
+                break;
+                
+            case CURSOR::pirate:
+                {
+                    return "pirate";
+                }
+                break;
+                
+            case CURSOR::coffee_mug:
+                {
+                    return "coffee_mug";
+                }
+                break;
+                
+            case CURSOR::umbrella:
+                {
+                    return "umbrella";
+                }
+                break;
+                
+            case CURSOR::circle:
+                {
+                    return "circle";
+                }
+                break;
+                
+            case CURSOR::xsb_left_arrow:
+                {
+                    return "xsb_left_arrow";
+                }
+                break;
+                
+            case CURSOR::xsb_right_arrow:
+                {
+                    return "xsb_right_arrow";
+                }
+                break;
+                
+            case CURSOR::xsb_up_arrow:
+                {
+                    return "xsb_up_arrow";
+                }
+                break;
+                
+            case CURSOR::xsb_down_arrow:
+                {
+                    return "xsb_down_arrow";
+                }
+                break;
+                
+            case CURSOR::top_left_corner:
+                {
+                    return "top_left_corner";
+                }
+                break;
+                
+            case CURSOR::top_right_corner:
+                {
+                    return "top_right_corner";
+                }
+                break;
+                
+            case CURSOR::bottom_left_corner:
+                {
+                    return "bottom_left_corner";
+                }
+                break;
+                
+            case CURSOR::bottom_right_corner:
+                {
+                    return "bottom_right_corner";
+                }
+                break;
+                
+            case CURSOR::sb_left_arrow:
+                {
+                    return "sb_left_arrow";
+                }
+                break;
+                
+            case CURSOR::sb_right_arrow:
+                {
+                    return "sb_right_arrow";
+                }
+                break;
+                
+            case CURSOR::sb_up_arrow:
+                {
+                    return "sb_up_arrow";
+                }
+                break;
+                
+            case CURSOR::sb_down_arrow:
+                {
+                    return "sb_down_arrow";
+                }
+                break;
+                
+            case CURSOR::top_side:
+                {
+                    return "top_side";
+                }
+                break;
+                
+            case CURSOR::bottom_side:
+                {
+                    return "bottom_side";
+                }
+                break;
+                
+            case CURSOR::left_side:
+                {
+                    return "left_side";
+                }
+                break;
+                
+            case CURSOR::right_side:
+                {
+                    return "right_side";
+                }
+                break;
+                
+            case CURSOR::top_tee:
+                {
+                    return "top_tee";
+                }
+                break;
+                
+            case CURSOR::bottom_tee:
+                {
+                    return "bottom_tee";
+                }
+                break;
+                
+            case CURSOR::left_tee:
+                {
+                    return "left_tee";
+                }
+                break;
+                
+            case CURSOR::right_tee:
+                {
+                    return "right_tee";
+                }
+                break;
+                
+            case CURSOR::top_left_arrow:
+                {
+                    return "top_left_arrow";
+                }
+                break;
+                
+            case CURSOR::top_right_arrow:
+                {
+                    return "top_right_arrow";
+                }
+                break;
+                
+            case CURSOR::bottom_left_arrow:
+                {
+                    return "bottom_left_arrow";
+                }
+                break;
+                
+            case CURSOR::bottom_right_arrow:
+                {
+                    return "bottom_right_arrow";
+                }
+                break;
+                
+            default:
+                {
+                    return "left_ptr";
+                }
+                break;
         }
     }
 
@@ -331,7 +540,7 @@ namespace // Tools
      *
      * @return The username as a const reference to std::string.
      */
-    const string& get_user_name()
+    const string &get_user_name()
     {
         static const string username = []() -> string
         {
@@ -340,7 +549,7 @@ namespace // Tools
             {
                 name = getenv("LOGNAME");
             }
-        
+
             return name ? name : "unknown";
         }();
 
@@ -354,7 +563,7 @@ namespace // Tools
           @brief Flushes any X server requests in que and checks for errors 
          
          */
-        void flush_x(const char *__calling_function, uint32_t __window = 0)
+        void flush_x(const char*__calling_function, uint32_t __window = 0)
         {
             AutoTimer t(__func__);
 
@@ -371,7 +580,7 @@ namespace // Tools
         }
         #define FLUSH_X()    flush_x(__func__)
         #define FLUSH_XWin() flush_x(__func__, _window)
-        #define FlushX_Win( __window ) do { flush_x( __func__, __window ); } while(0)
+        #define FlushX_Win(__window) do { flush_x(__func__, __window); } while (0)
 
         void check_xcb_void_cookie(xcb_void_cookie_t cookie, const char *__calling_function)
         {
@@ -432,7 +641,7 @@ namespace // Tools
         // };
     }
 
-    void pop_last_ss(stringstream & __ss)
+    void pop_last_ss(stringstream &__ss)
     {
         if (__ss.str().length() > 0)
         {
@@ -444,7 +653,7 @@ namespace // Tools
     }
 
     template<typename Type>
-    bool remove_element_from_vec(vector<Type>& vec, size_t index)
+    bool remove_element_from_vec(vector<Type> &vec, size_t index)
     {
         AutoTimer t(__func__);
         if (index < vec.size())
@@ -1097,7 +1306,7 @@ namespace XCB
 ****************************************/
 class __ev_sigs
 {
-    /* Defines */
+    /* Defines   */
         #define ConnEvSig(__w, __sig, __cb) \
         do { \
             ev_sigs->connect(__w, __sig, [this](const vector<uint32_t> &ev) -> void { __cb }); \
@@ -1107,7 +1316,7 @@ class __ev_sigs
     /* Variabels */
         umap<uint32_t, umap<int, function<void(vector<uint32_t>)>>> _data;
 
-    /* Methods */
+    /* Methods   */
         template<typename Callback>
         void connect(uint32_t __w, uint8_t __sig, Callback &&__cb)
         {
@@ -1988,7 +2197,6 @@ class pointer
             // xcb_warp_pointer(conn, XCB_NONE, screen->root, 0, 0, 0, 0, x, y);
             ungrab();
         }
-
 };
 
 class __pointer__
