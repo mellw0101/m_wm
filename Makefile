@@ -1,5 +1,5 @@
 ARMV8_FASTFLAGS = -O2               \
-                  -march=armv8-a#da    \
+                  -march=armv8-a#    \
                   -mtune=-mtune=cortex-a53
 
 ARMV8_CFLAGS =   -std=c++20                     \
@@ -98,7 +98,15 @@ LDFLAGS = \
 # 	./tools/check_and_install.sh
 
 # conf:
-# 	sudo chmod u+x tools/configure.sh
+# 	sudo chmod u+x tools/config# Changes to be committed:
+#	modified:   o.files/main.o
+#	modified:   o.files/xcb.o
+#	modified:   src/main.cpp
+#	modified:   src/xcb.cpp
+#	modified:   src/xcb.hpp
+#	modified:   test
+#
+ure.sh
 # 	./tools/configure.sh
 
 # dist: clean
