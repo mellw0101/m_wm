@@ -1,53 +1,36 @@
-#include <cstdint>
-#include <xcb/xcb.h>
-#include <xcb/xproto.h>
+#include "window.h"
 
-#include "globals.h"
-#include "xcb.hpp"
-
-/*
-    #include "xcb.hpp"
-    #include "structs.hpp"
-*/
-
-class window_t
+window::operator uint32_t()
 {
-    private:
-        uint32_t _window = 0;
+    return _window;
+}
 
-    public:
-        operator uint32_t()
-        {
-            return _window;
-        }
+window::operator const uint32_t&() const
+{
+    return _window;
+}
 
-        operator const uint32_t&() const
-        {
-            return _window;
-        }
+void window::map()
+{
+    XCB::map_window(_window);
+}
 
-        void map()
-        {
-            XCB::map_window(_window);
-        }
+void window::unmap()
+{
+    XCB::unmap_window(_window);
+}
 
-        void unmap()
-        {
-            XCB::unmap_window(_window);
-        }
+void window::raise()
+{
+    XCB::raise_window(_window);
+}
 
-        void raise()
-        {
-            XCB::raise_window(_window);
-        }
+void window::change_attribute(uint32_t __mask, const void *__data)
+{
+    XCB::change_window_attributes(_window, __mask, __data);
+}
 
-        void change_attribute(uint32_t __mask, const void *__data)
-        {
-            XCB::change_window_attributes(_window, __mask, __data);
-        }
-
-        void change_attribute_checked(uint32_t __mask, const void *__data)
-        {
-            XCB::change_window_attributes_checked(_window, __mask, __data);
-        }
-};
+void window::change_attribute_checked(uint32_t __mask, const void *__data)
+{
+    XCB::change_window_attributes_checked(_window, __mask, __data);
+}

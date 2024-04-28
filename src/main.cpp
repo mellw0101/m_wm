@@ -90,9 +90,10 @@ Logger logger;
 #include "tools.hpp"
 #include "prof.hpp"
 #include "color.hpp"
-#include "pty.h"
+#include "signal.h"
 
 /*
+#include "pty.h"
 #include "thread.hpp"
 #include <queue>
 #include <numeric>
@@ -1160,54 +1161,54 @@ namespace
             }
     };
 
-    class __window_client_map__
-    {
-        public:
-            umap<uint32_t, client *> _data;
+    // class __window_client_map__
+    // {
+    //     public:
+    //         umap<uint32_t, client *> _data;
 
-            void connect(uint32_t __window, client *__c)
-            {
-                _data[__window] = __c;
-            }
+    //         void connect(uint32_t __window, client *__c)
+    //         {
+    //             _data[__window] = __c;
+    //         }
 
-            /**
+    //         /**
 
-              @brief @returns @p client from uint32_t
+    //           @brief @returns @p client from uint32_t
 
-             */
-            client *retrive(uint32_t __window)
-            {
-                auto it = _data.find(__window);
-                if (it != _data.end())
-                {
-                    return it->second;
-                }
-                return nullptr;
+    //          */
+    //         client *retrive(uint32_t __window)
+    //         {
+    //             auto it = _data.find(__window);
+    //             if (it != _data.end())
+    //             {
+    //                 return it->second;
+    //             }
+    //             return nullptr;
 
-            }
+    //         }
 
-            void remove(uint32_t __window)
-            {
-                _data.erase(__window);
-            }
+    //         void remove(uint32_t __window)
+    //         {
+    //             _data.erase(__window);
+    //         }
 
-            void remove_by_value(client* __c)
-            {
-                for (auto it = _data.begin(); it != _data.end();)
-                {
-                    if (it->second == __c)
-                    {
-                        it = _data.erase(it); // Erase and move to next valid iterator
-                    }
-                    else
-                    {
-                        ++it; // Move to next item if current doesn't match
-                    }
-                }
+    //         void remove_by_value(client* __c)
+    //         {
+    //             for (auto it = _data.begin(); it != _data.end();)
+    //             {
+    //                 if (it->second == __c)
+    //                 {
+    //                     it = _data.erase(it); // Erase and move to next valid iterator
+    //                 }
+    //                 else
+    //                 {
+    //                     ++it; // Move to next item if current doesn't match
+    //                 }
+    //             }
 
-                loutI << "Deleted window from map, current size:" << _data.size() << '\n';
-            }
-    };
+    //             loutI << "Deleted window from map, current size:" << _data.size() << '\n';
+    //         }
+    // };
 }
 
 namespace XCB
@@ -1298,167 +1299,167 @@ namespace XCB
     }
 }
 
-/**
-*****************************************
-*****************************************
-**** @class @c __ev_sigs
-*****************************************
-****************************************/
-class __ev_sigs
-{
-    /* Defines   */
-        #define ConnEvSig(__w, __sig, __cb) \
-        do { \
-            ev_sigs->connect(__w, __sig, [this](const vector<uint32_t> &ev) -> void { __cb }); \
-        } while(false)
+// /**
+// *****************************************
+// *****************************************
+// **** @class @c __ev_sigs
+// *****************************************
+// ****************************************/
+// class __ev_sigs
+// {
+//     /* Defines   */
+//         #define ConnEvSig(__w, __sig, __cb) \
+//         do { \
+//             ev_sigs->connect(__w, __sig, [this](const vector<uint32_t> &ev) -> void { __cb }); \
+//         } while(false)
 
-    public:
-    /* Variabels */
-        umap<uint32_t, umap<int, function<void(vector<uint32_t>)>>> _data;
+//     public:
+//     /* Variabels */
+//         umap<uint32_t, umap<int, function<void(vector<uint32_t>)>>> _data;
 
-    /* Methods   */
-        template<typename Callback>
-        void connect(uint32_t __w, uint8_t __sig, Callback &&__cb)
-        {
-            _data[__w][__sig] = std::forward<Callback>(__cb);
-        }
+//     /* Methods   */
+//         template<typename Callback>
+//         void connect(uint32_t __w, uint8_t __sig, Callback &&__cb)
+//         {
+//             _data[__w][__sig] = std::forward<Callback>(__cb);
+//         }
 
-        void emit(uint32_t __w, uint8_t __sig, const vector<uint32_t> &__event_vec)
-        {
-            AutoTimer t("__ev_sigs::emit");
+//         void emit(uint32_t __w, uint8_t __sig, const vector<uint32_t> &__event_vec)
+//         {
+//             AutoTimer t("__ev_sigs::emit");
 
-            auto it = _data[__w].find(__sig);
-            if (it == _data[__w].end()) return;
-            it->second(__event_vec);
-        }
+//             auto it = _data[__w].find(__sig);
+//             if (it == _data[__w].end()) return;
+//             it->second(__event_vec);
+//         }
 
-        void remove(uint32_t __w)
-        {
-            auto it = _data.find(__w);
-            if (it == _data.end()) return;
-            _data.erase(it);
-        }
-};
-static __ev_sigs *ev_sigs(nullptr);
+//         void remove(uint32_t __w)
+//         {
+//             auto it = _data.find(__w);
+//             if (it == _data.end()) return;
+//             _data.erase(it);
+//         }
+// };
+// static __ev_sigs *ev_sigs(nullptr);
 
-/**
-*****************************************
-*****************************************
-**** @class @c __signal_manager__
-*****************************************
-****************************************/
-class __signal_manager__
-{
-    /* Defines   */
-        #define WS_conn signal_manager->_window_signals.conect
-        #define WS_emit(_window, _event) signal_manager->_window_signals.emit(_window, _event)
-        #define WS_emit_Win(_window, _event, _w2) signal_manager->_window_signals.emit(_window, _event, _w2)
-        #define WS_emit_root(_event, _w2) signal_manager->_window_signals.emit(screen->root, _event, _w2)
-        #define W_callback \
-            [this](uint32_t __window)
+// /**
+// *****************************************
+// *****************************************
+// **** @class @c __signal_manager__
+// *****************************************
+// ****************************************/
+// class __signal_manager__
+// {
+//     /* Defines   */
+//         #define WS_conn signal_manager->_window_signals.conect
+//         #define WS_emit(_window, _event) signal_manager->_window_signals.emit(_window, _event)
+//         #define WS_emit_Win(_window, _event, _w2) signal_manager->_window_signals.emit(_window, _event, _w2)
+//         #define WS_emit_root(_event, _w2) signal_manager->_window_signals.emit(screen->root, _event, _w2)
+//         #define W_callback \
+//             [this](uint32_t __window)
 
-        #define CONN_Win(__window, __event, __callback) \
-            signal_manager->_window_signals.conect(this->__window, __event, W_callback {__callback})
+//         #define CONN_Win(__window, __event, __callback) \
+//             signal_manager->_window_signals.conect(this->__window, __event, W_callback {__callback})
 
-        #define CONN(__e, __cb, __w) \
-            signal_manager->_window_signals.conect(__w, __e, W_callback {__cb})
+//         #define CONN(__e, __cb, __w) \
+//             signal_manager->_window_signals.conect(__w, __e, W_callback {__cb})
 
-        #define ConnSig(__w, __e, __cb) \
-            signal_manager->_window_signals.conect(__w, __e, [this](uint32_t w) {__cb})
+//         #define ConnSig(__w, __e, __cb) \
+//             signal_manager->_window_signals.conect(__w, __e, [this](uint32_t w) {__cb})
 
-        #define SIG(__window, __callback, __event) \
-            signal_manager->_window_signals.conect(__window, __event, __callback)
+//         #define SIG(__window, __callback, __event) \
+//             signal_manager->_window_signals.conect(__window, __event, __callback)
 
-        #define CONN_root(__event, __callback) \
-            signal_manager->_window_signals.conect(screen->root, __event, __callback)
+//         #define CONN_root(__event, __callback) \
+//             signal_manager->_window_signals.conect(screen->root, __event, __callback)
 
-        #define CONN_Win2(window, __event, __ref, __callback) \
-            signal_manager->_window_signals.conect(this->window, __event, [ref](uint32_t __window)  __callback)
+//         #define CONN_Win2(window, __event, __ref, __callback) \
+//             signal_manager->_window_signals.conect(this->window, __event, [ref](uint32_t __window)  __callback)
 
-        #define CONNECT_window_client(__window, __c) signal_manager->_window_client_map.connect(__window, __c)
-        #define CWC(__window) CONNECT_window_client(this->__window, this)
+//         #define CONNECT_window_client(__window, __c) signal_manager->_window_client_map.connect(__window, __c)
+//         #define CWC(__window) CONNECT_window_client(this->__window, this)
 
-        #define C_SIG(__c, __callback, __sig) \
-            signal_manager->client_signals.connect(__c, __sig, [this](client *c) {__callback});
+//         #define C_SIG(__c, __callback, __sig) \
+//             signal_manager->client_signals.connect(__c, __sig, [this](client *c) {__callback});
 
-        #define C_RETRIVE(__window) \
-            signal_manager->_window_client_map.retrive(__window)
+//         #define C_RETRIVE(__window) \
+//             signal_manager->_window_client_map.retrive(__window)
 
-    private:
-    /* Variabels */
-        unordered_map<string, vector<function<void()>>> signals;
-        unordered_map<uint32_t, vector<pair<int, function<void()>>>> client_signal_map;
+//     private:
+//     /* Variabels */
+//         unordered_map<string, vector<function<void()>>> signals;
+//         unordered_map<uint32_t, vector<pair<int, function<void()>>>> client_signal_map;
 
-    public:
-    /* Variabels */
-        __window_signals__ _window_signals;
-        __window_client_map__ _window_client_map;
-        __c_func_arr__ client_arr;
+//     public:
+//     /* Variabels */
+//         __window_signals__ _window_signals;
+//         __window_client_map__ _window_client_map;
+//         __c_func_arr__ client_arr;
 
-    /* Methods   */
-        template<typename Callback>
-        void connect(const string &__signal_name, Callback &&callback) {
-            signals[__signal_name].emplace_back(std::forward<Callback>(callback));
+//     /* Methods   */
+//         template<typename Callback>
+//         void connect(const string &__signal_name, Callback &&callback) {
+//             signals[__signal_name].emplace_back(std::forward<Callback>(callback));
 
-        }/* Connect a slot to a signal  */
-        template<typename Callback>
-        void connect_window(uint32_t __window, const string &__function, Callback &&callback) {
-            signals[to_string(__window) + "__" + __function].emplace_back(std::forward<Callback>(callback));
+//         }/* Connect a slot to a signal  */
+//         template<typename Callback>
+//         void connect_window(uint32_t __window, const string &__function, Callback &&callback) {
+//             signals[to_string(__window) + "__" + __function].emplace_back(std::forward<Callback>(callback));
 
-        }/* Connect a slot to a signal */
-        template<typename Callback>
-        void connect_client(uint32_t __frame_window_id, int __client_signal, Callback &&callback) {
-            client_signal_map[__frame_window_id].emplace_back(__client_signal, std::forward<Callback>(callback));
+//         }/* Connect a slot to a signal */
+//         template<typename Callback>
+//         void connect_client(uint32_t __frame_window_id, int __client_signal, Callback &&callback) {
+//             client_signal_map[__frame_window_id].emplace_back(__client_signal, std::forward<Callback>(callback));
 
-        }/* Connect a slot to a signal */
-        void emit(const string &__signal_name) {
-            auto it = signals.find(__signal_name);
-            if (it != signals.end()) {
-                for (auto& slot : it->second) {
-                    slot();
-                }
+//         }/* Connect a slot to a signal */
+//         void emit(const string &__signal_name) {
+//             auto it = signals.find(__signal_name);
+//             if (it != signals.end()) {
+//                 for (auto& slot : it->second) {
+//                     slot();
+//                 }
 
-            }
+//             }
 
-        }/* Emit a signal, calling all connected slots */
-        void emit_window(uint32_t __window, const string &__function) {
-            auto it = signals.find(to_string(__window) + "__" + __function);
-            if (it != signals.end()) {
-                for (auto& slot : it->second) {
-                    slot();
+//         }/* Emit a signal, calling all connected slots */
+//         void emit_window(uint32_t __window, const string &__function) {
+//             auto it = signals.find(to_string(__window) + "__" + __function);
+//             if (it != signals.end()) {
+//                 for (auto& slot : it->second) {
+//                     slot();
 
-                }
+//                 }
 
-            }
+//             }
 
-        }/* Emit a signal, calling all connected slots */
-        void emit_client(uint32_t __frame_window_id, int __client_signal) {
-            auto it = client_signal_map.find(__frame_window_id);
-            if (it == client_signal_map.end()) {
-                loutE << "client could not be found frame_window_id:" << __frame_window_id << loutEND;
-                return;
+//         }/* Emit a signal, calling all connected slots */
+//         void emit_client(uint32_t __frame_window_id, int __client_signal) {
+//             auto it = client_signal_map.find(__frame_window_id);
+//             if (it == client_signal_map.end()) {
+//                 loutE << "client could not be found frame_window_id:" << __frame_window_id << loutEND;
+//                 return;
 
-            }            
-            for (const auto &pair : it->second) {
-                if (pair.first == __client_signal) {
-                    pair.second();
+//             }            
+//             for (const auto &pair : it->second) {
+//                 if (pair.first == __client_signal) {
+//                     pair.second();
 
-                }
+//                 }
 
-            }
+//             }
 
-        }
-        void remove_client(uint32_t __frame_window_id) {
-            client_signal_map.erase(__frame_window_id);
+//         }
+//         void remove_client(uint32_t __frame_window_id) {
+//             client_signal_map.erase(__frame_window_id);
 
-        }
-        void init() {
-            signals.reserve(40);
+//         }
+//         void init() {
+//             signals.reserve(40);
 
-        }
+//         }
 
-};
-static __signal_manager__ *signal_manager(nullptr);
+// };
+// static __signal_manager__ *signal_manager(nullptr);
 
 class __window_attr__
 {
@@ -7942,10 +7943,10 @@ class client
                 (height + TITLE_BAR_HEIGHT + (BORDER_SIZE * 2)),
                 DARK_GREY
             );
-            xcb_flush(conn);
+            XCB::flush();
             win.reparent(frame, BORDER_SIZE, (TITLE_BAR_HEIGHT + BORDER_SIZE));
             update();
-            xcb_flush(conn);
+            XCB::flush();
     
             ConnSig(win, XCB_FOCUS_IN,
                 win.ungrab_button({{L_MOUSE_BUTTON, NULL}});
@@ -8039,7 +8040,7 @@ class client
             );
 
             ConnSig(close_button, XCB_ENTER_NOTIFY,
-                close_button.change_border_color(WHITE);
+                close_button.change_border_color(RED);
                 XCB::flush();   
             );
 
@@ -8556,13 +8557,9 @@ class context_menu
                 XCB_EVENT_MASK_FOCUS_CHANGE | XCB_EVENT_MASK_ENTER_WINDOW | XCB_EVENT_MASK_LEAVE_WINDOW | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_POINTER_MOTION,
                 RAISE
             );
-            ConnSig
-            (
-                context_window,
-                L_MOUSE_BUTTON_EVENT,
-                {
-                    hide__();
-                }
+
+            ConnSig(context_window, L_MOUSE_BUTTON_EVENT,
+                hide__();
             );
         }
 

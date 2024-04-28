@@ -106,7 +106,6 @@ LDFLAGS = \
 #	modified:   src/xcb.hpp
 #	modified:   test
 #
-ure.sh
 # 	./tools/configure.sh
 
 # dist: clean
