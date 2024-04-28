@@ -1,5 +1,5 @@
 ARMV8_FASTFLAGS = -O2               \
-                  -march=armv8-a    \
+                  -march=armv8-a#da    \
                   -mtune=-mtune=cortex-a53
 
 ARMV8_CFLAGS =   -std=c++20                     \
