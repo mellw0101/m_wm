@@ -6192,7 +6192,7 @@ class window
                 void focus_input()
                 {
                     AutoTimer timer("window::focus_input");
-                    XCB::set_focus_input(_window);
+                    XCB::set_input_focus(_window);
                 }
 
             void make_window()
@@ -8582,13 +8582,7 @@ class Window_Manager
             {
                 AutoTimer t(__func__);
 
-                xcb_set_input_focus
-                (
-                    conn,
-                    XCB_NONE,
-                    screen->root,
-                    XCB_CURRENT_TIME
-                );
+                XCB::set_input_focus(screen->root, XCB_NONE);
                 xcb_flush(conn);
             }
 

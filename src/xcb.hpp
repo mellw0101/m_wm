@@ -501,7 +501,7 @@ namespace XCB
      * @p XCB_INPUT_FOCUS_FOLLOW_KEYBOARD NOTE: This is experemental
      * 
      */
-    void set_focus_input(uint32_t __window, uint8_t __revert_to = XCB_INPUT_FOCUS_POINTER_ROOT);
+    void set_input_focus(uint32_t __window, uint8_t __revert_to = XCB_INPUT_FOCUS_POINTER_ROOT);
 
     void clear_area(uint32_t __window, uint16_t __width, uint16_t __height, int16_t __x = 0, int16_t __y = 0);
 
