@@ -15910,7 +15910,7 @@ void setup_wm()
     
     ev_sigs = new __ev_sigs;
     NEW_CLASS(ddTerm,          DropDownTerm       ) { ddTerm->init(); }
-    NEW_CLASS(pty,             Pty                ) { pty->start(); }
+    // NEW_CLASS(pty,             Pty                ) { pty->start(); }
 }
 
 int main()
