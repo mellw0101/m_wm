@@ -1,5 +1,5 @@
-#ifndef EVENT__HPP
-#define EVENT__HPP
+/* EVENT_HPP */
+#pragma once
 
 #include <cstdint>
 #include <functional>
@@ -75,5 +75,3 @@ class __event__handler
             
         __event__handler(xcb_connection_t *conn) : ev(new xcb_generic_event_t) {}
 };
-
-#endif

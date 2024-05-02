@@ -6,7 +6,9 @@
 #include <cstdint>
 #include <xcb/xcb.h>
 #include <xcb/xproto.h>
+
 #include "prof.hpp"
+#include "color.hpp"
 
 namespace XCB
 {
@@ -20,31 +22,31 @@ namespace XCB
         xcb_flush(conn);
     }
     
-    void change_window_attributes(uint32_t __window, uint32_t __mask, const void *__data)
+    void change_window_attributes(uint32_t window, uint32_t mask, const void *data)
     {
         xcb_change_window_attributes
         (
             conn,
-            __window,
-            __mask,
-            __data
+            window,
+            mask,
+            data
         );
         xcb_flush(conn);
     }
 
-    void change_window_attributes_checked(uint32_t __window, uint32_t __mask, const void *__data)
+    void change_window_attributes_checked(uint32_t window, uint32_t mask, const void *data)
     {
         xcb_void_cookie_t cookie = xcb_change_window_attributes
         (
             conn,
-            __window,
-            __mask,
-            __data
+            window,
+            mask,
+            data
         );
         xcb_generic_error_t *error = xcb_request_check(conn, cookie);
         if (error != nullptr)
         {
-            loutE << WINDOW_ID_BY_INPUT(__window) << "error_code" << error->error_code << loutEND;
+            loutE << WINDOW_ID_BY_INPUT(window) << "error_code" << error->error_code << loutEND;
         }
         xcb_flush(conn);
     }
@@ -266,6 +268,21 @@ namespace XCB
     xcb_intern_atom_reply_t *intern_atom_reply(xcb_intern_atom_cookie_t __cookie)
     {
         return xcb_intern_atom_reply(conn, __cookie, nullptr);
+    }
+
+    void make_xcb_border(uint32_t window, int color)
+    {
+        xcb_change_window_attributes
+        (
+            conn,
+            window,
+            XCB_CW_BORDER_PIXEL,
+            (const uint32_t[1])
+            {
+                Color->get(color)
+            }
+        );
+        xcb_flush(conn);
     }
 }
 

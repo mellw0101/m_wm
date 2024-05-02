@@ -4149,9 +4149,7 @@ namespace // 'window' class Namespace
 
 /**
 *****************************************
-*****************************************
 **** @class @c window
-*****************************************
 ****************************************/
 class window
 {
@@ -5889,7 +5887,8 @@ class window
                 int len;
                 xcb_char2b_t *char2b_str = to_char2b(str, &len);
 
-                xcb_image_text_16(
+                xcb_image_text_16
+                (
                     conn,
                     len,
                     _window,
@@ -8315,9 +8314,7 @@ class Entry
 
 /**
 *****************************************
-*****************************************
 **** @class @c context_menu
-*****************************************
 ****************************************/
 class context_menu
 {
@@ -8430,9 +8427,7 @@ class context_menu
 
 /**
 *****************************************
-*****************************************
 **** @class @c Window_Manager
-*****************************************
 ****************************************/
 class Window_Manager
 {
@@ -13220,13 +13215,12 @@ class change_desktop
         vector<thread> animation_threads;
 
     /* Methods     */
-        vector<client *>
-        get_clients_on_desktop(const uint8_t &desktop)
+        vector<client *> get_clients_on_desktop(const uint8_t &desktop)
         {
-            vector<client *>(clients);
+            vector<client *> clients;
             for (client *const &c : wm->client_list)
             {
-                if (c == nullptr) continue;
+                if ( !c ) continue;
 
                 if (c->desktop == desktop && c != wm->focused_client)
                 {
@@ -13234,7 +13228,7 @@ class change_desktop
                 }
             }
 
-            if (wm->focused_client != nullptr && wm->focused_client->desktop == desktop)
+            if (wm->focused_client && wm->focused_client->desktop == desktop)
             {
                 clients.push_back(wm->focused_client);
             }
@@ -13242,10 +13236,9 @@ class change_desktop
             return clients;
         }
 
-        vector<client *>
-        get_clients_on_desktop_with_app(const uint8_t &desktop)
+        vector<client *> get_clients_on_desktop_with_app(const uint8_t &desktop)
         {
-            vector<client *>(clients);
+            vector<client *> clients;
             for (client *const &c : wm->client_list)
             {
                 if (c == nullptr) continue;
@@ -13259,8 +13252,7 @@ class change_desktop
             return clients;
         }
 
-        void
-        animate(vector<client *> clients, const DIRECTION &direction)
+        void animate(vector<client *> clients, const DIRECTION &direction)
         {
             switch (direction)
             {
@@ -13273,10 +13265,10 @@ class change_desktop
                             animation_threads.emplace_back(&change_desktop::anim_cli, this, c, c->x - screen->width_in_pixels);
                         }
                     }
-
+                 
                     break;
                 }
-
+                
                 case PREV:
                 {
                     for (client *const &c : clients)
@@ -13286,19 +13278,19 @@ class change_desktop
                             animation_threads.emplace_back(&change_desktop::anim_cli, this, c, c->x + screen->width_in_pixels);
                         }
                     }
-
+                 
                     break;
                 }
             }
         }
 
-        void
-        anim_cli(client *c, const int &endx)
+        void anim_cli(client *c, int endx)
         {
-            if (c == nullptr) return;
+            if ( !c ) return;
  
-            Mwm_Animator anim(c);
-            anim.animate_client_x(
+            Mwm_Animator anim( c );
+            anim.animate_client_x
+            (
                 c->x,
                 endx,
                 duration
@@ -13306,15 +13298,13 @@ class change_desktop
             c->update();
         }
 
-        void
-        thread_sleep(const double &milliseconds)
+        void thread_sleep(const double &milliseconds)
         {
             auto duration = chrono::duration<double, milli>(milliseconds);
             this_thread::sleep_for(duration);
         }
 
-        void
-        stopAnimations()
+        void stopAnimations()
         {
             stop_show_flag.store(true);
             stop_hide_flag.store(true);
@@ -13332,8 +13322,7 @@ class change_desktop
             }
         }
 
-        void
-        joinAndClearThreads()
+        void joinAndClearThreads()
         {
             for (thread &t : animation_threads)
             {
@@ -13375,7 +13364,8 @@ class resize_client
         }
 
     /* Subclasses  */
-        class no_border {
+        class no_border
+        {
             public:
             /* Constructor */
                 no_border(client * & c, const uint32_t & x, const uint32_t & y)
