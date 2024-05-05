@@ -3394,6 +3394,7 @@ class evH
                         signal_manager->_window_signals.emit(e->window, XCB_EXPOSE);
                         break;
                     }
+     
                     case XCB_BUTTON_PRESS:
                     {
                         AutoTimer t("XCB_BUTTON_PRESS");
@@ -3421,9 +3422,12 @@ class evH
                                 signal_manager->_window_signals.emit(e->event, R_MOUSE_BUTTON_EVENT);
                             }
                         }
+
                         buttonPressH(ev);
+
                         break;
                     }
+
                     case XCB_KEY_PRESS:
                     {
                         AutoTimer t("XCB_KEY_PRESS");
@@ -3434,9 +3438,12 @@ class evH
                         {
                             if ((c = C_RETRIVE(e->event)) != nullptr) C_EMIT(c, EWMH_MAXWIN_SIGNAL);
                         }
+
                         keyPressH(ev);
+
                         break;
                     }
+
                     case XCB_ENTER_NOTIFY:
                     {
                         AutoTimer t("XCB_ENTER_NOTIFY");
