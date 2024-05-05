@@ -878,71 +878,71 @@ typedef struct __client__data__t__
     {}    
 } client_data_t;
 
-// class __c_func_arr__ {
-//     /* Defines   */
-//         #define C_SIGNAL_WDATA(__cb, __sig) \
-//             signal_manager->client_arr.add_func_to_sig_wdata([this](client *__c, void *__data){__cb}, __sig)
+class __c_func_arr__ {
+    /* Defines   */
+        #define C_SIGNAL_WDATA(__cb, __sig) \
+            signal_manager->client_arr.add_func_to_sig_wdata([this](client *__c, void *__data){__cb}, __sig)
 
-//         #define C_SIGNAL(__cb, __sig) \
-//             signal_manager->client_arr.add_func_to_sig([this](client *__c){__cb}, __sig)
+        #define C_SIGNAL(__cb, __sig) \
+            signal_manager->client_arr.add_func_to_sig([this](client *__c){__cb}, __sig)
 
-//         #define C_EMIT(__c, __sig) \
-//             signal_manager->client_arr.send_c_sig(__c, __sig)
+        #define C_EMIT(__c, __sig) \
+            signal_manager->client_arr.send_c_sig(__c, __sig)
 
-//         #define C_EMIT_DATA(__c, __sig, __data) \
-//             signal_manager->client_arr.send_c_sig_w_data(__c, __sig, __data)
+        #define C_EMIT_DATA(__c, __sig, __data) \
+            signal_manager->client_arr.send_c_sig_w_data(__c, __sig, __data)
 
-//     /* Variabels */
-//         static constexpr uint8_t ERROR_STATE = make_T_MAX<uint8_t>();
+    /* Variabels */
+        static constexpr uint8_t ERROR_STATE = make_T_MAX<uint8_t>();
 
-//     /* Methods */
-//         constexpr uint8_t sig_to_index__(uint8_t __sig)
-//         {
-//             switch (__sig)
-//             {
-//                 case BUTTON_MAXWIN_PRESS:               return 0;
-//                 case KILL_SIGNAL:                       return 1;
-//                 case FOCUS_CLIENT:                      return 2;
-//                 case MOVE_CLIENT_MOUSE:                 return 3;
-//                 case TILE_LEFT:                         return 4;
-//                 case TILE_RIGHT:                        return 5;
-//                 case TILE_DOWN:                         return 6;
-//                 case TILE_UP:                           return 7;
-//                 case EWMH_MAXWIN_SIGNAL:                return 8;
-//                 case RESIZE_CLIENT_BORDER_LEFT:         return 9;
-//                 case RESIZE_CLIENT_BORDER_RIGHT:        return 10;
-//                 case RESIZE_CLIENT_BORDER_TOP:          return 11;
-//                 case RESIZE_CLIENT_BORDER_BOTTOM:       return 12;
-//                 case RESIZE_CLIENT_BORDER_TOP_LEFT:     return 13;
-//                 case RESIZE_CLIENT_BORDER_TOP_RIGHT:    return 14;
-//                 case RESIZE_CLIENT_BORDER_BOTTOM_RIGHT: return 15;
-//                 case RESIZE_CLIENT_BORDER_BOTTOM_LEFT:  return 16;
+    /* Methods */
+        constexpr uint8_t sig_to_index__(uint8_t __sig)
+        {
+            switch (__sig)
+            {
+                case BUTTON_MAXWIN_PRESS:               return 0;
+                case KILL_SIGNAL:                       return 1;
+                case FOCUS_CLIENT:                      return 2;
+                case MOVE_CLIENT_MOUSE:                 return 3;
+                case TILE_LEFT:                         return 4;
+                case TILE_RIGHT:                        return 5;
+                case TILE_DOWN:                         return 6;
+                case TILE_UP:                           return 7;
+                case EWMH_MAXWIN_SIGNAL:                return 8;
+                case RESIZE_CLIENT_BORDER_LEFT:         return 9;
+                case RESIZE_CLIENT_BORDER_RIGHT:        return 10;
+                case RESIZE_CLIENT_BORDER_TOP:          return 11;
+                case RESIZE_CLIENT_BORDER_BOTTOM:       return 12;
+                case RESIZE_CLIENT_BORDER_TOP_LEFT:     return 13;
+                case RESIZE_CLIENT_BORDER_TOP_RIGHT:    return 14;
+                case RESIZE_CLIENT_BORDER_BOTTOM_RIGHT: return 15;
+                case RESIZE_CLIENT_BORDER_BOTTOM_LEFT:  return 16;
 
-//                 default: return make_T_MAX<uint8_t>();
-//             }
-//         }
+                default: return make_T_MAX<uint8_t>();
+            }
+        }
 
-//     public:
-//     /* Variabels */
-//         FixedArray<function<void(client *c)>, 17> func;
+    public:
+    /* Variabels */
+        FixedArray<function<void(client *c)>, 17> func;
 
-//     /* Methods   */
-//         constexpr void send_c_sig(client *__c, int __sig)
-//         {
-//             uint8_t index = sig_to_index__(__sig);
-//             if (index == ERROR_STATE) return;
-//             func[index](__c);
-//         }
+    /* Methods   */
+        constexpr void send_c_sig(client *__c, int __sig)
+        {
+            uint8_t index = sig_to_index__(__sig);
+            if (index == ERROR_STATE) return;
+            func[index](__c);
+        }
 
-//         template<typename Callback>
-//         constexpr void add_func_to_sig(Callback &&__callback, uint8_t __sig)
-//         {
-//             uint8_t index = sig_to_index__(__sig);
-//             if (index == ERROR_STATE) return;
-//             func[index] = std::forward<function<void(client *)>>(__callback);
-//         }
+        template<typename Callback>
+        constexpr void add_func_to_sig(Callback &&__callback, uint8_t __sig)
+        {
+            uint8_t index = sig_to_index__(__sig);
+            if (index == ERROR_STATE) return;
+            func[index] = std::forward<function<void(client *)>>(__callback);
+        }
 
-// };
+};
 
 class __root_func_arr__ {
     /* Defines   */

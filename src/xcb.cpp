@@ -48,6 +48,7 @@ namespace XCB
         {
             loutE << WINDOW_ID_BY_INPUT(window) << "error_code" << error->error_code << loutEND;
         }
+
         xcb_flush(conn);
     }
 

@@ -90,9 +90,9 @@ Logger logger;
 #include "tools.hpp"
 #include "prof.hpp"
 #include "color.hpp"
-#include "signal.h"
 
 /*
+#include "signal.h"
 #include "pty.h"
 #include "thread.hpp"
 #include <queue>
@@ -667,6 +667,271 @@ namespace // Tools
     }
 
 }
+
+/****************************************
+**** @class @c __window_signals__
+****************************************/
+class __window_signals__
+{
+    public:
+        umap<uint32_t, umap<int, function<void(uint32_t)>>> _data;
+
+        template<typename Callback>
+        void conect(uint32_t __w, uint8_t __sig, Callback &&__cb)
+        {
+            _data[__w][__sig] = std::forward<Callback>(__cb);
+        }
+
+        void emit(uint32_t __w, uint8_t __sig)
+        {
+            AutoTimer t("__window_signals__:" + string(__func__) + ":1");
+        
+            auto it = _data[__w].find(__sig);
+            if (it != _data[__w].end())
+            {
+                it->second(__w);
+            }
+        }
+
+        void emit(uint32_t __w, uint8_t __sig, uint32_t __w2)
+        {
+            AutoTimer t("__window_signals__:" + string(__func__) + ":2");
+
+            auto it = _data[__w].find(__sig);
+            if (it != _data[__w].end())
+            {
+                it->second(__w2);
+            }
+        }
+
+        void remove(uint32_t __w)
+        {
+            auto it = _data.find(__w);
+            if (it == _data.end()) return;
+            _data.erase(it);
+        }
+};
+
+/****************************************
+**** @class @c __ev_sigs
+****************************************/
+class __ev_sigs
+{
+    /* Defines   */
+        #define ConnEvSig(__w, __sig, __cb) \
+        do { \
+            ev_sigs->connect(__w, __sig, [this](const vector<uint32_t> &ev) -> void { __cb }); \
+        } while(false)
+
+    public:
+    /* Variabels */
+        umap<uint32_t, umap<int, function<void(vector<uint32_t>)>>> _data;
+
+    /* Methods   */
+        template<typename Callback>
+        void connect(uint32_t __w, uint8_t __sig, Callback &&__cb)
+        {
+            _data[__w][__sig] = std::forward<Callback>(__cb);
+        }
+
+        void emit(uint32_t __w, uint8_t __sig, const vector<uint32_t> &__event_vec)
+        {
+            AutoTimer t("__ev_sigs::emit");
+
+            auto it = _data[__w].find(__sig);
+            if (it == _data[__w].end()) return;
+            it->second(__event_vec);
+        }
+
+        void remove(uint32_t __w)
+        {
+            auto it = _data.find(__w);
+            if (it == _data.end()) return;
+            _data.erase(it);
+        }
+};
+static __ev_sigs *ev_sigs(nullptr);
+
+
+class client;
+class __window_client_map__
+{
+    public:
+        umap<uint32_t, client *> _data;
+
+        void connect(uint32_t __window, client *__c)
+        {
+            _data[__window] = __c;
+        }
+
+        /**
+
+            @returns @class client from uint32_t
+
+            */
+        client *retrive(uint32_t __window)
+        {
+            auto it = _data.find(__window);
+            if (it != _data.end())
+            {
+                return it->second;
+            }
+            return nullptr;
+
+        }
+
+        void remove(uint32_t __window)
+        {
+            _data.erase(__window);
+        }
+
+        void remove_by_value(client* __c)
+        {
+            for (auto it = _data.begin(); it != _data.end();)
+            {
+                if (it->second == __c)
+                {
+                    it = _data.erase(it); // Erase and move to next valid iterator
+                }
+                else
+                {
+                    ++it; // Move to next item if current doesn't match
+                }
+            }
+
+            loutI << "Deleted window from map, current size:" << _data.size() << '\n';
+        }
+};
+
+/****************************************
+**** @class @c __signal_manager__
+****************************************/
+class __signal_manager__
+{
+    /* Defines   */
+        #define WS_conn signal_manager->_window_signals.conect
+        #define WS_emit(_window, _event) signal_manager->_window_signals.emit(_window, _event)
+        #define WS_emit_Win(_window, _event, _w2) signal_manager->_window_signals.emit(_window, _event, _w2)
+        #define WS_emit_root(_event, _w2) signal_manager->_window_signals.emit(screen->root, _event, _w2)
+        #define W_callback \
+            [this](uint32_t __window)
+
+        #define CONN_Win(__window, __event, __callback) \
+            signal_manager->_window_signals.conect(this->__window, __event, W_callback {__callback})
+
+        #define CONN(__e, __cb, __w) \
+            signal_manager->_window_signals.conect(__w, __e, W_callback {__cb})
+
+        #define ConnSig(__w, __e, __cb) \
+            signal_manager->_window_signals.conect(__w, __e, [this](uint32_t w) {__cb})
+
+        #define SIG(__window, __callback, __event) \
+            signal_manager->_window_signals.conect(__window, __event, __callback)
+
+        #define CONN_root(__event, __callback) \
+            signal_manager->_window_signals.conect(screen->root, __event, __callback)
+
+        #define CONN_Win2(window, __event, __ref, __callback) \
+            signal_manager->_window_signals.conect(this->window, __event, [ref](uint32_t __window)  __callback)
+
+        #define CONNECT_window_client(__window, __c) signal_manager->_window_client_map.connect(__window, __c)
+        #define CWC(__window) CONNECT_window_client(this->__window, this)
+
+        #define C_SIG(__c, __callback, __sig) \
+            signal_manager->client_signals.connect(__c, __sig, [this](client *c) {__callback});
+
+        #define C_RETRIVE(__window) \
+            signal_manager->_window_client_map.retrive(__window)
+
+    private:
+    /* Variabels */
+        unordered_map<string, vector<function<void()>>> signals;
+        unordered_map<uint32_t, vector<pair<int, function<void()>>>> client_signal_map;
+
+    public:
+    /* Variabels */
+        __window_signals__ _window_signals;
+        __window_client_map__ _window_client_map;
+        __c_func_arr__ client_arr;
+
+    /* Methods   */
+        /* Connect a slot to a signal  */
+        template<typename Callback>
+        void connect(const string &__signal_name, Callback &&callback)
+        {
+            signals[__signal_name].emplace_back(std::forward<Callback>(callback));
+        }
+
+        /* Connect a slot to a signal */
+        template<typename Callback>
+        void connect_window(uint32_t __window, const string &__function, Callback &&callback)
+        {
+            signals[to_string(__window) + "__" + __function].emplace_back(std::forward<Callback>(callback));
+        }
+
+        /* Connect a slot to a signal */
+        template<typename Callback>
+        void connect_client(uint32_t __frame_window_id, int __client_signal, Callback &&callback)
+        {
+            client_signal_map[__frame_window_id].emplace_back(__client_signal, std::forward<Callback>(callback));
+        }
+
+        /* Emit a signal, calling all connected slots */
+        void emit(const string &__signal_name)
+        {
+            auto it = signals.find(__signal_name);
+            if (it != signals.end())
+            {
+                for (auto& slot : it->second)
+                {
+                    slot();
+                }
+            }
+        }
+
+        /* Emit a signal, calling all connected slots */
+        void emit_window(uint32_t __window, const string &__function)
+        {
+            auto it = signals.find(to_string(__window) + "__" + __function);
+            if (it != signals.end())
+            {
+                for (auto& slot : it->second)
+                {
+                    slot();
+                }
+            }
+        }
+
+        void emit_client(uint32_t __frame_window_id, int __client_signal)
+        {
+            auto it = client_signal_map.find(__frame_window_id);
+            if (it == client_signal_map.end())
+            {
+                loutE << "client could not be found frame_window_id:" << __frame_window_id << loutEND;
+                return;
+            }            
+
+            for (const auto &pair : it->second)
+            {
+                if (pair.first == __client_signal)
+                {
+                    pair.second();
+                }
+            }
+        }
+
+        void remove_client(uint32_t __frame_window_id)
+        {
+            client_signal_map.erase(__frame_window_id);
+        }
+
+        void init()
+        {
+            signals.reserve(40);
+        }
+};
+static __signal_manager__ *signal_manager(nullptr);
+
 
 namespace
 {
@@ -1594,14 +1859,16 @@ class __net_logger__
 
 struct size_pos
 {
-    void save(const int & x, const int & y, const int & width, const int & height) {
+    void save(const int & x, const int & y, const int & width, const int & height)
+    {
         this->x = x;
         this->y = y;
         this->width = width;
         this->height = height;
-
-    } int16_t x, y; uint16_t width, height;
-
+    }
+    
+    int16_t x, y;
+    uint16_t width, height;
 };
 
 class mxb
@@ -2603,236 +2870,271 @@ class __pid_manager__
 
     /* Methods     */
         /* Pid Info    */
-            string pid_status__(pid_t __pid) {
+            string pid_status__(pid_t __pid)
+            {
                 string line_str = "/proc/" + to_string(__pid) + "/status";
                 ifstream file; file.open(line_str);
                 string var;
                 stringstream buffer;
-                while (getline(file, var)) {
+                while (getline(file, var))
+                {
                     buffer << var << '\n';
-
-                } string result; result = buffer.str();
+                }
+                
+                string result;
+                result = buffer.str();
                 
                 loutI << result << '\n';
                 file.close();
                 return string();
-
             }
-            string get_process_name_by_pid__(pid_t pid) {
+
+            string get_process_name_by_pid__(pid_t pid)
+            {
                 string path = "/proc/" + std::to_string(pid) + "/comm";
                 ifstream commFile(path);
                 string name;
 
-                if (commFile.good()) {
+                if (commFile.good())
+                {
                     getline(commFile, name);
                     return name;
-                
-                } else {
-                    return "Process not found";
-
                 }
-
+                else
+                {
+                    return "Process not found";
+                }
             }
-            string pid_cmd_line__(pid_t __pid) {
+            
+            string pid_cmd_line__(pid_t __pid)
+            {
                 string line_str = "/proc/" + to_string(__pid) + "/cmdline";
                 ifstream file;
                 file.open(line_str);
                 string var;
                 stringstream buffer;
-                while (getline(file, var)) {
+                while (getline(file, var))
+                {
                     buffer << var << '\n';
+                }
                 
-                } string result; result = buffer.str();
-
+                string result; result = buffer.str();
                 loutI << result << '\n';
+
                 string test = result;
                 ifstream iss(test);
                 string token;
 
                 vector<string> parts;
-                while (getline(iss, token, ' ')) {
+                while (getline(iss, token, ' '))
+                {
                     parts.push_back(token);
-
                 }
-                if (parts.size() == 1) {
+                
+                if (parts.size() == 1)
+                {
                     file.close();
                     return "mainPid";
-
                 }
-                file.close();
-                
-                return string();
 
+                file.close();
+                return string();
             }
-            string get_correct_process_name__(const string &__launchName) {
+            
+            string get_correct_process_name__(const string &__launchName)
+            {
                 DIR* dir;
                 struct dirent* ent;
                 string path;
                 string line;
 
                 vector<string> parts;
-                for (int i(0), start(0); i < __launchName.length(); ++i) {
-                    if (__launchName[i] == '-') {
+                for (int i(0), start(0); i < __launchName.length(); ++i)
+                {
+                    if (__launchName[i] == '-')
+                    {
                         string s = __launchName.substr(start, i - start);
                         parts.push_back(s);
                         start = i + 1;
-
                     }
-                    if (i == (__launchName.length() - 1)) {
+                    
+                    if (i == (__launchName.length() - 1))
+                    {
                         string s = __launchName.substr(start, i - start);
                         parts.push_back(s);
-
                     }
-
                 }
-                for (int i = 0; i < parts.size(); ++i) {
-                    if ((dir = opendir("/proc")) != NULL) {
-                        while ((ent = readdir(dir)) != NULL) {
-                            if (ent->d_type == DT_DIR) {
+            
+                for (int i = 0; i < parts.size(); ++i)
+                {
+                    if ((dir = opendir("/proc")) != NULL)
+                    {
+                        while ((ent = readdir(dir)) != NULL)
+                        {
+                            // Check if the directory is a PID
+                            if (ent->d_type == DT_DIR)
+                            {
                                 path = std::string("/proc/") + ent->d_name + "/comm";
-                                std::ifstream comm(path.c_str());
-                                if (comm.good()) {
+                                ifstream comm(path.c_str());
+                                if (comm.good())
+                                {
                                     getline(comm, line);
-                                    if (line == parts[i]) {
+                                    if (line == parts[i])
+                                    {
                                         return parts[i];
-
                                     }
-
                                 }
+                            }
+                        }
 
-                            }/* Check if the directory is a PID */
-
-                        } closedir(dir);
-
+                        closedir(dir);
                     }
+                }
 
-                } return string();
-
+                return string();
             }
-            bool is_process_running__(const pid_t __pid) {
+
+            bool is_process_running__(const pid_t __pid)
+            {
                 struct stat statBuf;
                 string procPath = "/proc/" + to_string(__pid);
                 return stat(procPath.c_str(), &statBuf) == 0;
             }
 
         /* Pid Killing */
-            bool send_signal__(const pid_t pid, int signal) {
+            bool send_signal__(const pid_t pid, int signal)
+            {
                 return kill(pid, signal) == 0;
-
             }
-            bool send_sigterm__(pid_t __pid, const string &__name) {
-                if (kill(__pid, SIGTERM) == -1) {
+
+            bool send_sigterm__(pid_t __pid, const string &__name)
+            {
+                if (kill(__pid, SIGTERM) == -1)
+                {
                     loutE << ERRNO_MSG("Error sending SIGTERM") << " Process " << __name << __pid << loutEND;
                     return false;
-
                 }
 
                 int status;
-                pid_t result = waitpid(__pid, &status, 0); // Wait for the process to change state
-                if (result == -1) {
+                pid_t result = waitpid(__pid, &status, 0);
+
+                // Wait for the process to change state
+                if (result == -1)
+                {
                     loutE << ERRNO_MSG("Error waiting for process") << " Process " << __name << __pid << loutEND;
                     return false;
-                    
                 } 
-                if (!is_process_running__(__pid))/* Check if the child exited normally */ {
+                    
+                /* Check if the child exited normally */
+                if (!is_process_running__(__pid))
+                {
                     loutI << "Process " << __name << __pid << " terminated successfully with exit status " << WEXITSTATUS(status) << loutEND;
                     return true;
-
-                } else {
+                }
+                else
+                {
                     loutI << "Process " << __name << __pid << " did not terminate successfully." << loutEND;
                     return false;
-
                 }
-
             }
-            void send_sigkill__(pid_t __pid, const string &__name) {
-                if (send_signal__(__pid, SIGKILL)) {
+
+            void send_sigkill__(pid_t __pid, const string &__name)
+            {
+                if (send_signal__(__pid, SIGKILL))
+                {
                     loutI << "SIGKILL signal sent to process " << __name << __pid << " for forceful termination." << loutEND;
 
-                } else {
-                    loutE << "Failed to send SIGKILL to process " << __name << __pid << loutEND;
-
                 }
-
+                else
+                {
+                    loutE << "Failed to send SIGKILL to process " << __name << __pid << loutEND;
+                }
             }
-            void kill_pid__(pid_t __pid, const string &__name) {
-                if (is_process_running__(__pid)) {
-                    if (!send_sigterm__(__pid, __name)) {
+
+            void kill_pid__(pid_t __pid, const string &__name)
+            {
+                if (is_process_running__(__pid))
+                {
+                    if (!send_sigterm__(__pid, __name))
+                    {
                         loutI << "Process " << __name << __pid << " still running forcefully killing" << loutEND;
                         send_sigkill__(__pid, __name);
-
                     }
-
                 }
-
             }
 
-        void check_vec__() {
-            for (int i = 0; i < _pid_vec.size(); ++i) {
-                if (!is_process_running__(_pid_vec[i].pid)) {
+        void check_vec__()
+        {
+            for (int i = 0; i < _pid_vec.size(); ++i)
+            {
+                if (!is_process_running__(_pid_vec[i].pid))
+                {
                     remove_element_from_vec(_pid_vec, i);
-
                 }
-
             }
-
         }
 
     public:
     /* Methods     */
-        void add_pid(pid_t __pid) {
+        void add_pid(pid_t __pid)
+        {
             _pid_vec.push_back({__pid, get_process_name_by_pid__(__pid)});
             check_vec__();
-
         }
-        void kill_all_pids() {
-            for (pid_data_t pid_data : _pid_vec) {
+
+        void kill_all_pids()
+        {
+            for (pid_data_t pid_data : _pid_vec)
+            {
                 if (pid_data.name == "code") continue;
                 kill_pid__(pid_data.pid, pid_data.name);
-
             }
-
         }
-        void check_pid(pid_t __pid) {
+
+        void check_pid(pid_t __pid)
+        {
             if (__pid == 0) return;
 
             bool found = false;
-            for (int i = 0; i < _pid_vec.size(); ++i) {
-                if (__pid == _pid_vec[i].pid) {
+            for (int i = 0; i < _pid_vec.size(); ++i)
+            {
+                if (__pid == _pid_vec[i].pid)
+                {
                     found = true;
                     break;
-
                 }
-
             }
-            if (!found) {
+
+            if (!found)
+            {
                 add_pid(__pid);
-
             }
-
         }
-        void remove_pid(pid_t __pid) {
-            for (int i = 0; i < _pid_vec.size(); ++i) {
-                if (_pid_vec[i].pid == __pid) {
+
+        void remove_pid(pid_t __pid)
+        {
+            for (int i = 0; i < _pid_vec.size(); ++i)
+            {
+                if (_pid_vec[i].pid == __pid)
+                {
                     remove_element_from_vec(_pid_vec, i);
-
                 }
+            }
+        }
 
+        void list_pids()
+        {
+            check_vec__();
+            for (int i = 0; i < _pid_vec.size(); ++i)
+            {
+                loutI << "pid" << _pid_vec[i].pid << " name: " << _pid_vec[i].name << '\n';
             }
 
-        }
-        void list_pids() {
-            check_vec__();
-            for (int i = 0; i < _pid_vec.size(); ++i) {
-                loutI << "pid" << _pid_vec[i].pid << " name: " << _pid_vec[i].name << '\n';
-
-            } loutI << "Total running pids" << _pid_vec.size() << loutEND;
-
+            loutI << "Total running pids" << _pid_vec.size() << loutEND;
         }
 
     /* Constructor */
         __pid_manager__() {}
-
 };
 static __pid_manager__ *pid_manager(nullptr);
 
@@ -3494,8 +3796,7 @@ class __event_handler__
             }
         }
         
-        constexpr uint8_t
-        char_to_keycode__(int8_t c) const
+        constexpr uint8_t char_to_keycode__(int8_t c) const
         {
             switch (c)
             {
@@ -3532,8 +3833,7 @@ class __event_handler__
             return (uint8_t)0;
         }
 
-        constexpr void
-        processEvent(xcb_generic_event_t* ev)
+        constexpr void processEvent(xcb_generic_event_t* ev)
         {
             uint8_t responseType = ev->response_type & ~0x80;
             switch (responseType)
@@ -3702,20 +4002,17 @@ class __event_handler__
             }
         }
         
-        void
-        end()
+        void end()
         {
             shouldContinue = false;
-
         }
         
         using CallbackId = int; template<typename Callback>
-        CallbackId
-        setEventCallback(uint8_t eventType, Callback&& callback) {
+        CallbackId setEventCallback(uint8_t eventType, Callback&& callback)
+        {
             CallbackId id = nextCallbackId++;
             eventCallbacks[eventType].emplace_back(id, std::forward<Callback>(callback));
             return id;
-
         }
 
         void
@@ -3752,25 +4049,23 @@ class __event_handler__
         }
         
         template<typename Callback>
-        void
-        set_button_press_callback(uint32_t __window, const uint16_t &__mask, const xcb_keycode_t &__key, Callback &&callback) {
-            setEventCallback(XCB_KEY_PRESS, [this, __window, callback, __key, __mask](Ev ev) {
+        void set_button_press_callback(uint32_t __window, const uint16_t &__mask, const xcb_keycode_t &__key, Callback &&callback)
+        {
+            setEventCallback(XCB_KEY_PRESS, [this, __window, callback, __key, __mask](Ev ev)
+            {
                 RE_CAST_EV(xcb_key_press_event_t);
                 if (e->event != __window) return;
-                if (e->detail == __key) {
-                    if (e->state == __mask) {
+                if (e->detail == __key)
+                {
+                    if (e->state == __mask)
+                    {
                         callback();
-
                     }
-
                 }
-
             });
-
         }
 
-        void
-        iter_and_log_map_size()
+        void iter_and_log_map_size()
         {
             uint16_t total_events = 0;
             for (const auto &pair : eventCallbacks)
@@ -4149,7 +4444,9 @@ namespace // 'window' class Namespace
 
 /**
 *****************************************
+*****************************************
 **** @class @c window
+*****************************************
 ****************************************/
 class window
 {
@@ -5887,8 +6184,7 @@ class window
                 int len;
                 xcb_char2b_t *char2b_str = to_char2b(str, &len);
 
-                xcb_image_text_16
-                (
+                xcb_image_text_16(
                     conn,
                     len,
                     _window,
@@ -8314,7 +8610,9 @@ class Entry
 
 /**
 *****************************************
+*****************************************
 **** @class @c context_menu
+*****************************************
 ****************************************/
 class context_menu
 {
@@ -8427,7 +8725,9 @@ class context_menu
 
 /**
 *****************************************
+*****************************************
 **** @class @c Window_Manager
+*****************************************
 ****************************************/
 class Window_Manager
 {
@@ -8806,17 +9106,19 @@ class Window_Manager
                         return edge::TOP;
                     }
 
+                    /* BOTTOM EDGE OF CLIENT */
                     if (((y >= bottom_border) && (y < bottom_border + prox))
-                    && ((x > left_border + prox) && (x < right_border - prox))) {
+                    && ((x > left_border + prox) && (x < right_border - prox)))
+                    {
                         return edge::BOTTOM_edge;
-
-                    } /* BOTTOM EDGE OF CLIENT */
+                    }
                     
+                    /* LEFT EDGE OF CLIENT */
                     if (((x > left_border) - prox && (x <= left_border))
-                    && ((y > top_border + prox) && (y < bottom_border - prox))) {
+                    && ((y > top_border + prox) && (y < bottom_border - prox)))
+                    {
                         return edge::LEFT;
-
-                    } /* LEFT EDGE OF CLIENT */
+                    }
                     
                     if (((x >= right_border) && (x < right_border + prox))
                     && ((y > top_border + prox) && (y < bottom_border - prox))) {
@@ -9097,7 +9399,8 @@ class Window_Manager
             
             bool setSubstructureRedirectMask__()
             {
-                xcb_void_cookie_t cookie = xcb_change_window_attributes_checked(
+                xcb_void_cookie_t cookie = xcb_change_window_attributes_checked
+                (
                     conn,
                     root,
                     XCB_CW_EVENT_MASK,
@@ -9116,8 +9419,8 @@ class Window_Manager
             
             void configure_root__()
             {
-                root.set_backround_color( DARK_GREY );
-                root.set_event_mask( ROOT_EVENT_MASK );
+                root.set_backround_color(DARK_GREY);
+                root.set_event_mask(ROOT_EVENT_MASK);
                 root.grab_keys(
                 {
                     { Q,       SHIFT  | ALT   },
@@ -12529,8 +12832,7 @@ class __dock__
             MIN
         } dock_anim_t;
 
-        void
-        anim_dock_menu(dock_anim_t __state)
+        void anim_dock_menu(dock_anim_t __state)
         {
             const int duration = 200;
 
@@ -12563,8 +12865,7 @@ class __dock__
             }
         }
 
-        void
-        create_window__()
+        void create_window__()
         {
             dock_menu.create_window(
                 screen->root,
@@ -12579,8 +12880,7 @@ class __dock__
             dock_search.init();
         }
 
-        void
-        show__(uint32_t __window)
+        void show__(uint32_t __window)
         {
             if (__window == dock_menu)
             {
@@ -12604,8 +12904,7 @@ class __dock__
             }
         }
 
-        void
-        hide__(uint32_t __window)
+        void hide__(uint32_t __window)
         {
             if (__window == dock_menu)
             {
@@ -13109,11 +13408,9 @@ class change_desktop
                 }
             }
 
-            /* mtx.lock(); */
             lock_guard<mutex> lock(mtx);
             thread_sleep(duration + 40);
             joinAndClearThreads();
-            /* mtx.unlock(); */
         }
 
         void change_with_app(const DIRECTION &direction)
@@ -13124,15 +13421,20 @@ class change_desktop
             {
                 case NEXT:
                 {
-                    if (wm->cur_d->desktop == wm->desktop_list.size()) return;
-                    if (wm->focused_client->desktop != wm->cur_d->desktop) return;
+                    if (wm->cur_d->desktop == wm->desktop_list.size()
+                    || wm->focused_client->desktop != wm->cur_d->desktop)
+                    {
+                        return;
+                    }
 
                     hide = get_clients_on_desktop_with_app(wm->cur_d->desktop);
                     show = get_clients_on_desktop_with_app(wm->cur_d->desktop + 1);
                     animate(show, NEXT);
                     animate(hide, NEXT);
-                    wm->cur_d->current_clients.erase(
-                        remove(
+                    wm->cur_d->current_clients.erase
+                    (
+                        remove
+                        (
                             wm->cur_d->current_clients.begin(),
                             wm->cur_d->current_clients.end(),
                             wm->focused_client
@@ -13155,8 +13457,10 @@ class change_desktop
                     show = get_clients_on_desktop_with_app(wm->cur_d->desktop - 1);
                     animate(show, PREV);
                     animate(hide, PREV);
-                    wm->cur_d->current_clients.erase(
-                        remove(
+                    wm->cur_d->current_clients.erase
+                    (
+                        remove
+                        (
                             wm->cur_d->current_clients.begin(),
                             wm->cur_d->current_clients.end(),
                             wm->focused_client
@@ -13195,16 +13499,12 @@ class change_desktop
             wm->cur_d = wm->desktop_list[n - 1];
             for (client *const &c : wm->cur_d->current_clients) 
             {
-                if (c != nullptr)
-                {
-                    c->map();
-                }
+                if (c != nullptr) c->map();
             }
         }
     
     private:
     /* Variabels   */
-        // xcb_connection_t(*connection);
         vector<client *> show;
         vector<client *> hide;
         thread show_thread;
@@ -13220,7 +13520,7 @@ class change_desktop
             vector<client *> clients;
             for (client *const &c : wm->client_list)
             {
-                if ( !c ) continue;
+                if (c == nullptr) continue;
 
                 if (c->desktop == desktop && c != wm->focused_client)
                 {
@@ -13228,7 +13528,7 @@ class change_desktop
                 }
             }
 
-            if (wm->focused_client && wm->focused_client->desktop == desktop)
+            if (wm->focused_client != nullptr && wm->focused_client->desktop == desktop)
             {
                 clients.push_back(wm->focused_client);
             }
@@ -13265,10 +13565,10 @@ class change_desktop
                             animation_threads.emplace_back(&change_desktop::anim_cli, this, c, c->x - screen->width_in_pixels);
                         }
                     }
-                 
+
                     break;
                 }
-                
+
                 case PREV:
                 {
                     for (client *const &c : clients)
@@ -13278,17 +13578,17 @@ class change_desktop
                             animation_threads.emplace_back(&change_desktop::anim_cli, this, c, c->x + screen->width_in_pixels);
                         }
                     }
-                 
+
                     break;
                 }
             }
         }
 
-        void anim_cli(client *c, int endx)
+        void anim_cli(client *c, const int &endx)
         {
-            if ( !c ) return;
+            if (c == nullptr) return;
  
-            Mwm_Animator anim( c );
+            Mwm_Animator anim(c);
             anim.animate_client_x
             (
                 c->x,
@@ -13354,13 +13654,14 @@ class resize_client
          * AND NOW WITH THE 'retard_int' I CAN CALL IT LIKE THIS 'resize_client(c, 0)'
          * 
          */
-        resize_client(client * & c , int retard_int) : c(c) {
+        resize_client(client * & c , int retard_int) : c(c)
+        {
             if (c->win.is_EWMH_fullscreen()) return;
+
             pointer.grab();
             pointer.teleport(c->x + c->width, c->y + c->height);
             run();
             pointer.ungrab();
-
         }
 
     /* Subclasses  */
@@ -13391,7 +13692,8 @@ class resize_client
                 const double frameDuration = 1000.0 / frameRate;
             
             /* Methods     */
-                constexpr void teleport_mouse(edge edge) {
+                constexpr void teleport_mouse(edge edge)
+                {
                     switch (edge)
                     {
                         case edge::TOP:
@@ -13449,7 +13751,8 @@ class resize_client
                     }
                 }
 
-                void resize_client(const uint32_t x, const uint32_t y, edge edge) {
+                void resize_client(const uint32_t x, const uint32_t y, edge edge)
+                {
                     switch(edge)
                     {
                         case edge::LEFT:
@@ -13499,14 +13802,16 @@ class resize_client
                             break;
                         }
 
-                        case edge::BOTTOM_RIGHT:{
+                        case edge::BOTTOM_RIGHT:
+                        {
                             c->width_height((x - c->x), (y - c->y));   
                             break;
                         }
                     }
                 }
 
-                void run(edge edge) {
+                void run(edge edge)
+                {
                     xcb_generic_event_t *ev;
                     bool shouldContinue = true;
                     while (shouldContinue)
@@ -13540,7 +13845,8 @@ class resize_client
                     }
                 }
 
-                bool isTimeToRender() {
+                bool isTimeToRender()
+                {
                     const auto &currentTime = chrono::high_resolution_clock::now();
                     const chrono::duration<double, milli> &elapsedTime = currentTime - lastUpdateTime;
 
@@ -14412,67 +14718,92 @@ class tile
          * @return false if the current tile position is not the specified tile position.
          *
          */
-        bool current_tile_pos(TILEPOS mode) {
-            switch (mode) {
-                case   TILEPOS::LEFT       :{
+        bool current_tile_pos(TILEPOS mode)
+        {
+            switch (mode)
+            {
+                case TILEPOS::LEFT:
+                {
                     if (c->x      == 0 
                     &&  c->y      == 0 
                     &&  c->width  == screen->width_in_pixels / 2 
-                    &&  c->height == screen->height_in_pixels) {
+                    &&  c->height == screen->height_in_pixels)
+                    {
                         return true;
+                    }
+                
+                    break;
+                }
 
-                    } break;
-
-                } case TILEPOS::RIGHT      :{
+                case TILEPOS::RIGHT:
+                {
                     if (c->x      == screen->width_in_pixels / 2 
                     &&  c->y      == 0 
                     &&  c->width  == screen->width_in_pixels / 2
-                    &&  c->height == screen->height_in_pixels) {
+                    &&  c->height == screen->height_in_pixels)
+                    {
                         return true;
-
-                    } break;
-
-                } case TILEPOS::LEFT_DOWN  :{
-                    if (c->x      == 0
-                    &&  c->y      == screen->height_in_pixels / 2
-                    &&  c->width  == screen->width_in_pixels  / 2
-                    &&  c->height == screen->height_in_pixels / 2) {
-                        return true;
-
-                    } break;
-
-                } case TILEPOS::RIGHT_DOWN :{
-                    if (c->x      == screen->width_in_pixels  / 2
-                    &&  c->y      == screen->height_in_pixels / 2
-                    &&  c->width  == screen->width_in_pixels  / 2
-                    &&  c->height == screen->height_in_pixels / 2) {
-                        return true;
-
-                    } break;
-
-                } case TILEPOS::LEFT_UP    :{
-                    if (c->x      == 0
-                    &&  c->y      == 0
-                    &&  c->width  == screen->width_in_pixels  / 2
-                    &&  c->height == screen->height_in_pixels / 2) {
-                        return true;
-
-                    } break;
-
-                } case TILEPOS::RIGHT_UP   :{
-                    if (c->x      == screen->width_in_pixels  / 2
-                    &&  c->y      == 0
-                    &&  c->width  == screen->width_in_pixels  / 2
-                    &&  c->height == screen->height_in_pixels / 2) {
-                        return true;
-
-                    } break;
-
+                    }
+                    
+                    break;
                 }
 
-            } return false; 
+                case TILEPOS::LEFT_DOWN:
+                {
+                    if (c->x      == 0
+                    &&  c->y      == screen->height_in_pixels / 2
+                    &&  c->width  == screen->width_in_pixels  / 2
+                    &&  c->height == screen->height_in_pixels / 2)
+                    {
+                        return true;
+                    }
 
+                    break;
+                }
+
+                case TILEPOS::RIGHT_DOWN:
+                {
+                    if (c->x      == screen->width_in_pixels  / 2
+                    &&  c->y      == screen->height_in_pixels / 2
+                    &&  c->width  == screen->width_in_pixels  / 2
+                    &&  c->height == screen->height_in_pixels / 2)
+                    {
+                        return true;
+                    }
+
+                    break;
+                }
+                
+                case TILEPOS::LEFT_UP:
+                {
+                    if (c->x      == 0
+                    &&  c->y      == 0
+                    &&  c->width  == screen->width_in_pixels  / 2
+                    &&  c->height == screen->height_in_pixels / 2)
+                    {
+                        return true;
+                    }
+
+                    break;
+                }
+
+                case TILEPOS::RIGHT_UP:
+                {
+                    if (c->x      == screen->width_in_pixels  / 2
+                    &&  c->y      == 0
+                    &&  c->width  == screen->width_in_pixels  / 2
+                    &&  c->height == screen->height_in_pixels / 2)
+                    {
+                        return true;
+                    }
+
+                    break;
+                }
+            }
+            
+            return false; 
         }
+
         /**
          *
          * @brief Sets the size and position of a window to a specific tile position.
@@ -14484,80 +14815,100 @@ class tile
          * @param sizepos The tile position to set.
          *
          */
-        void set_tile_sizepos(TILEPOS sizepos) {
-            switch (sizepos) {
-                case   TILEPOS::LEFT       : {
-                    animate(
+        void set_tile_sizepos(TILEPOS sizepos)
+        {
+            switch (sizepos)
+            {
+                case TILEPOS::LEFT:
+                {
+                    animate
+                    (
                         0,
                         0,
                         screen->width_in_pixels / 2,
                         screen->height_in_pixels
-
-                    ); return;
-
-                } case TILEPOS::RIGHT      : {
-                    animate(
+                    );
+                    break;
+                }
+                
+                case TILEPOS::RIGHT:
+                {
+                    animate
+                    (
                         screen->width_in_pixels / 2,
                         0,
                         screen->width_in_pixels / 2,
                         screen->height_in_pixels
-
-                    ); return;
-
-                } case TILEPOS::LEFT_DOWN  : {
-                    animate(
-                        0,
-                        screen->height_in_pixels / 2,
-                        screen->width_in_pixels / 2,
-                        screen->height_in_pixels / 2
-
-                    ); return;
-
-                } case TILEPOS::RIGHT_DOWN : {
-                    animate(
-                        screen->width_in_pixels / 2,
-                        screen->height_in_pixels / 2,
-                        screen->width_in_pixels / 2,
-                        screen->height_in_pixels / 2
-
-                    ); return;
-
-                } case TILEPOS::LEFT_UP    : {
-                    animate(
-                        0,
-                        0,
-                        screen->width_in_pixels / 2,
-                        screen->height_in_pixels / 2
-
-                    ); return;
-
-                } case TILEPOS::RIGHT_UP   : {
-                    animate(
-                        screen->width_in_pixels / 2,
-                        0,
-                        screen->width_in_pixels / 2,
-                        screen->height_in_pixels / 2
-
-                    ); return;
-                    
+                    );
+                    break;
                 }
 
-            }
+                case TILEPOS::LEFT_DOWN:
+                {
+                    animate
+                    (
+                        0,
+                        screen->height_in_pixels / 2,
+                        screen->width_in_pixels / 2,
+                        screen->height_in_pixels / 2
+                    );
+                    break;
+                }
+                
+                case TILEPOS::RIGHT_DOWN:
+                {
+                    animate
+                    (
+                        screen->width_in_pixels / 2,
+                        screen->height_in_pixels / 2,
+                        screen->width_in_pixels / 2,
+                        screen->height_in_pixels / 2
+                    );
+                    break;
+                }
 
+                case TILEPOS::LEFT_UP:
+                {
+                    animate
+                    (
+                        0,
+                        0,
+                        screen->width_in_pixels / 2,
+                        screen->height_in_pixels / 2
+                    );
+                    break;
+                }
+
+                case TILEPOS::RIGHT_UP:
+                {
+                    animate
+                    (
+                        screen->width_in_pixels / 2,
+                        0,
+                        screen->width_in_pixels / 2,
+                        screen->height_in_pixels / 2
+                    );
+                    break;
+                }
+            }
         }
-        void restore_og_tile_pos() {
-            animate(
+
+        void restore_og_tile_pos()
+        {
+            animate
+            (
                 c->tile_ogsize.x,
                 c->tile_ogsize.y,
                 c->tile_ogsize.width,
                 c->tile_ogsize.height
-
             );
-
         }
-        void animate(const int &end_x, const int &end_y, const int &end_width, const int &end_height) {
+
+        void animate(const int &end_x, const int &end_y, const int &end_width, const int &end_height)
+        {
             Mwm_Animator anim(c);
-            anim.animate_client(
+            anim.animate_client
+            (
                 c->x,
                 c->y, 
                 c->width, 
@@ -14567,9 +14918,8 @@ class tile
                 end_width, 
                 end_height, 
                 TILE_ANIMATION_DURATION
-
-            ); c->update();
-
+            );
+            c->update();
         }
 
     public:
@@ -14580,7 +14930,8 @@ class tile
             if (c == nullptr) return;
             if (c->is_EWMH_fullscreen()) return;
             
-            switch (tile) {
+            switch (tile)
+            {
                 case TILE::LEFT:
                 {
                     // IF 'CURRENTLT_TILED' TO 'LEFT'
@@ -14593,117 +14944,122 @@ class tile
                     // IF 'CURRENTLY_TILED' TO 'RIGHT', 'LEFT_DOWN' OR 'LEFT_UP'
                     if (current_tile_pos(TILEPOS::RIGHT)
                     ||  current_tile_pos(TILEPOS::LEFT_DOWN)
-                    ||  current_tile_pos(TILEPOS::LEFT_UP)) {
+                    ||  current_tile_pos(TILEPOS::LEFT_UP))
+                    {
                         set_tile_sizepos(TILEPOS::LEFT);
                         return;
-
                     }
 
                     // IF 'CURRENTLY_TILED' TO 'RIGHT_DOWN'
-                    if (current_tile_pos(TILEPOS::RIGHT_DOWN)) {
+                    if (current_tile_pos(TILEPOS::RIGHT_DOWN))
+                    {
                         set_tile_sizepos(TILEPOS::LEFT_DOWN);
                         return;
-
                     }
 
                     // IF 'CURRENTLY_TILED' TO 'RIGHT_UP'
-                    if (current_tile_pos(TILEPOS::RIGHT_UP)) {
+                    if (current_tile_pos(TILEPOS::RIGHT_UP))
+                    {
                         set_tile_sizepos(TILEPOS::LEFT_UP);
                         return;
-
                     }
 
                     c->save_tile_ogsize();
                     set_tile_sizepos(TILEPOS::LEFT);
-                    break;
 
-                } case TILE::RIGHT : {
+                    break;
+                }
+                
+                case TILE::RIGHT:
+                {
                     // IF 'CURRENTLY_TILED' TO 'RIGHT'
-                    if (current_tile_pos(TILEPOS::RIGHT)) {
+                    if (current_tile_pos(TILEPOS::RIGHT))
+                    {
                         restore_og_tile_pos();
                         return;
-
                     }
                     
                     // IF 'CURRENTLT_TILED' TO 'LEFT', 'RIGHT_DOWN' OR 'RIGHT_UP' 
                     if (current_tile_pos(TILEPOS::LEFT)
                     ||  current_tile_pos(TILEPOS::RIGHT_UP)
-                    ||  current_tile_pos(TILEPOS::RIGHT_DOWN)) {
+                    ||  current_tile_pos(TILEPOS::RIGHT_DOWN))
+                    {
                         set_tile_sizepos(TILEPOS::RIGHT);
                         return;
-
                     }
                     
                     // IF 'CURRENTLT_TILED' 'LEFT_DOWN'
-                    if (current_tile_pos(TILEPOS::LEFT_DOWN)) {
+                    if (current_tile_pos(TILEPOS::LEFT_DOWN))
+                    {
                         set_tile_sizepos(TILEPOS::RIGHT_DOWN);
                         return;
-
                     }
                     
                     // IF 'CURRENTLY_TILED' 'LEFT_UP'
-                    if (current_tile_pos(TILEPOS::LEFT_UP)) {
+                    if (current_tile_pos(TILEPOS::LEFT_UP))
+                    {
                         set_tile_sizepos(TILEPOS::RIGHT_UP);
                         return;
-
                     }
+
 
                     c->save_tile_ogsize();
                     set_tile_sizepos(TILEPOS::RIGHT);
+                    
                     break;
+                }
 
-                } case TILE::DOWN  : {
+                case TILE::DOWN:
+                {
                     // IF 'CURRENTLY_TILED' 'LEFT' OR 'LEFT_UP'
                     if (current_tile_pos(TILEPOS::LEFT)
-                    ||  current_tile_pos(TILEPOS::LEFT_UP)) {
+                    ||  current_tile_pos(TILEPOS::LEFT_UP))
+                    {
                         set_tile_sizepos(TILEPOS::LEFT_DOWN);
                         return;
-
                     }
 
                     // IF 'CURRENTLY_TILED' 'RIGHT' OR 'RIGHT_UP'
                     if (current_tile_pos(TILEPOS::RIGHT) 
-                    ||  current_tile_pos(TILEPOS::RIGHT_UP)) {
+                    ||  current_tile_pos(TILEPOS::RIGHT_UP))
+                    {
                         set_tile_sizepos(TILEPOS::RIGHT_DOWN);
                         return;
-
                     }
                     
                     // IF 'CURRENTLY_TILED' 'LEFT_DOWN' OR 'RIGHT_DOWN'
                     if (current_tile_pos(TILEPOS::LEFT_DOWN)
-                    ||  current_tile_pos(TILEPOS::RIGHT_DOWN)) {
+                    ||  current_tile_pos(TILEPOS::RIGHT_DOWN))
+                    {
                         restore_og_tile_pos();
                         return;
-
                     }
 
                     break;
+                }
 
-                } case TILE::UP    : {
+                case TILE::UP:
+                {
                     // IF 'CURRENTLY_TILED' 'LEFT'
                     if (current_tile_pos(TILEPOS::LEFT)
-                    ||  current_tile_pos(TILEPOS::LEFT_DOWN)) {
+                    ||  current_tile_pos(TILEPOS::LEFT_DOWN))
+                    {
                         set_tile_sizepos(TILEPOS::LEFT_UP);
                         return;
-
                     }
 
                     // IF 'CURRENTLY_TILED' 'RIGHT' OR RIGHT_DOWN
                     if (current_tile_pos(TILEPOS::RIGHT)
-                    ||  current_tile_pos(TILEPOS::RIGHT_DOWN)) {
+                    ||  current_tile_pos(TILEPOS::RIGHT_DOWN))
+                    {
                         set_tile_sizepos(TILEPOS::RIGHT_UP);
                         return;
-
                     }
 
                     break;
-
                 }
-
             }
-
         }
-
 };
 
 class Events
