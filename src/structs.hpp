@@ -944,7 +944,8 @@ class __c_func_arr__ {
 
 };
 
-class __root_func_arr__ {
+class __root_func_arr__
+{
     /* Defines   */
         #define ROOT_SIG(__cb, __sig) \
             signal_manager->client_arr.add_func_to_sig([this](client *__c){__cb}, __sig)
@@ -956,8 +957,10 @@ class __root_func_arr__ {
         static constexpr uint8_t ERROR_STATE = make_T_MAX<uint8_t>();
 
     /* Methods */
-        uint8_t sig_to_index__(uint8_t __sig) {
-            switch (__sig) {
+        uint8_t sig_to_index__(uint8_t __sig)
+        {
+            switch (__sig)
+            {
                 case BUTTON_MAXWIN_PRESS: return 0;
                 case KILL_SIGNAL:         return 1;
                 case FOCUS_CLIENT:        return 2;
@@ -970,9 +973,7 @@ class __root_func_arr__ {
                 case EWMH_MAXWIN_SIGNAL:  return 9;
 
                 default: return make_T_MAX<uint8_t>();
-
             }
-
         }
 
     public:
@@ -997,7 +998,9 @@ class __root_func_arr__ {
 
 };
 
-typedef enum {
+typedef enum
+{
+
     SET_EV_CALLBACK__RESIZE_NO_BORDER = 1,
     HIDE_DOCK                         = 2
 

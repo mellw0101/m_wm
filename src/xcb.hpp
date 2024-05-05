@@ -48,16 +48,16 @@ class AtomMonitor
         }
 
         // Fetch and store an atom by name
-        void fetchAndStoreAtom(const char* name) {
+        void fetchAndStoreAtom(const char* name)
+        {
             xcb_intern_atom_cookie_t cookie = xcb_intern_atom(conn, 0, slen(name), name);
             xcb_intern_atom_reply_t* reply = xcb_intern_atom_reply(conn, cookie, nullptr);
 
-            if (reply) {
+            if (reply)
+            {
                 *_atomPtr = reply->atom;
                 free(reply);
-
             }
-
         }
 
         // Access the atom value

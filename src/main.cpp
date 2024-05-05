@@ -1728,17 +1728,20 @@ class __file_system__
             return status;
 
         }
-        string accessor(accessor_t __folder, const string &__sub_path)  {
-            if (__folder == CONDIG_FOLDER) {
+
+        string accessor(accessor_t __folder, const string &__sub_path)
+        {
+            if (__folder == CONDIG_FOLDER)
+            {
                 return (config_folder + "/" + __sub_path);
-
-            } else if (__folder == ICON_FOLDER) {
+            }
+            else if (__folder == ICON_FOLDER)
+            {
                 return (icon_folder + "/" + __sub_path);
-
-            } return string();
-
+            }
+            
+            return string();
         }
-
 };
 static __file_system__ *file_system(nullptr);
 
