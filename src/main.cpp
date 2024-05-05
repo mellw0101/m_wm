@@ -8842,8 +8842,6 @@ class Window_Manager
                 context_menu->add_entry("quit",                 [this]() { quit(0); });
 
                 setup_events__();
-
-                loutI << "init DONE!!" << '\n';
             }
 
             void quit(int __status)
@@ -16039,6 +16037,7 @@ void setup_wm()
     ev_sigs = new __ev_sigs;
     NEW_CLASS(ddTerm,          DropDownTerm       ) { ddTerm->init(); }
     // NEW_CLASS(pty,             Pty                ) { pty->start(); }
+    loutI << "setup_wm DONE!!" << '\n';
 }
 
 int main()
