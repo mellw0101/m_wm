@@ -3375,11 +3375,12 @@ class evH
                 AutoTimer t("main_loop");
 
                 ev = xcb_wait_for_event(conn);
-                if ( !ev )
+                if (!ev)
                 {
                     loutE << "ev = nullptr";
                     continue;
                 }
+
                 uint8_t res = (ev->response_type & ~0x80);
                 AutoTimer t2("inner loop");
 
@@ -3529,6 +3530,7 @@ class evH
                         break;
                     }
                 }
+
                 free(ev);
             }
         }
@@ -4018,8 +4020,7 @@ class __event_handler__
             return id;
         }
 
-        void
-        removeEventCallback(uint8_t eventType, CallbackId id)
+        void removeEventCallback(uint8_t eventType, CallbackId id)
         {
             auto& callbacks = eventCallbacks[eventType];
             callbacks.erase(
@@ -4959,10 +4960,10 @@ class window
                     free(prop_reply);
                     return decorate;
 
-                } if (prop_reply) free(prop_reply);
+                }
+                if (prop_reply) free(prop_reply);
 
                 return true; // Default to decorating if we can't find or interpret the hints
-
             }
         
         /* Set           */
@@ -8841,6 +8842,8 @@ class Window_Manager
                 context_menu->add_entry("quit",                 [this]() { quit(0); });
 
                 setup_events__();
+
+                loutI << "init DONE!!" << '\n';
             }
 
             void quit(int __status)
@@ -9748,7 +9751,6 @@ class Window_Manager
                     signal_manager->emit("SET_EV_CALLBACK__RESIZE_NO_BORDER");
                 }
             }
-
 };
 static Window_Manager *wm(nullptr);
 
