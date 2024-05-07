@@ -16019,31 +16019,15 @@ void setup_wm()
     NEW_CLASS(pid_manager,     __pid_manager__    ) {}
     
     ev_sigs = new __ev_sigs;
-    NEW_CLASS(ddTerm,          DropDownTerm       ) { ddTerm->init(); }
-    loutI << "setup_wm DONE!!" << '\n';
+    // NEW_CLASS(ddTerm,          DropDownTerm       ) { ddTerm->init(); }
 }
 
 int main()
 {
     loutI << "\n\n          -- mwm starting --\n" << '\n';
-
-    /* function<void()> audio_thread = [ & ]()-> void
-    {
-        audio.init();
-        audio.run();
-
-    }; thread( audio_thread ).detach();
-
-    audio.list_sinks();
-
-    test tester;
-    tester.init(); */
-
     setup_wm();
-    event_handler->run();
-    
-    // ev_hand->main_loop();
-    xcb_disconnect(conn);
-    return 0;
+    ev_hand->main_loop();
+    xcb_disconnect(conn);    
 
+    return 0;
 }
