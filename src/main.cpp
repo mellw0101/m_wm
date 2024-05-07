@@ -3370,8 +3370,6 @@ class evH
         {
             key_codes.init();
 
-            loutE << "main loop reached!!" << '\n';
-
             while (true)
             {
                 AutoTimer t("main_loop");
@@ -3454,6 +3452,7 @@ class evH
                         signal_manager->_window_signals.emit(e->event, XCB_ENTER_NOTIFY);
                         break;
                     }
+                    
                     case XCB_LEAVE_NOTIFY:
                     {
                         AutoTimer t("XCB_LEAVE_NOTIFY");
@@ -3462,6 +3461,7 @@ class evH
                         signal_manager->_window_signals.emit(e->event, XCB_LEAVE_NOTIFY);
                         break;
                     }
+                    
                     case XCB_FOCUS_IN:
                     {
                         AutoTimer t("XCB_FOCUS_IN");
@@ -3471,6 +3471,7 @@ class evH
                         signal_manager->_window_signals.emit(screen->root, SET_FOCUSED_CLIENT, e->event);
                         break;
                     }
+                    
                     case XCB_FOCUS_OUT:
                     {
                         AutoTimer t("XCB_FOCUS_OUT");
@@ -3479,6 +3480,7 @@ class evH
                         signal_manager->_window_signals.emit(e->event, XCB_FOCUS_OUT);
                         break;
                     }
+                    
                     case XCB_MAP_REQUEST:
                     {
                         AutoTimer t("XCB_MAP_REQUEST");
@@ -3486,6 +3488,7 @@ class evH
                         signal_manager->_window_signals.emit(screen->root, XCB_MAP_REQUEST, e->window);
                         break;
                     }
+                    
                     case XCB_MAP_NOTIFY:
                     {
                         AutoTimer t("XCB_MAP_NOTIFY");
@@ -3494,26 +3497,7 @@ class evH
                         signal_manager->_window_signals.emit(screen->root, XCB_MAP_NOTIFY, e->event);
                         break;
                     }
-                    /* case XCB_CLIENT_MESSAGE:
-                    {
-                        AutoTimer t("XCB_CLIENT_MESSAGE");
-                        loutI << "XCB_CLIENT_MESSAGE was detected" << '\n';
-
-                        RE_CAST_EV(xcb_client_message_event_t);
-                        if (e->format == 32)
-                        {
-                            // xcb_atom_t atom = xcb->get_atom(0, "WM_DELETE_WINDOW");
-                            iAtomR p_reply(1, "WM_PROTOCOLS");
-                            iAtomR d_reply(0, "WM_DELETE_WINDOW");
-                            
-                            if (e->data.data32[0] == d_reply.Atom() && e->type == p_reply.Atom())
-                            {
-                                loutI << "emmiting sig" << '\n';
-                                signal_manager->_window_signals.emit(e->window, KILL_SIGNAL);
-                            }
-                        }
-                        break;
-                    } */
+                    
                     case XCB_DESTROY_NOTIFY:
                     {
                         AutoTimer t("XCB_DESTROY_NOTIFY");
@@ -3526,6 +3510,7 @@ class evH
                         }
                         break;
                     }
+                    
                     case XCB_PROPERTY_NOTIFY:
                     {
                         AutoTimer t("XCB_PROPERTY_NOTIFY");
@@ -16035,7 +16020,6 @@ void setup_wm()
     
     ev_sigs = new __ev_sigs;
     NEW_CLASS(ddTerm,          DropDownTerm       ) { ddTerm->init(); }
-    // NEW_CLASS(pty,             Pty                ) { pty->start(); }
     loutI << "setup_wm DONE!!" << '\n';
 }
 
@@ -16055,10 +16039,10 @@ int main()
     test tester;
     tester.init(); */
 
-    /* event_handler->run(); */
-    
     setup_wm();
-    ev_hand->main_loop();
+    event_handler->run();
+    
+    // ev_hand->main_loop();
     xcb_disconnect(conn);
     return 0;
 
