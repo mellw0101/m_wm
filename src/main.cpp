@@ -3219,7 +3219,7 @@ class __key_codes__
 {
     public:
     // constructor and destructor.
-        __key_codes__() 
+        __key_codes__()
         : keysyms(nullptr) {}
 
         ~__key_codes__()
