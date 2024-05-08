@@ -88,10 +88,10 @@ Logger logger;
 #include "structs.hpp"
 #include "defenitions.hpp"
 #include "tools.hpp"
-#include "prof.hpp"
 #include "color.hpp"
 
 /*
+#include "prof.hpp"
 #include "signal.h"
 #include "pty.h"
 #include "thread.hpp"
@@ -563,7 +563,7 @@ namespace // Tools
          */
         void flush_x(const char*__calling_function, uint32_t __window = 0)
         {
-            AutoTimer t(__func__);
+            // AutoTimer t(__func__);
 
             int err = xcb_flush(conn);
             if (err <= 0)
@@ -582,7 +582,7 @@ namespace // Tools
 
         void check_xcb_void_cookie(xcb_void_cookie_t cookie, const char *__calling_function)
         {
-            AutoTimer t(__func__);
+            // AutoTimer t(__func__);
 
             xcb_generic_error_t *error = xcb_request_check(conn, cookie);
             if (error)
@@ -653,7 +653,7 @@ namespace // Tools
     template<typename Type>
     bool remove_element_from_vec(vector<Type> &vec, size_t index)
     {
-        AutoTimer t(__func__);
+        // AutoTimer t(__func__);
         if (index < vec.size())
         {
             vec.erase(vec.begin() + index);
@@ -684,7 +684,7 @@ class __window_signals__
 
         void emit(uint32_t __w, uint8_t __sig)
         {
-            AutoTimer t("__window_signals__:" + string(__func__) + ":1");
+            // AutoTimer t("__window_signals__:" + string(__func__) + ":1");
         
             auto it = _data[__w].find(__sig);
             if (it != _data[__w].end())
@@ -695,7 +695,7 @@ class __window_signals__
 
         void emit(uint32_t __w, uint8_t __sig, uint32_t __w2)
         {
-            AutoTimer t("__window_signals__:" + string(__func__) + ":2");
+            // AutoTimer t("__window_signals__:" + string(__func__) + ":2");
 
             auto it = _data[__w].find(__sig);
             if (it != _data[__w].end())
@@ -736,7 +736,7 @@ class __ev_sigs
 
         void emit(uint32_t __w, uint8_t __sig, const vector<uint32_t> &__event_vec)
         {
-            AutoTimer t("__ev_sigs::emit");
+            // AutoTimer t("__ev_sigs::emit");
 
             auto it = _data[__w].find(__sig);
             if (it == _data[__w].end()) return;
@@ -3159,7 +3159,7 @@ class Launcher
         }
         int launch_child_process(const char *command)
         {
-            AutoTimer t(__func__);
+            // AutoTimer t(__func__);
 
             pid_t pid;
             posix_spawnattr_t attr;
@@ -3372,7 +3372,7 @@ class evH
 
             while (true)
             {
-                AutoTimer t("main_loop");
+                // AutoTimer t("main_loop");
 
                 ev = xcb_wait_for_event(conn);
                 if (!ev)
@@ -3382,13 +3382,13 @@ class evH
                 }
 
                 uint8_t res = (ev->response_type & ~0x80);
-                AutoTimer t2("inner loop");
+                // AutoTimer t2("inner loop");
 
                 switch (res)
                 {
                     case XCB_EXPOSE:
                     {
-                        AutoTimer t("XCB_EXPOSE");
+                        // AutoTimer t("XCB_EXPOSE");
 
                         RE_CAST_EV(xcb_expose_event_t);
                         signal_manager->_window_signals.emit(e->window, XCB_EXPOSE);
@@ -3397,7 +3397,7 @@ class evH
      
                     case XCB_BUTTON_PRESS:
                     {
-                        AutoTimer t("XCB_BUTTON_PRESS");
+                        // AutoTimer t("XCB_BUTTON_PRESS");
 
                         RE_CAST_EV(xcb_button_press_event_t);
                         if (e->detail == L_MOUSE_BUTTON)
@@ -3430,7 +3430,7 @@ class evH
 
                     case XCB_KEY_PRESS:
                     {
-                        AutoTimer t("XCB_KEY_PRESS");
+                        // AutoTimer t("XCB_KEY_PRESS");
 
                         RE_CAST_EV(xcb_key_press_event_t);
                         client *c = nullptr;
@@ -3446,7 +3446,7 @@ class evH
 
                     case XCB_ENTER_NOTIFY:
                     {
-                        AutoTimer t("XCB_ENTER_NOTIFY");
+                        // AutoTimer t("XCB_ENTER_NOTIFY");
 
                         RE_CAST_EV(xcb_enter_notify_event_t);
                         signal_manager->_window_signals.emit(e->event, XCB_ENTER_NOTIFY);
@@ -3455,7 +3455,7 @@ class evH
                     
                     case XCB_LEAVE_NOTIFY:
                     {
-                        AutoTimer t("XCB_LEAVE_NOTIFY");
+                        // AutoTimer t("XCB_LEAVE_NOTIFY");
 
                         RE_CAST_EV(xcb_leave_notify_event_t);
                         signal_manager->_window_signals.emit(e->event, XCB_LEAVE_NOTIFY);
@@ -3464,7 +3464,7 @@ class evH
                     
                     case XCB_FOCUS_IN:
                     {
-                        AutoTimer t("XCB_FOCUS_IN");
+                        // AutoTimer t("XCB_FOCUS_IN");
 
                         RE_CAST_EV(xcb_focus_in_event_t);
                         signal_manager->_window_signals.emit(e->event, XCB_FOCUS_IN);
@@ -3474,7 +3474,7 @@ class evH
                     
                     case XCB_FOCUS_OUT:
                     {
-                        AutoTimer t("XCB_FOCUS_OUT");
+                        // AutoTimer t("XCB_FOCUS_OUT");
                         
                         RE_CAST_EV(xcb_focus_out_event_t);
                         signal_manager->_window_signals.emit(e->event, XCB_FOCUS_OUT);
@@ -3483,7 +3483,7 @@ class evH
                     
                     case XCB_MAP_REQUEST:
                     {
-                        AutoTimer t("XCB_MAP_REQUEST");
+                        // AutoTimer t("XCB_MAP_REQUEST");
                         RE_CAST_EV(xcb_map_request_event_t);
                         signal_manager->_window_signals.emit(screen->root, XCB_MAP_REQUEST, e->window);
                         break;
@@ -3491,7 +3491,7 @@ class evH
                     
                     case XCB_MAP_NOTIFY:
                     {
-                        AutoTimer t("XCB_MAP_NOTIFY");
+                        // AutoTimer t("XCB_MAP_NOTIFY");
 
                         RE_CAST_EV(xcb_map_notify_event_t);
                         signal_manager->_window_signals.emit(screen->root, XCB_MAP_NOTIFY, e->event);
@@ -3500,7 +3500,7 @@ class evH
                     
                     case XCB_DESTROY_NOTIFY:
                     {
-                        AutoTimer t("XCB_DESTROY_NOTIFY");
+                        // AutoTimer t("XCB_DESTROY_NOTIFY");
 
                         RE_CAST_EV(xcb_destroy_notify_event_t); 
                         if (e->window == e->event)
@@ -3508,12 +3508,13 @@ class evH
                             signal_manager->_window_signals.emit(screen->root, XCB_DESTROY_NOTIFY, e->event);
                             xcb_flush(conn);
                         }
+
                         break;
                     }
                     
                     case XCB_PROPERTY_NOTIFY:
                     {
-                        AutoTimer t("XCB_PROPERTY_NOTIFY");
+                        // AutoTimer t("XCB_PROPERTY_NOTIFY");
 
                         RE_CAST_EV(xcb_property_notify_event_t);
                         if (e->atom == ewmh->_NET_WM_NAME)
@@ -3521,6 +3522,7 @@ class evH
                             signal_manager->_window_signals.emit(e->window, XCB_PROPERTY_NOTIFY);
                             xcb_flush(conn);
                         }
+
                         break;
                     }
                 }
@@ -3775,7 +3777,7 @@ class __event_handler__
 
             while (shouldContinue)
             {
-                AutoTimer timer("main loop");
+                // AutoTimer timer("main loop");
 
                 ev = xcb_wait_for_event(conn);
                 if (!ev) continue;
@@ -3785,7 +3787,7 @@ class __event_handler__
                 
                 if (it != eventCallbacks.end())
                 {
-                    AutoTimer timer_2("inner loop");
+                    // AutoTimer timer_2("inner loop");
                     for (const auto &pair : it->second)
                     {
                         pair.second(ev);
@@ -4456,7 +4458,6 @@ class window
         operator uint32_t()
         {
             return _window;
-
         }
     
         window& operator=(uint32_t new_window) // Overload the assignment operator for uint32_t
@@ -4478,7 +4479,7 @@ class window
                                 const void    *__border_data = nullptr,
                                 CURSOR   __cursor = CURSOR::arrow)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 /* _depth        = 0L; */
                 _parent       = __parent;
@@ -4571,25 +4572,25 @@ class window
         /* Main          */
             void raise()
             {
-                AutoTimer t("window::raise");
+                // AutoTimer t("window::raise");
                 XCB::raise_window(_window);
             }  
             
             void map()
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
                 XCB::map_window(_window);
             }
             
             void unmap()
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
                 XCB::unmap_window(_window);
             }
             
             void reparent(uint32_t __new_parent, int16_t __x, int16_t __y)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
                 XCB::reparent_window(_window, __new_parent, __x, __y);
             }          
              
@@ -4644,7 +4645,7 @@ class window
             
             void kill_test()
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 uint32_t w = this->_window;
                 iAtomR p_reply(1, "WM_PROTOCOLS");
@@ -4669,13 +4670,13 @@ class window
             
             void clear()
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
                 XCB::clear_area(_window, _width, _height);
             }
 
             int focus()
             {
-                AutoTimer timer("window::focus");
+                // AutoTimer timer("window::focus");
                 focus_input();
                 set_active_EWMH_window();
                 xcb_flush(conn);
@@ -4692,7 +4693,7 @@ class window
             {
                 if (__event_mask & XCB_EVENT_MASK_EXPOSURE)
                 {
-                    AutoTimer t("window:send_event:XCB_EVENT_MASK_EXPOSURE");
+                    // AutoTimer t("window:send_event:XCB_EVENT_MASK_EXPOSURE");
 
                     xcb_expose_event_t expose_event = {
                         .response_type = XCB_EXPOSE,
@@ -4716,7 +4717,7 @@ class window
 
                 if (__event_mask & XCB_EVENT_MASK_STRUCTURE_NOTIFY)
                 {
-                    AutoTimer t("window:send_event:XCB_EVENT_MASK_STRUCTURE_NOTIFY");
+                    // AutoTimer t("window:send_event:XCB_EVENT_MASK_STRUCTURE_NOTIFY");
 
                     const uint32_t *value_list =  reinterpret_cast<const uint32_t *>(__value_list);
 
@@ -4746,7 +4747,7 @@ class window
                 
                 if (__event_mask & KILL_WINDOW)
                 {
-                    AutoTimer t("window:send_event:KILL_WINDOW");
+                    // AutoTimer t("window:send_event:KILL_WINDOW");
 
                     const uint32_t *value_list = reinterpret_cast<const uint32_t *>(__value_list);
 
@@ -4772,7 +4773,7 @@ class window
             
             void update(uint32_t __x, uint32_t __y, uint32_t __width, uint32_t __height)
             {
-                AutoTimer t("window::update");
+                // AutoTimer t("window::update");
 
                 _x      = __x;
                 _y      = __y;
@@ -4783,7 +4784,7 @@ class window
         /* Check         */
             bool check_atom(xcb_atom_t __atom)
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
 
                 xcb_get_property_cookie_t cookie = xcb_ewmh_get_wm_state(ewmh, _window);
                 xcb_ewmh_get_atoms_reply_t reply;
@@ -4805,7 +4806,7 @@ class window
             /* Function to fetch and check the _MOTIF_WM_HINTS property */
             bool check_frameless_window_hint()
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
 
                 bool is_frameless = false;
                 xcb_atom_t property;
@@ -4834,7 +4835,7 @@ class window
 
             bool is_EWMH_fullscreen()
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
 
                 xcb_get_property_cookie_t cookie = xcb_ewmh_get_wm_state(ewmh, _window);
                 xcb_ewmh_get_atoms_reply_t wm_state;
@@ -4855,7 +4856,7 @@ class window
 
             bool is_active_EWMH_window()
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
 
                 uint32_t active_window = 0;
                 uint8_t err = xcb_ewmh_get_active_window_reply(/** TODO: check for unchecked foo */
@@ -4912,7 +4913,7 @@ class window
             
             bool is_mapped()
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
 
                 xcb_get_window_attributes_cookie_t cookie = xcb_get_window_attributes( conn, _window );
                 xcb_get_window_attributes_reply_t *reply = xcb_get_window_attributes_reply( conn, cookie, nullptr );
@@ -4963,7 +4964,7 @@ class window
         /* Set           */
             void set_active_EWMH_window()
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
 
                 xcb_void_cookie_t cookie = xcb_ewmh_set_active_window_checked
                 (
@@ -4977,7 +4978,7 @@ class window
 
             void set_EWMH_fullscreen_state()
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 xcb_change_property
                 (
@@ -4997,7 +4998,7 @@ class window
             void
             unset_EWMH_fullscreen_state()
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 xcb_change_property(
                     conn,
@@ -5141,7 +5142,7 @@ class window
 
                 void make_png_from_icon()
                 {
-                    AutoTimer t(__func__);
+                    // AutoTimer t(__func__);
 
                     if (fs::exists(PNG_HASH(get_icccm_class())))
                     {
@@ -5166,7 +5167,7 @@ class window
             /* icccm */
                 void get_override_redirect()
                 {
-                    AutoTimer t(__func__);
+                    // AutoTimer t(__func__);
 
                     xcb_get_window_attributes_reply_t *wa = xcb_get_window_attributes_reply(conn, xcb_get_window_attributes(conn, _window), NULL);
                     if ( !wa )
@@ -5199,7 +5200,8 @@ class window
                     }
                 }
 
-                void get_window_size_hints() {
+                void get_window_size_hints()
+                {
                     xcb_size_hints_t hints;
                     memset(&hints, 0, sizeof(xcb_size_hints_t)); // Initialize hints structure
 
@@ -5301,7 +5303,7 @@ class window
 
             uint32_t get_transient_for_window()
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
 
                 uint32_t t_for = 0; // Default to 0 (no parent)
                 xcb_get_property_cookie_t cookie = xcb_get_property(conn, 0, _window, XCB_ATOM_WM_TRANSIENT_FOR, XCB_ATOM_WINDOW, 0, sizeof(uint32_t));
@@ -5419,7 +5421,7 @@ class window
 
             string get_net_wm_name_by_req()
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 xcb_ewmh_get_utf8_strings_reply_t wm_name;
                 string windowName = "";
@@ -5540,7 +5542,7 @@ class window
 
             xcb_rectangle_t get_xcb_rectangle_t_by_req()
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 xcb_get_geometry_reply_t *g = xcb_get_geometry_reply(conn, xcb_get_geometry(conn, _window), nullptr);
                 if (g == nullptr) return (xcb_rectangle_t){0, 0, 0, 0};
@@ -5551,7 +5553,7 @@ class window
 
             xcb_rectangle_t get_xcb_rectangle_t_by_req_2()
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
                 xcb_rectangle_t rect{0, 0, 0, 0};
                 geo(&rect.x, &rect.y, &rect.width, &rect.height);
                 return rect;
@@ -5705,13 +5707,13 @@ class window
             
             void apply_event_mask(const uint32_t *__mask)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
                 XCB::apply_ev_mask(_window, __mask);
             }
             
             void set_pointer(CURSOR cursor_type)
             {
-                AutoTimer t("window:set_pointer");
+                // AutoTimer t("window:set_pointer");
 
                 xcb_cursor_context_t *ctx;
                 if (xcb_cursor_context_new(conn, screen, &ctx) < 0)
@@ -5777,7 +5779,7 @@ class window
 
                     void geo(int16_t *__x = nullptr, int16_t *__y = nullptr, uint16_t *__width = nullptr, uint16_t *__height = nullptr)
                     {
-                        AutoTimer timer(__func__);
+                        // AutoTimer timer(__func__);
 
                         xcb_get_geometry_cookie_t cookie = xcb_get_geometry_unchecked(conn, _window);
                         xcb_get_geometry_reply_t *reply = xcb_get_geometry_reply(conn, cookie, nullptr);
@@ -5920,7 +5922,7 @@ class window
         /* Backround     */
             void set_backround_color(int __color)
             {
-                AutoTimer t("window::set_backround_color");
+                // AutoTimer t("window::set_backround_color");
                 _color = __color;
                 change_back_pixel(Color->get(__color));
                 _font_gc_good = false;
@@ -5928,7 +5930,7 @@ class window
 
             void change_backround_color(int __color)
             {
-                AutoTimer t("window::change_backround_color");
+                // AutoTimer t("window::change_backround_color");
                 set_backround_color(__color);
                 clear();
                 xcb_flush(conn);
@@ -5948,7 +5950,7 @@ class window
             
             void set_backround_png(const char *imagePath)
             {
-                AutoTimer t("window:set_backround_png");
+                // AutoTimer t("window:set_backround_png");
 
                 Imlib_Image image = imlib_load_image(imagePath);
                 if (!image)
@@ -6072,7 +6074,7 @@ class window
             #define AUTO -16
             void draw(const string &__str, int __text_color = WHITE, int __backround_color = AUTO, int16_t __x = AUTO, int16_t __y = AUTO, const char *__font_name = DEFAULT_FONT)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 get_font(__font_name);
                 if (__backround_color == AUTO) __backround_color = _color;
@@ -6094,7 +6096,7 @@ class window
             
             void draw_text(const char *str , int text_color, int backround_color, const char *font_name, int16_t x, int16_t y)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 get_font(font_name);
                 create_font_gc(text_color, backround_color, font);
@@ -6112,7 +6114,7 @@ class window
             
             void draw_text_auto_color(const char *__str, int16_t __x, int16_t __y, int __text_color = WHITE, int __backround_color = 0, const char *__font_name = DEFAULT_FONT)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 if (_font_gc_good == false)
                 {
@@ -6149,7 +6151,7 @@ class window
              */
             void draw_acc(const char *__str, int __text_color = WHITE, int __backround_color = 0, const char *__font_name = DEFAULT_FONT)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 if (_font_gc_good == false)
                 {
@@ -6174,7 +6176,7 @@ class window
 
             void draw_text_16(const char *str, int text_color, int background_color, const char *font_name, int16_t x, int16_t y)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 get_font(font_name);
                 create_font_gc(text_color, background_color, font);
@@ -6197,7 +6199,7 @@ class window
 
             void draw_text_16_auto_color(const char *__str, int16_t __x, int16_t __y, int __text_color = WHITE, int __background_color = 0, const char *__font_name = DEFAULT_FONT)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 get_font(__font_name);
                 int bg_color;
@@ -6222,7 +6224,7 @@ class window
             
             void draw_acc_16(const char *__str, int __text_color = WHITE, int __background_color = 0, const char *__font_name = DEFAULT_FONT)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 if (_font_gc_good == false)
                 {
@@ -6383,7 +6385,7 @@ class window
         /* Buttons       */
             void grab_button(initializer_list<pair<uint8_t, uint16_t>> __bindings)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 for (const auto &pair : __bindings)
                 {
@@ -6405,7 +6407,7 @@ class window
 
             void ungrab_button(initializer_list<pair<uint8_t, uint16_t>> __bindings)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 for (const auto &pair : __bindings)
                 {
@@ -6421,7 +6423,7 @@ class window
 
             void update_with_geo_unchecked()
             {
-                AutoTimer t("window::update_with_geo_unchecked");
+                // AutoTimer t("window::update_with_geo_unchecked");
 
                 xcb_flush(conn);
                 geo(&_x, &_y, &_width, &_height);
@@ -6479,13 +6481,13 @@ class window
                  */
                 void focus_input()
                 {
-                    AutoTimer timer("window::focus_input");
+                    // AutoTimer timer("window::focus_input");
                     XCB::set_input_focus(_window);
                 }
 
             void make_window()
             {
-                AutoTimer t("window::make_window");
+                // AutoTimer t("window::make_window");
 
                 if ((_window = XCB::gen_Xid()) == U32_MAX)
                 {
@@ -6527,7 +6529,7 @@ class window
             /* Gc     */
                 void create_graphics_exposure_gc()
                 {
-                    AutoTimer t(__func__);
+                    // AutoTimer t(__func__);
                     
                     _gc = xcb_generate_id(conn);
                     xcb_create_gc
@@ -6548,7 +6550,7 @@ class window
 
                 void create_font_gc(int __text_color, int __backround_color, xcb_font_t __font)
                 {
-                    AutoTimer t(__func__);
+                    // AutoTimer t(__func__);
 
                     font_gc = XCB::gen_Xid();
                     XCB::create_gc
@@ -6571,7 +6573,7 @@ class window
             /* Pixmap */
                 void create_pixmap()
                 {
-                    AutoTimer t(__func__);
+                    // AutoTimer t(__func__);
 
                     pixmap = xcb_generate_id(conn);
                     xcb_create_pixmap
@@ -6589,7 +6591,7 @@ class window
             /* Png    */
                 void create_png_from_vector_bitmap(const char *file_name, const vector<vector<bool>> &bitmap)
                 {
-                    AutoTimer t(__func__);
+                    // AutoTimer t(__func__);
 
                     int width = bitmap[0].size();
                     int height = bitmap.size();
@@ -6708,21 +6710,21 @@ class window
         /* Get        */
             void get_font(const char *font_name)
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
                 font = XCB::open_and_get_font_id(font_name);
             }
         
         /* Background */
             void change_back_pixel(uint32_t __pixel)
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
                 XCB::change_back_pixel(_window, __pixel);
             }
 
         /* Borders    */
             void create_border_window(BORDER __border, int __color, uint32_t __x, uint32_t __y, uint32_t __width, uint32_t __height)
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
 
                 uint32_t window;
                 if ((window = XCB::gen_Xid()) == U32_MAX)
@@ -6771,7 +6773,7 @@ class window
             
             void make_border_window(int __border, uint32_t __size, int __color)
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 if (__border & UP   ) CREATE_UP_BORDER(__size, __color);
                 if (__border & DOWN ) CREATE_DOWN_BORDER(__size, __color);
@@ -7000,7 +7002,7 @@ class client
         /* Main      */
             void make_decorations()
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 make_frame();
                 set_icon_png();
@@ -7033,7 +7035,7 @@ class client
             
             void update()
             {
-                AutoTimer t("client:update");
+                // AutoTimer t("client:update");
 
                 x      = frame.x();
                 y      = frame.y();
@@ -7268,7 +7270,7 @@ class client
         /* Config    */
             void x_y(uint32_t __x, uint32_t __y)
             {
-                AutoTimer t("client::x_y");
+                // AutoTimer t("client::x_y");
 
                 const uint32_t newX = __x, newY = __y;
                 frame.conf_checked
@@ -7295,7 +7297,7 @@ class client
             void _x(int16_t __x)
             {
                 /* frame.x(x); */
-                AutoTimer t("client::_x");
+                // AutoTimer t("client::_x");
 
                 const uint32_t newX = __x;
                 xcb_configure_window_checked
@@ -7322,7 +7324,7 @@ class client
 
             void _y(int16_t __y)
             {
-                AutoTimer t("client::_y");
+                // AutoTimer t("client::_y");
 
                 const uint32_t newY = __y;
                 XCB::configure_window_checked
@@ -7670,7 +7672,7 @@ class client
 
             void y_height(uint32_t y, uint32_t height)
             {
-                AutoTimer t("client::y_height");
+                // AutoTimer t("client::y_height");
 
                 win.conf_unchecked
                 (
@@ -7912,7 +7914,7 @@ class client
             
             void set_client_params()
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 win.set_client_size_as_hints( &x, &y, &width, &height );
                 if ( win.get_min_width()  > width
@@ -7927,7 +7929,7 @@ class client
         /* Get       */
             void get_window_parameters()
             {
-                AutoTimer t("client:" + string(__func__));
+                // AutoTimer t("client:" + string(__func__));
 
                 xcb_get_geometry_cookie_t cookie = xcb_get_geometry(conn, win);
                 xcb_get_geometry_reply_t *reply = xcb_get_geometry_reply(conn, cookie, nullptr);
@@ -8011,7 +8013,7 @@ class client
     /* Methods     */
         void make_frame()
         {
-            AutoTimer timer(__func__);
+            // AutoTimer timer(__func__);
 
             frame.create_window
             (
@@ -8051,7 +8053,7 @@ class client
         
         void make_titlebar()
         {
-            AutoTimer timer(__func__);
+            // AutoTimer timer(__func__);
 
             titlebar.create_window
             (
@@ -8088,7 +8090,7 @@ class client
         
         void make_close_button()
         {
-            AutoTimer t(__func__);
+            // AutoTimer t(__func__);
 
             close_button.create_window
             (
@@ -8131,7 +8133,7 @@ class client
         
         void make_max_button()
         {
-            AutoTimer timer(__func__);
+            // AutoTimer timer(__func__);
             max_button.create_window
             (
                 frame,
@@ -8195,7 +8197,7 @@ class client
         
         void make_min_button()
         {
-            AutoTimer timer(__func__);
+            // AutoTimer timer(__func__);
 
             min_button.create_window
             (
@@ -8237,7 +8239,7 @@ class client
         
         void make_borders()
         {
-            AutoTimer timer(__func__);
+            // AutoTimer timer(__func__);
             
             border[left].create_window
             (
@@ -8388,7 +8390,7 @@ class client
         
         void set_icon_png()
         {
-            AutoTimer timer(__func__);
+            // AutoTimer timer(__func__);
 
             icon.create_window
             (
@@ -8560,7 +8562,7 @@ class Entry
     /* Methods */
         void make_window(uint32_t __parent, int16_t __x, int16_t __y, uint16_t __width, uint16_t __height)
         {
-            AutoTimer t("Entry:make_window");
+            // AutoTimer t("Entry:make_window");
 
             window.create_window
             (
@@ -8749,7 +8751,7 @@ class Window_Manager
         /* Main         */
             void init()
             {
-                AutoTimer timer("Class Window_Manager: " + string(__func__));
+                // AutoTimer timer("Class Window_Manager: " + string(__func__));
 
                 conn__(nullptr, nullptr);
                 setup__();
@@ -8854,7 +8856,7 @@ class Window_Manager
             
             void focus_none()
             {
-                AutoTimer t(__func__);
+                // AutoTimer t(__func__);
 
                 XCB::set_input_focus(screen->root, XCB_NONE);
                 xcb_flush(conn);
@@ -8969,7 +8971,7 @@ class Window_Manager
             /* Fetch */
                 client *client_from_window(const xcb_window_t *window)
                 {
-                    AutoTimer t(__func__);
+                    // AutoTimer t(__func__);
 
                     for (const auto &c:client_list)
                     {
@@ -8983,7 +8985,7 @@ class Window_Manager
                 
                 client *client_from_any_window(const xcb_window_t *window)
                 {
-                    AutoTimer t(__func__);
+                    // AutoTimer t(__func__);
 
                     for (const auto &c:client_list)
                     {
@@ -9160,7 +9162,7 @@ class Window_Manager
 
             void manage_new_client(uint32_t __window)
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
 
                 client *c = make_client__(__window);
                 if (c == nullptr)
@@ -9232,7 +9234,7 @@ class Window_Manager
 
             void remove_client(client *c)
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
                 if (c == nullptr)
                 {
                     loutE << "null client" << '\n';
@@ -9288,7 +9290,7 @@ class Window_Manager
         /* Desktop      */
             void create_new_desktop(uint16_t __n)
             {
-                AutoTimer timer(__func__);
+                // AutoTimer timer(__func__);
 
                 for (int i = 0; i < desktop_list.size(); ++i)
                 {
@@ -13073,7 +13075,7 @@ class DropDownTerm
             );
 
             ConnEvSig(w, DropDownTermSignal,
-                AutoTimer t("DropDownTerm SIG");
+                // AutoTimer t("DropDownTerm SIG");
 
                 for (int i = 0; i < _char_vec.size(); ++i)
                 {
@@ -14130,7 +14132,7 @@ class resize_client
 
                 vector<vector<uint32_t>> pollForEvents()
                 {
-                    AutoTimer t("resize_client::border::pollForEvents");
+                    // AutoTimer t("resize_client::border::pollForEvents");
                     
                     vector<vector<uint32_t>> evVec;
                     xcb_generic_event_t* ev;
@@ -14138,13 +14140,13 @@ class resize_client
 
                     while ((ev = xcb_poll_for_event(conn)) != nullptr)
                     {
-                        AutoTimer t("resize_client::border::pollForEvents main_loop");
+                        // AutoTimer t("resize_client::border::pollForEvents main_loop");
                         
                         switch (ev->response_type & ~0x80)
                         {
                             case XCB_EXPOSE:
                             {
-                                AutoTimer t("resize_client::border::pollForEvents XCB_EXPOSE");
+                                // AutoTimer t("resize_client::border::pollForEvents XCB_EXPOSE");
                                 RE_CAST_EV(xcb_expose_event_t);
                                 vector<uint32_t> data = {EXPOSE_BIT, e->window};
                                 evVec.push_back(data);
@@ -14174,7 +14176,7 @@ class resize_client
                             }
                             case XCB_PROPERTY_NOTIFY:
                             {
-                                AutoTimer t("resize_client::border::pollForEvents XCB_PROPERTY_NOTIFY");
+                                // AutoTimer t("resize_client::border::pollForEvents XCB_PROPERTY_NOTIFY");
                                 
                                 RE_CAST_EV(xcb_property_notify_event_t);
                                 if (e->atom == ewmh->_NET_WM_NAME)
@@ -14189,7 +14191,7 @@ class resize_client
                             {
                                 if (motion_bit++ > 3)
                                 {
-                                    AutoTimer t("resize_client::border::pollForEvents XCB_MOTION_NOTIFY");
+                                    // AutoTimer t("resize_client::border::pollForEvents XCB_MOTION_NOTIFY");
                                     
                                     RE_CAST_EV(xcb_motion_notify_event_t);
                                     const uint32_t rootX = e->root_x, rootY = e->root_y;
@@ -14203,7 +14205,7 @@ class resize_client
                             }
                             case XCB_BUTTON_RELEASE:
                             {
-                                AutoTimer t("resize_client::border::pollForEvents XCB_BUTTON_RELEASE");
+                                // AutoTimer t("resize_client::border::pollForEvents XCB_BUTTON_RELEASE");
 
                                 RE_CAST_EV(xcb_button_press_event_t);
                                 vector<uint32_t> data = {BUTTON_RELEASE_BIT};
@@ -14224,11 +14226,11 @@ class resize_client
 
                     while (shouldContinue)
                     {
-                        AutoTimer t("resize_client::border::run full_loop");
+                        // AutoTimer t("resize_client::border::run full_loop");
                      
                         if ((ev = xcb_wait_for_event(conn)) == nullptr) continue;
 
-                        AutoTimer t2("resize_client::border::run inner_loop");
+                        // AutoTimer t2("resize_client::border::run inner_loop");
 
                         switch (ev->response_type & ~0x80)
                         {
@@ -14236,7 +14238,7 @@ class resize_client
                             {
                                 if (isTimeToRender())
                                 {
-                                    AutoTimer t3("resize_client::border::run XCB_MOTION_NOTIFY");
+                                    // AutoTimer t3("resize_client::border::run XCB_MOTION_NOTIFY");
                                     RE_CAST_EV(xcb_motion_notify_event_t);
                                     snap(e->root_x, e->root_y, edge, 12);
                                     /* c->update(); */
@@ -14246,14 +14248,14 @@ class resize_client
                             }
                             case XCB_BUTTON_RELEASE:
                             {
-                                AutoTimer t3("resize_client::border::run XCB_BUTTON_RELEASE");
+                                // AutoTimer t3("resize_client::border::run XCB_BUTTON_RELEASE");
                                 shouldContinue = false;                        
                                 c->update();
                                 break;
                             }
                             case XCB_PROPERTY_NOTIFY:
                             {
-                                AutoTimer t3("resize_client::border::run XCB_PROPERTY_NOTIFY");
+                                // AutoTimer t3("resize_client::border::run XCB_PROPERTY_NOTIFY");
                                 RE_CAST_EV(xcb_property_notify_event_t);
                                 if (e->atom == ewmh->_NET_WM_NAME)
                                 {
@@ -14263,7 +14265,7 @@ class resize_client
                             }
                             case XCB_EXPOSE:
                             {
-                                AutoTimer t3("resize_client::border::run XCB_EXPOSE");
+                                // AutoTimer t3("resize_client::border::run XCB_EXPOSE");
                                 RE_CAST_EV(xcb_expose_event_t);
                                 Emit(e->window, XCB_EXPOSE);
                             }
@@ -14280,7 +14282,7 @@ class resize_client
 
                     while (shouldContinue)
                     {
-                        AutoTimer t("resize_client::border::run full_loop");
+                        // AutoTimer t("resize_client::border::run full_loop");
                         if (isTimeToRender())
                         {
                             vector<vector<uint32_t>> vec = pollForEvents();
@@ -14311,7 +14313,7 @@ class resize_client
 
                             if (!last_motion_ev.empty())
                             {
-                                AutoTimer t("resize_client::border::run_test final size exec");
+                                // AutoTimer t("resize_client::border::run_test final size exec");
                                 snap(last_motion_ev[1], last_motion_ev[2], edge, 12);
                                 xcb_flush(conn);
                                 c->update();
@@ -14530,7 +14532,8 @@ class max_win
     /* Methods     */
         void max_win_animate(int endX, int endY, int endWidth, int endHeight)
         {
-            animate_client(
+            animate_client
+            (
                 c,
                 endX,
                 endY,
@@ -14545,7 +14548,7 @@ class max_win
         {
             if (c->max_button_ogsize.x > screen->width_in_pixels)
             {
-                c->max_button_ogsize.x = (screen->width_in_pixels  / 4);
+                c->max_button_ogsize.x = (screen->width_in_pixels / 4);
             }
 
             if (c->max_button_ogsize.y > screen->height_in_pixels)
@@ -15991,8 +15994,8 @@ void setup_wm()
     user = get_user_name();
     loutCUser(USER);
 
-    init_gProf();
-    setupReportGeneration();
+    // init_gProf();
+    // setupReportGeneration();
 
     NEW_CLASS(signal_manager, __signal_manager__) { signal_manager->init(); }
     NEW_CLASS(file_system,    __file_system__   ) { file_system->init_check(); }
